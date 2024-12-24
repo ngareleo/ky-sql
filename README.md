@@ -1,2 +1,3 @@
-# learning-speech-api
-Experimenting with the Javascript Web Speech API
+# ky-sql
+
+This is an attempt at building a minimal database application. Fully custom and heavily insipired by sqlite.
