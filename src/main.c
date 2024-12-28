@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     char input[MAX_QUERY_SIZE], *targetfn = *argv + 1;
     FILE *tstream;
 
-    fopen(targetfn, "r+");
+    tstream = fopen(targetfn, "r+");
 
     while (1) {
         char c, *pinput = input;
