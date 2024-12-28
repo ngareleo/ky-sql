@@ -7,26 +7,26 @@
 
 int main() {
     printf("Ky-sql says hi!\n");
+    char input[MAX_QUERY_SIZE];
 
     while (1) {
-        char input[MAX_QUERY_SIZE], *pinput = input, c; 
-
+        char c, *pinput = input;
         printf("(kysql) : ");
-
+        
         while ((c = getchar()) != EOF) {
             if (c == '\n') 
                 break;
             *(pinput++) = c;
         }
 
-        if (!strcmp(pinput, QUIT)){
+        if (!strcmp(input, QUIT)){
             printf("\nAll the best traveler\n");
             break;
         }
 
         printf("%s\n", input);
         
-        memset(pinput, '\0', strlen(input) + 1);
+        memset(input, 0, strlen(input));
     }
 
     return 0;
