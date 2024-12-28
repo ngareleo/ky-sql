@@ -12,7 +12,6 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-
     printf("Ky-sql says hi!\n");
 
     char input[MAX_QUERY_SIZE], *targetfn = *argv + 1;
@@ -40,5 +39,6 @@ int main(int argc, char *argv[]) {
         memset(input, 0, strlen(input));
     }
 
+    fclose(tstream);
     return 0;
 }
