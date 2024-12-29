@@ -1,6 +1,6 @@
 # ky-sql spec
 
-We want to build a minimal database app. To make things as simple and yet functional as possible we will take inspiration from sqlite. The database will be file-based. We will also build a simple cli application that can execute basic sql statements.
+We want to build a minimal database app. To make things as simple and yet functional as possible we will take inspiration from `sqlite`. The database will be file-based. We will also build a simple cli application that can execute basic sql statements.
 
 ## Usage
 
@@ -22,30 +22,37 @@ The database file will be split into 3 distinct sections that serve different ap
 
 ### 1. Metadata section
 
-The metadata will hold critical file specific information like the schema and storage information. Let's dig deeper.
+The metadata will hold critical file specific information like the schema and storage information.
 
 #### Table Definitions
 
-This is information about the schema, we will store information like the column information like names and data types. By calculating byte locations before hand, we can seek to a specific byte in the file to acquire data and hence reduce the cost of searches.
+Information about the schema like the column data. i.e. column names, constraints, and data type.
 
 #### Storage Mappings
 
-During runtime, after each write we will store byte offsets for each table in the rest of the file. Since we have a schema, we can search tables in a linear fashion. By implementing indexing and ordering, we can narrow down search to a specific byte location.
+During runtime, after each write we will store byte offsets for each table here . Since we have a schema, we can search tables in a linear fashion. By implementing indexing and ordering, we can narrow down search to a specific byte location.
 
-Generally, we will load metadata during boot, so since mappings are in memory during searches, we can get do almost immediate searches in some cases.
+Generally, we will load metadata during boot to allow us to do near instant searches in some cases for small tables (we will provide benchmarks at the end).
 
 ### 2. Data
 
-This is the section that ordered data. We perform searches against this section.
+Block of data where data is stored. We perform searches against this section.
 
 ### 3. Immediate write buffer
 
-Cost of appending to file is very low (almost immediate). For writes we will append data here during runtime. This includes deletions as well. _Why now use memory instead?_ We want to avoid the cost all together and we don't lose much from this. (As far as we know). Instead of incurring memory cost, we will append data here and when the process is idle, we will do the synchronization.
+Cost of appending to file is very low (searches should be near instant). For writes we will append data here during runtime. This includes deletions as well. _Why now use memory instead?_ We want to avoid memory cost at all costs. Instead, we will append data here and when certain conditions are met. e.g. the process is idle, the size of the block reaches a limit, or we hold too many records of a certain table, we will do synchronization with the `data block`.
 
-To insert data of size `x`, we will use 2 constant sized buffers of lets say `25MB` _(A user can increase the buffer size using options)_ We will copy data in two phases.
+To understand the motivation of all this, lets look at a simple insertion: To insert data of size `x`, we will use 2 constant sized buffers of lets say `25MB` _(A user can increase the buffer size using options)
 
-During the _first phase_, we copy data into a buffer `A`. Then write data over the byte locations we just copied. In the second phase, we copy the next `25MB` bytes into buffer `B`, and overwrite the bytes we just copied using buffer A. The routine continues until we have nothing else to copy.
+1. We copy `25MB - x` bytes into a buffer `A`.
+2. Write the payload `x` bytes.
+3. Copy the the next `25MB` after the payload into buffer `B`.
+4. Write the contents of buffer `A`.
+5. Copy next `25MB` into buffer `A`.
+6. Write the payload in buffer `B`.
+
+We loop 3, 4, 5, and 6 until we have no more data to copy.
 
 For extra performs, we can calculate all the memory locations we are going to be writing beforehand, which will allow us to queue all the mini operations ahead of time and perform this costly operation just once.
 
-This means during queries we will need to check the immediate write buffer and reconcile data. We can however use in-memory flags to indicate to the algorithm if it needs to do a second search in this block. If say we didn't write any data for table B, we can skip the reconciliation step.
+This means during queries we will need to check the **immediate write buffer** and reconcile data. We can however use in-memory flags to indicate to the algorithm if it needs to do a second search in this block. If say we didn't write any data that belongs in table B, we can skip the reconciliation step by checking flags.
