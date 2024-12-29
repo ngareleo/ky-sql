@@ -40,19 +40,20 @@ Block of data where data is stored. We perform searches against this section.
 
 ### 3. Immediate write buffer
 
-Cost of appending to file is very low (searches should be near instant). For writes we will append data here during runtime. This includes deletions as well. _Why now use memory instead?_ We want to avoid memory cost at all costs. Instead, we will append data here and when certain conditions are met. e.g. the process is idle, the size of the block reaches a limit, or we hold too many records of a certain table, we will do synchronization with the `data block`.
+Cost of appending to file is very low (searches should be near instant). As for writes, we will append data and return. This includes insertions and deletions. 
 
-To understand the motivation of all this, lets look at a simple insertion: To insert data of size `x`, we will use 2 constant sized buffers of lets say `25MB` _(A user can increase the buffer size using options)
+_Why not use memory?_ This is to avoid memory build up especially with large block sizes. Instead, we will append data here and when certain conditions are met. e.g. the process is idle, the size of the block reaches a limit, or we hold too many records of a certain table, we will do synchronization with the `data block`.
 
-1. We copy `25MB - x` bytes into a buffer `A`.
-2. Write the payload `x` bytes.
-3. Copy the the next `25MB` after the payload into buffer `B`.
-4. Write the contents of buffer `A`.
-5. Copy next `25MB` into buffer `A`.
-6. Write the payload in buffer `B`.
+To understand the motivation of all this, lets look at a simple insertion: Assuming we are inserting data of size `X`, we need 2 constant sized buffers of lets say `25MB` (can be set to much higher size for performance tweaks to a certain extent. Depends of you). We will say the buffer has `Y` bytes
 
-We loop 3, 4, 5, and 6 until we have no more data to copy.
+1. We copy `Y - X` bytes into a buffer `A` from where we are inserting the data.
+2. Write the payload `X` bytes.
+3. Copy the the next `Y` bytes past the payload into `B`.
+4. Write the contents of `A`.
+5. Copy next `Y` bytes into `A`.
+6. Write the contents of `B`
+7. We go to num 4 or quit when we have no more data to copy.
 
-For extra performs, we can calculate all the memory locations we are going to be writing beforehand, which will allow us to queue all the mini operations ahead of time and perform this costly operation just once.
+For extra performance, we can calculate all the byte locations we are going to be writing or deleting beforehand, which will allow us to queue all the mini operations ahead of time and perform this costly operation just once.
 
-This means during queries we will need to check the **immediate write buffer** and reconcile data. We can however use in-memory flags to indicate to the algorithm if it needs to do a second search in this block. If say we didn't write any data that belongs in table B, we can skip the reconciliation step by checking flags.
+This also means that during queries we will need to check query the **immediate write buffer** and reconcile data we fetched from the `data block`. We even use in-memory flags to indicate if we need to do a search in this block. If say we didn't write any data that belongs in table B, we can skip the reconciliation step by checking flags.
