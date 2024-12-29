@@ -34,8 +34,7 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        printf("%s\n", input);
-        
+        printf("%s\n", input);        
         memset(input, 0, strlen(input));
     }
 
