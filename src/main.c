@@ -16,7 +16,7 @@ typedef struct
     char *target;
 } Config;
 
-int make_config(Config *config, struct stat *s, int argc, char *argv[]);
+int make_config(Config *config, int argc, char *argv[]);
 int read_shell_turn(char *buffer, int max);
 int parse_shell_input(char *in);
 
@@ -25,9 +25,8 @@ int main(int argc, char *argv[])
     char input[BUFFER_MAX], *pinput = input;
     FILE *tstream;
     Config config, *pconfig = &config;
-    struct stat sb, *psb = &sb;
 
-    if (make_config(pconfig, psb, argc, argv) < 0)
+    if (make_config(pconfig, argc, argv) < 0)
     {
         fprintf(stderr, "Usage for %s:\n", *argv);
         return -1;
@@ -68,12 +67,14 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int make_config(Config *config, struct stat *s, int argc, char *argv[])
+int make_config(Config *config, int argc, char *argv[])
 {
     if (argc < 2)
         return -1;
 
-    int ret = stat(*(argv + 1), s);
+    struct stat s;
+    int ret = stat(*(argv + 1), &s);
+
     if (ret < 0)
     {
         if (errno == ENOENT)
