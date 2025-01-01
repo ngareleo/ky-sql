@@ -1,9 +1,0 @@
----
-triple:          'arm64-apple-darwin'
-binary-path:     '/Users/leo/Projects/ky-sql/src/main'
-relocations:
-  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100003C08, symSize: 0x1A8 }
-  - { offsetInCU: 0x42, offset: 0x42, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100003C08, symSize: 0x1A8 }
-  - { offsetInCU: 0xDB, offset: 0xDB, size: 0x8, addend: 0x0, symName: _makeConfig, symObjAddr: 0x1A8, symBinAddr: 0x100003DB0, symSize: 0x6C }
-  - { offsetInCU: 0x11F, offset: 0x11F, size: 0x8, addend: 0x0, symName: _readShellTurn, symObjAddr: 0x214, symBinAddr: 0x100003E1C, symSize: 0xB0 }
-...
