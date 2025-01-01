@@ -10,7 +10,7 @@ typedef struct {
 } Config;
 
 int makeConfig(Config *config, int argc, char *argv[]);
-int readShellTurn(char *buffer);
+int readShellTurn(char *buffer, int max);
 
 int main(int argc, char *argv[]) {
     char input[BUFFER_MAX], *pinput = input;
@@ -22,13 +22,13 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     
-    if ((tstream = fopen(pconfig->target, "r+")) == NULL) {
+    if (pconfig->target == NULL && (tstream = fopen(pconfig->target, "r+")) == NULL) {
         printf("Error opening stream\n");
         return -1;
     }
 
     while (1) {
-        int in = readShellTurn(pinput);
+        int in = readShellTurn(pinput, BUFFER_MAX);
 
         if (in == 0) {
             printf("Farewell traveler!!\n");
@@ -52,10 +52,6 @@ int makeConfig(Config *config, int argc, char *argv[]) {
     if (argc < 2) {
         return -1;
     }
-
-    printf("Break >>\n");
-
-
     config->target = *(argv + 1);
     return 0;
 } 
@@ -65,16 +61,16 @@ int makeConfig(Config *config, int argc, char *argv[]) {
  * Reads turn input from the shell. 
  * Returns the number of bytes written per turn, 0 if user quit and returns <0 on error
  */
-int readShellTurn(char *buffer) {
+int readShellTurn(char *buffer, int max) {
     char c;
-    int i;
+    int i = 0;
 
     printf("\n(kysql) : ");
 
-    while ((c = getchar()) != EOF) {
+    while ((c = getchar()) != EOF && i < max) {
         if (c == '\n') 
             break;
-        *(buffer + i) = c;
+        *(buffer + i++) = c;
     }
 
     if (!strcmp(buffer, QUIT)){
