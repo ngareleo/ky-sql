@@ -4,7 +4,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include "./token.c"
-#include "./dtypes.h"
 
 #define BUFFER_MAX 200
 #define MAX_TOKENS 100
@@ -19,6 +18,7 @@ typedef struct
 int make_config(Config *config, int argc, char *argv[]);
 int read_shell_turn(char *buffer, int max);
 int parse_shell_input(char *in);
+int tokenize(char *in, char *out[]);
 
 int main(int argc, char *argv[])
 {
@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
         }
 
         parse = parse_shell_input(pinput);
+
         if (parse < 0)
         {
             fprintf(stderr, "Trouble parsing input\n");
@@ -136,7 +137,8 @@ int parse_shell_input(char *in)
     if (!strcmp(in, QUIT))
         return 0;
 
-    char *tokens[MAX_TOKENS];
+    char **tokens = (char **)malloc(sizeof(char *) * MAX_TOKENS);
+
     if (tokenize(in, tokens) < 0)
     {
         fprintf(stderr, "Couldn't tokenize input text\n");
@@ -150,4 +152,37 @@ int parse_shell_input(char *in)
     }
 
     return -1;
+}
+
+/**
+ * Split input by whitespace
+ */
+int tokenize(char *in, char *out[])
+{
+    size_t n;
+    if ((n = strlen(in)) <= 0)
+        return -1;
+
+    char *p_out = *out;
+    int marker = 0, count = 0;
+
+    while (count < n)
+    {
+        if (*(in + count) == ' ')
+        {
+            if (count != marker)
+            {
+                p_out = (char *)malloc(sizeof(char) * (count - marker));
+                memcpy(p_out, in + marker, count - marker);
+                p_out++;
+            }
+            marker = count + 1;
+        }
+        count++;
+    }
+
+    p_out = (char *)malloc(sizeof(char) * (count - marker));
+    memcpy(p_out, in + marker, count - marker);
+
+    return 0;
 }
