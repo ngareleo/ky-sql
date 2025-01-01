@@ -3,9 +3,11 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include "./token.c"
 #include "./dtypes.h"
 
 #define BUFFER_MAX 200
+#define MAX_TOKENS 100
 #define EXIT_MESSAGE "\nFarewell traveler!!\n"
 #define QUIT "quit"
 
@@ -16,7 +18,6 @@ typedef struct
 
 int make_config(Config *config, struct stat *s, int argc, char *argv[]);
 int read_shell_turn(char *buffer, int max);
-int parse_table_defs(TableDef *def, Config *config);
 int parse_shell_input(char *in);
 
 int main(int argc, char *argv[])
@@ -109,9 +110,24 @@ int read_shell_turn(char *buffer, int max)
     return i;
 }
 
-int parse_query_statement(char *in)
+/*
+ */
+int parse_select_statement(char *tokens[])
 {
-    return -1;
+    // tokenize
+    char *t_select = "select",
+         *ut_select = "SELECT",
+         *t_from = "from",
+         *ut_from = "FROM";
+
+    printf("Value of 0 --> %s", *tokens);
+
+    if (strcmp(*tokens, t_select) || strcmp(*tokens, ut_select))
+    {
+        return -1;
+    }
+
+    return 0;
 }
 
 int parse_shell_input(char *in)
@@ -119,8 +135,18 @@ int parse_shell_input(char *in)
     if (!strcmp(in, QUIT))
         return 0;
 
-    if (parse_query_statement(in) < 0)
-        printf("Query --> %s\n", in);
+    char *tokens[MAX_TOKENS];
+    if (tokenize(in, tokens) < 0)
+    {
+        fprintf(stderr, "Couldn't tokenize input text\n");
+        return -1;
+    }
+
+    if (parse_select_statement(tokens) < 0)
+    {
+        fprintf(stderr, "Not select statement\n");
+        return -1;
+    }
 
     return -1;
 }
