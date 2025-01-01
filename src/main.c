@@ -84,26 +84,13 @@ int read_shell_turn(char *buffer, int max) {
 
     while ((c = getchar()) != EOF && i < max) {
         if (c == '\n') 
+            printf("       -> ");
+        else if (c == ';') 
             break;
         *(buffer + i++) = c;
     }
 
     return i;
-}
-
-int parse_table_defs(TableDef *def, Config *config) {
-    FILE *stream;
-    char buf[1000], *pbuf = buf;
-
-    stream = fopen(config->target, "r+");
-
-    size_t nr;
-    if (!(nr = fread(def, sizeof(TableDef), 1, stream))) {
-        perror("fread");
-        return -1;
-    }
-
-    return 0;
 }
 
 int parse_shell_input(char *in) {
