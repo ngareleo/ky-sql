@@ -17,12 +17,16 @@ struct config
 
 int make_config(struct config *config, int argc, char *argv[]);
 int read_shell_turn(char *buffer, int max);
-int parse_shell_input(char *in);
+int parse_shell_input(char **tokens);
 int tokenize(char *in, char *out[]);
+int parse_select_statement(char **tokens);
 
 int main(int argc, char *argv[])
 {
-    char input[BUFFER_MAX], *pinput = input;
+    char input[BUFFER_MAX],
+        *pinput = input,
+        **tokens;
+
     FILE *tstream;
     struct config conf, *pconfig = &conf;
 
@@ -48,7 +52,13 @@ int main(int argc, char *argv[])
             break;
         }
 
-        parse = parse_shell_input(pinput);
+        if (tokenize(pinput, tokens) < 0)
+        {
+            fprintf(stderr, "Couldn't tokenize input text\n");
+            return -1;
+        }
+
+        parse = parse_shell_input(tokens);
 
         if (parse < 0)
         {
@@ -64,6 +74,7 @@ int main(int argc, char *argv[])
         memset(pinput, '\0', in);
     }
 
+    free(tokens);
     fclose(tstream);
     return 0;
 }
@@ -112,11 +123,22 @@ int read_shell_turn(char *buffer, int max)
     return i;
 }
 
-/*
- */
-int parse_select_statement(char *tokens[])
+int parse_shell_input(char **tokens)
 {
-    // tokenize
+    if (!strcmp(*tokens, QUIT))
+        return 0;
+
+    if (parse_select_statement(tokens) < 0)
+    {
+        fprintf(stderr, "Not select statement\n");
+        return -1;
+    }
+
+    return -1;
+}
+
+int parse_select_statement(char **tokens)
+{
     char *t_select = "select",
          *ut_select = "SELECT",
          *t_from = "from",
@@ -132,36 +154,24 @@ int parse_select_statement(char *tokens[])
     return 0;
 }
 
-int parse_shell_input(char *in)
-{
-    if (!strcmp(in, QUIT))
-        return 0;
-
-    char **tokens = (char **)malloc(sizeof(char *) * MAX_TOKENS);
-
-    if (tokenize(in, tokens) < 0)
-    {
-        fprintf(stderr, "Couldn't tokenize input text\n");
-        return -1;
-    }
-
-    if (parse_select_statement(tokens) < 0)
-    {
-        fprintf(stderr, "Not select statement\n");
-        return -1;
-    }
-
-    return -1;
-}
-
 /**
- * Split input by whitespace
+ * Split input by whitespace. Takes in `out` which it reserves memory for.
+ * It's upto to caller to free memory at the end.
  */
-int tokenize(char *in, char *out[])
+int tokenize(char *in, char **out)
 {
     size_t n;
     if ((n = strlen(in)) <= 0)
         return -1;
+
+    int ns = 0;
+    for (int i = 0; i < n; i++)
+    {
+        if (*(in + i) == ' ')
+            ns++;
+    }
+
+    out = (char **)malloc(sizeof(char *) * ns);
 
     char *p_out = *out;
     int marker = 0, count = 0;
