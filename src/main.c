@@ -10,12 +10,12 @@
 #define EXIT_MESSAGE "\nFarewell traveler!!\n"
 #define QUIT "quit"
 
-typedef struct
+struct config
 {
     char *target;
-} Config;
+};
 
-int make_config(Config *config, int argc, char *argv[]);
+int make_config(struct config *config, int argc, char *argv[]);
 int read_shell_turn(char *buffer, int max);
 int parse_shell_input(char *in);
 int tokenize(char *in, char *out[]);
@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 {
     char input[BUFFER_MAX], *pinput = input;
     FILE *tstream;
-    Config config, *pconfig = &config;
+    struct config conf, *pconfig = &conf;
 
     if (make_config(pconfig, argc, argv) < 0)
     {
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int make_config(Config *config, int argc, char *argv[])
+int make_config(struct config *config, int argc, char *argv[])
 {
     if (argc < 2)
         return -1;
@@ -175,8 +175,8 @@ int tokenize(char *in, char *out[])
                 p_out = (char *)malloc(sizeof(char) * (count - marker));
                 memcpy(p_out, in + marker, count - marker);
                 p_out++;
+                marker = count + 1;
             }
-            marker = count + 1;
         }
         count++;
     }
