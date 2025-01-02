@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
         if (tokenize(pinput, tokens) < 0)
         {
             fprintf(stderr, "Couldn't tokenize input text\n");
-            return -1;
+            break;
         }
 
         parse = parse_shell_input(tokens);
