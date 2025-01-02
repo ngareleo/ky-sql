@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include "utilities.c"
 
 #define BUFFER_MAX 200
 #define MAX_TOKENS 100
@@ -17,7 +18,6 @@ struct config
 int make_config(struct config *config, int argc, char *argv[]);
 int read_shell_turn(char *buffer, int max);
 int parse_shell_input(char **tokens);
-int tokenize(char *in, char *out[]);
 int parse_select_statement(char **tokens);
 
 int main(int argc, char *argv[])
@@ -151,46 +151,6 @@ int parse_select_statement(char **tokens)
     if (strcmp(*tokens, t_select) || strcmp(*tokens, ut_select))
     {
         return -1;
-    }
-
-    return 0;
-}
-
-/**
- * Split input by whitespace. Takes in `out` which it reserves memory for.
- * It's upto to caller to free memory at the end.
- */
-int tokenize(char *in, char **out)
-{
-    size_t n;
-    if ((n = strlen(in)) <= 0)
-        return -1;
-
-    int ns = 0;
-    for (int i = 0; i < n; i++)
-    {
-        if (*(in + i) == ' ')
-            ns++;
-    }
-
-    out = (char **)malloc(sizeof(char *) * ns);
-
-    char *p_out = *out;
-    int marker = 0, count = 0;
-
-    while (count < n)
-    {
-        if (*(in + count) == ' ' || count == n + 1)
-        {
-            if (count != marker)
-            {
-                p_out = (char *)malloc(sizeof(char) * (count - marker));
-                memcpy(p_out, in + marker, count - marker);
-                p_out++;
-                marker = count + 1;
-            }
-        }
-        count++;
     }
 
     return 0;
