@@ -3,7 +3,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include "./token.c"
 
 #define BUFFER_MAX 200
 #define MAX_TOKENS 100
