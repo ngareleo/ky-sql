@@ -43,9 +43,9 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-        int in = read_shell_turn(pinput, BUFFER_MAX), parse;
+        int in, parse;
 
-        if (in < 0)
+        if ((in = read_shell_turn(pinput, BUFFER_MAX)) < 0)
         {
             fprintf(stderr, "Error reading input. Try again.\n");
             break;
