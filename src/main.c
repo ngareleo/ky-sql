@@ -180,7 +180,7 @@ int tokenize(char *in, char **out)
 
     while (count < n)
     {
-        if (*(in + count) == ' ')
+        if (*(in + count) == ' ' || count == n + 1)
         {
             if (count != marker)
             {
@@ -192,9 +192,6 @@ int tokenize(char *in, char **out)
         }
         count++;
     }
-
-    p_out = (char *)malloc(sizeof(char) * (count - marker));
-    memcpy(p_out, in + marker, count - marker);
 
     return 0;
 }

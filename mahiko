@@ -1,0 +1,39 @@
+#! /bin/bash
+
+usage(){
+    echo "Usage: $0 <command> [arguments]"
+    echo "Commands:"
+    echo "  build     - Build the project"
+    echo "  run       - Build and run the project"
+    echo "  test      - Run tests"
+}
+
+build() {
+    gcc ./src/main.c -o ./out/main -g
+}
+
+test() {
+    gcc ./src/tests.c -o ./out/tests -g && ./out/tests
+}
+
+run() {
+    gcc ./src/main.c -o ./out/main -g && ./out/main
+}
+
+case "$1" in 
+    "run")
+        run
+        ;;
+
+    "build")
+        build
+        ;;
+
+    "test")
+        test
+        ;;
+
+    *)
+        usage
+        ;;
+esac
