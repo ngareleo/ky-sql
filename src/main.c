@@ -74,6 +74,9 @@ int main(int argc, char *argv[])
         memset(pinput, '\0', in);
     }
 
+    for (int j = 0; tokens + j != NULL; j++)
+        free(*(tokens + j));
+
     free(tokens);
     fclose(tstream);
     return 0;
