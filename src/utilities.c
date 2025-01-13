@@ -7,20 +7,29 @@
 #define SPACE ' '
 #define SEMICOLON ';'
 
+typedef char *Token;
+typedef char **Tokens;
+
 ///
 /// Free multi-dimensional array
 ///
-void multifree(void **arr, size_t size)
+void free_tokens(Tokens tokens, size_t size)
 {
     for (int i = 0; i < size; i++)
-    {
-        free(arr[i]);
-    }
+        free(tokens[i]);
 
-    free(arr);
+    free(tokens);
 }
 
-int counttokens(char *text, char match)
+int count_tokens_flat_list(Tokens tokens)
+{
+    int count = 0;
+    for (char *token = *tokens; token != NULL; count++)
+        ;
+    return count;
+}
+
+int count_tokens_from_text(char *text, char match)
 {
     size_t n = strlen(text);
     if (n <= 0)
@@ -55,7 +64,7 @@ char **tokenize(char *text)
     int ns = 0,
         skip = 0,
         count = 0,
-        num = counttokens(text, SPACE);
+        num = count_tokens_from_text(text, SPACE);
 
     if (num < 0)
         return NULL;
@@ -76,7 +85,7 @@ char **tokenize(char *text)
 
             if (out[count] == NULL)
             {
-                multifree((void **)out, count);
+                free_tokens(out, count);
                 return NULL;
             }
 

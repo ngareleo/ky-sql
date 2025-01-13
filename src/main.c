@@ -1,34 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <errno.h>
 #include "utilities.c"
+#include "config.c"
 
 #define BUFFER_MAX 200
 #define MAX_TOKENS 100
 #define EXIT_MESSAGE "\nFarewell traveler!!\n"
 #define QUIT "quit"
 
-struct config
-{
-    char *target;
-};
-
-void pr_config(struct config *config);
-int make_config(struct config *config, int argc, char *argv[]);
 int read_shell_turn(char *buffer, int max);
-int parse_shell_input(char **tokens);
-int parse_select_statement(char **tokens);
+int parse_shell_input(Tokens tokens);
+int parse_select_statement(Tokens tokens);
 
 int main(int argc, char *argv[])
 {
     char input[BUFFER_MAX],
-        *pinput = input,
-        **tokens;
-
+        *pinput = input;
+    Tokens tokens;
     FILE *tstream;
-    struct config conf, *pconfig = &conf;
+    Config conf, *pconfig = &conf;
 
     if (!make_config(pconfig, argc, argv))
     {
@@ -74,38 +65,13 @@ int main(int argc, char *argv[])
         memset(pinput, '\0', in);
     }
 
-    for (int j = 0; tokens + j != NULL; j++)
-        free(*(tokens + j));
+    // cleanups
 
-    free(tokens);
+    int tokencount = count_tokens_flat_list(tokens);
+    if (tokencount > 0)
+        free_tokens(tokens, tokencount);
+
     fclose(tstream);
-    return 0;
-}
-
-void pr_config(struct config *config)
-{
-    printf("[debug] Target : %s\n", config->target);
-}
-
-int make_config(struct config *config, int argc, char *argv[])
-{
-    if (argc < 2)
-        return -1;
-
-    struct stat s;
-    int ret = stat(*(argv + 1), &s);
-
-    if (ret < 0)
-    {
-        if (errno == ENOENT)
-        {
-            // we setup a file
-            printf("We setup a file at path %s\n", *(argv + 1));
-        }
-    }
-    config->target = *(argv + 1);
-
-    pr_config(config);
     return 0;
 }
 
@@ -132,7 +98,7 @@ int read_shell_turn(char *buffer, int max)
     return i;
 }
 
-int parse_shell_input(char **tokens)
+int parse_shell_input(Tokens tokens)
 {
     if (!strcmp(*tokens, QUIT))
         return 0;
@@ -146,7 +112,7 @@ int parse_shell_input(char **tokens)
     return -1;
 }
 
-int parse_select_statement(char **tokens)
+int parse_select_statement(Tokens tokens)
 {
     char *t_select = "select",
          *ut_select = "SELECT",
