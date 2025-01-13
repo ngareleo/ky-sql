@@ -15,6 +15,7 @@ struct config
     char *target;
 };
 
+void pr_config(struct config *config);
 int make_config(struct config *config, int argc, char *argv[]);
 int read_shell_turn(char *buffer, int max);
 int parse_shell_input(char **tokens);
@@ -29,13 +30,13 @@ int main(int argc, char *argv[])
     FILE *tstream;
     struct config conf, *pconfig = &conf;
 
-    if (make_config(pconfig, argc, argv) < 0)
+    if (!make_config(pconfig, argc, argv))
     {
         fprintf(stderr, "Usage for %s:\n", *argv);
         return -1;
     }
 
-    if (pconfig->target == NULL && (tstream = fopen(pconfig->target, "r+")) == NULL)
+    if ((tstream = fopen(pconfig->target, "r+")) == NULL)
     {
         fprintf(stderr, "Error opening stream\n");
         return -1;
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
             break;
         }
 
-        if (tokenize(pinput, tokens) < 0)
+        if ((tokens = tokenize(pinput)) == NULL)
         {
             fprintf(stderr, "Couldn't tokenize input text\n");
             break;
@@ -81,6 +82,11 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+void pr_config(struct config *config)
+{
+    printf("[debug] Target : %s\n", config->target);
+}
+
 int make_config(struct config *config, int argc, char *argv[])
 {
     if (argc < 2)
@@ -95,10 +101,11 @@ int make_config(struct config *config, int argc, char *argv[])
         {
             // we setup a file
             printf("We setup a file at path %s\n", *(argv + 1));
-            return -1;
         }
     }
     config->target = *(argv + 1);
+
+    pr_config(config);
     return 0;
 }
 

@@ -13,11 +13,11 @@ build() {
 }
 
 test() {
-    gcc ./src/tests.c -o ./out/tests && ./out/tests
+    gcc ./src/tests.c -o ./out/tests -v && ./out/tests
 }
 
 run() {
-    gcc ./src/main.c -o ./out/main -g && ./out/main
+    gcc ./src/main.c -o ./out/main && ./out/main
 }
 
 case "$1" in 

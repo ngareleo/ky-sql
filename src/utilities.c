@@ -7,9 +7,9 @@
 #define SPACE ' '
 #define SEMICOLON ';'
 
-/**
- * Free multi-dimensional array
- */
+///
+/// Free multi-dimensional array
+///
 void multifree(void **arr, size_t size)
 {
     for (int i = 0; i < size; i++)
@@ -20,36 +20,22 @@ void multifree(void **arr, size_t size)
     free(arr);
 }
 
-///
-///  Assumes there's a semicolon
-///
-char **tokenize(char *text)
+int counttokens(char *text, char match)
 {
-    size_t n;
+    size_t n = strlen(text);
+    if (n <= 0)
+        return -1;
 
-    if (!(n = strlen(text)))
-        return NULL;
-
-    if (*(text + strlen(text) - 1) != SEMICOLON)
-        return NULL;
-
-    // Step 1. count number of tokens
-
-    char **out;
-    int ns = 0, skip = 0;
-
+    int nt, skip = 0;
     for (int i = 0; i < n; i++)
     {
-        if (*(text + i) == ' ')
+        if (*(text + i) == match)
         {
-            // check if we previously hit a space
-            if (skip)
+            if (!skip)
             {
-                continue;
+                nt++;
+                skip = 1;
             }
-
-            ns++;
-            skip = 1; // we hit some white space
         }
         else
         {
@@ -57,15 +43,24 @@ char **tokenize(char *text)
         }
     }
 
-    out = (char **)malloc(sizeof(char *) * ns + 1);
-    if (!out)
+    return nt;
+}
+
+///
+///  Assumes there's a semicolon
+///
+char **tokenize(char *text)
+{
+    char **out;
+    int ns = 0,
+        skip = 0,
+        count = 0,
+        num = counttokens(text, SPACE);
+
+    if (num < 0)
         return NULL;
 
-    skip = 0;
-
-    int count = 0;
-
-    for (const char *marker = text, *chars = text; count < ns + 1; chars++)
+    for (const char *marker = text, *chars = text; count < num + 1; chars++)
     {
         if (*chars == SPACE || *chars == SEMICOLON)
         {
