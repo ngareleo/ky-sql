@@ -13,7 +13,7 @@ build() {
 }
 
 test() {
-    gcc ./src/tests.c -o ./out/tests -g && ./out/tests
+    gcc ./src/tests.c -o ./out/tests && ./out/tests
 }
 
 run() {
