@@ -3,43 +3,72 @@
 #include <assert.h>
 #include "./utilities.c"
 
-void test_count_tokens()
+void execute_suite(char *suite, void(func)());
+
+void test_strip()
+{
+    printf(">> It should remove single empty space");
+    char *in = " Hello";
+    strip(in);
+    assert(strcmp(in, "Hello"));
+    printf(" ✅ \n");
+
+    printf(">> It should remove multiple empty spaces with text");
+    in = "     Hello";
+    strip(in);
+    assert(strcmp(in, "Hello"));
+    printf(" ✅ \n");
+
+    printf(">> It should remove multiple empty spaces with no text");
+    in = "                 ";
+    strip(in);
+    assert(strcmp(in, ""));
+    printf(" ✅ \n");
+
+    printf(">> It should do nothing on strings with no padding");
+    in = "Hello";
+    strip(in);
+    assert(strcmp(in, "Hello"));
+    printf(" ✅ \n");
+}
+
+void test_count_tokens_from_text()
 {
     printf(">> It should return -1 for empty strings");
     assert(count_tokens_from_text("", ' ') == -1);
-    printf("✅ \n");
+    printf(" ✅ \n");
 
-    printf(">> It should count whitespaces as no tokens");
-    assert(count_tokens_from_text("       ", ' ') == 0);
-    printf("✅ \n");
+    printf(">> It should count multiple whitespaces as 0 tokens");
+    assert(count_tokens_from_text("       ", ' ') == -1);
+    printf(" ✅ \n");
 
     printf(">> It should count one string properly");
     assert(count_tokens_from_text("Hello", ' ') == 1);
-    printf("✅ \n");
+    printf(" ✅ \n");
 
     printf(">> It should count one even with padding");
     assert(count_tokens_from_text(" Hello  ", ' ') == 1);
-    printf("✅ \n");
+    printf(" ✅ \n");
 
     printf(">> It should count two string properly");
     assert(count_tokens_from_text("Hello world", ' ') == 2);
-    printf("✅ \n");
+    printf(" ✅ \n");
 
     printf(">> It should count two strings properly even with padding");
     assert(count_tokens_from_text("Hello    world   ", ' ') == 2);
-    printf("✅ \n");
+    printf(" ✅ \n");
 
     printf(">> It should count multiple tokens properly");
     assert(count_tokens_from_text("In a galaxy far far away", ' ') == 6);
-    printf("✅ \n");
+    printf(" ✅ \n");
 
-    printf(">> Test that it checks input for termination ");
+    printf(">> Test that it checks input for termination");
     assert(tokenize("test") == NULL);
-    printf("✅ \n");
+    printf(" ✅ \n");
 
     printf(">> Edge case. Multiple single characters");
     assert(count_tokens_from_text("a b c d e f g", ' ') == 7);
-    printf("✅ \n");
+    printf(" ✅ \n");
 }
 
 void test_tokenize()
@@ -73,9 +102,15 @@ void test_tokenize()
 int main()
 {
     printf("Running tests .............\n\n");
-    test_tokenize();
-    printf("\n");
-    test_count_tokens();
-    printf("\nAll tests passed! \n");
+    execute_suite("Test strip", test_strip);
+    execute_suite("Test count tokens from text", test_count_tokens_from_text);
+    execute_suite("Test tokenize", test_tokenize);
     return 0;
+}
+
+void execute_suite(char *suite, void(func)())
+{
+    printf("Executing test suite: %s\n\n", suite);
+    func();
+    printf("success\n\n");
 }

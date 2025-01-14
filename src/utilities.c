@@ -29,8 +29,31 @@ int count_tokens_flat_list(Tokens tokens)
     return count;
 }
 
+int strip(char *text)
+{
+    char *ptext;
+    int len = strlen(text);
+
+    if (len)
+    {
+        return 0;
+    }
+
+    for (ptext = text; ptext - text < len && *ptext == SPACE; ptext++)
+    {
+        printf("C %c\n", *ptext);
+    }
+
+    text = ptext;
+    return 0;
+}
+
 int count_tokens_from_text(char *text, char match)
 {
+    if (!strip(text))
+        return -1;
+
+    printf("Within count tokens: Text %s\n", text);
     size_t n = strlen(text);
     if (n <= 0)
         return -1;

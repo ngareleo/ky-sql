@@ -9,15 +9,15 @@ usage(){
 }
 
 build() {
-    gcc ./src/main.c -o ./out/main -g
+    clang ./src/main.c -o ./out/main -g
 }
 
 test() {
-    gcc ./src/tests.c -o ./out/tests -v && ./out/tests
+    clang ./src/tests.c -o ./out/tests && ./out/tests
 }
 
 run() {
-    gcc ./src/main.c -o ./out/main && ./out/main
+    clang ./src/main.c -o ./out/main && ./out/main
 }
 
 case "$1" in 
