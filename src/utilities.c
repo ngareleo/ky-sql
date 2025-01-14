@@ -40,9 +40,7 @@ int strip(char *text)
     }
 
     for (ptext = text; ptext - text < len && *ptext == SPACE; ptext++)
-    {
-        printf("C %c\n", *ptext);
-    }
+        ;
 
     text = ptext;
     return 0;
