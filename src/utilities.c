@@ -60,7 +60,6 @@ int count_tokens_from_text(char *text, char match)
 ///
 char **tokenize(char *text)
 {
-    char **out;
     int ns = 0,
         skip = 0,
         count = 0,
@@ -68,6 +67,8 @@ char **tokenize(char *text)
 
     if (num < 0)
         return NULL;
+
+    char **out = (char **)malloc(sizeof(char *) * num);
 
     for (const char *marker = text, *chars = text; count < num + 1; chars++)
     {
@@ -85,7 +86,7 @@ char **tokenize(char *text)
 
             if (out[count] == NULL)
             {
-                free_tokens(out, count);
+                free_tokens(out, count + 1);
                 return NULL;
             }
 
