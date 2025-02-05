@@ -89,7 +89,7 @@ void test_tokenize()
     out = tokenize(mock);
     assert(strcmp(out[0], "Hello") == 0);
     assert(strcmp(out[1], "World") == 0);
-    free_tokens(out, 2);
+    free_tokens(out);
     printf("✅ \n");
 
     printf(">> Test that long random string is tokenized correctly");
@@ -100,7 +100,7 @@ void test_tokenize()
     assert(strcmp(out[2], "To") == 0);
     assert(strcmp(out[3], "my") == 0);
     assert(strcmp(out[4], "People") == 0);
-    free_tokens(out, 5);
+    free_tokens(out);
     printf("✅ \n");
 
     printf(">> Should work properly with non-alphanumerics and single characters");
@@ -116,7 +116,23 @@ void test_tokenize()
     assert(strcmp(out[7], "ss") == 0);
     assert(strcmp(out[8], "s") == 0);
     assert(strcmp(out[9], "@") == 0);
-    free_tokens(out, 10);
+    free_tokens(out);
+    printf("✅ \n");
+}
+
+void test_count_tokens_from_single_list()
+{
+
+    printf(">> Test that it doesn't count null values ");
+    assert(count_tokens_flat_list(NULL) == -1);
+    printf("✅ \n");
+
+    char **mock = (char **)malloc(sizeof(char *) * 2);
+    mock[0] = "Hello";
+    mock[1] = "World";
+
+    printf(">> Test that it counts properly");
+    assert(count_tokens_flat_list(mock) == 2);
     printf("✅ \n");
 }
 
@@ -129,9 +145,11 @@ int main()
     }
 
     printf("Running tests .............\n\n");
+    execute_suite("Test count tokens from list", test_count_tokens_from_single_list);
     execute_suite("Test strip", test_strip);
     execute_suite("Test count tokens from text", test_count_tokens_from_text);
     execute_suite("Test tokenize", test_tokenize);
+
     return 0;
 }
 

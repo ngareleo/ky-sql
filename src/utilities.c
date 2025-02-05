@@ -10,23 +10,30 @@
 typedef char *Token;
 typedef char **Tokens;
 
-///
-/// Free multi-dimensional array
-///
-void free_tokens(Tokens tokens, size_t size)
-{
-    for (int i = 0; i < size; i++)
-        free(tokens[i]);
-
-    free(tokens);
-}
-
 int count_tokens_flat_list(Tokens tokens)
 {
-    int count = 0;
-    for (char *token = *tokens; token != NULL; count++)
+    int count;
+
+    if (tokens == NULL)
+        return -1;
+
+    for (count = 0; tokens[count] != NULL; count++)
         ;
+
     return count;
+}
+
+void free_tokens(Tokens tokens)
+{
+    int count;
+
+    if (tokens == NULL)
+        return;
+
+    for (count = 0; tokens[count] != NULL; count++)
+        free(tokens[count]);
+
+    free(tokens);
 }
 
 char *strip(char *text)
@@ -156,7 +163,7 @@ char **tokenize(char *text)
             output[count] = (char *)malloc(sizeof(char) * width + 1);
             if (output[count] == NULL)
             {
-                free_tokens(output, count + 1);
+                free_tokens(output);
                 return NULL;
             }
             strncpy(output[count], marker, width);
