@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "headers/log.h"
 
+// Todo: Use flags to run debug conditionally by compiling this conditionally
 int pf(logType type, const char *str, ...)
 {
     char *color = COLOR_RESET, in[strlen(str) + MAX_PREFIX_WIDTH], prefix[6];
@@ -46,4 +47,6 @@ int pf(logType type, const char *str, ...)
     // reset
     printf("%s", COLOR_RESET);
     return result;
+
+    return 0;
 }

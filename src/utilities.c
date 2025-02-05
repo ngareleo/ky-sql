@@ -69,7 +69,7 @@ char *strip(char *text)
     while (*(text + end) == SPACE)
         end--;
 
-    // debug("{ Word: '%s', Len: %zu, Start: %zu, End: %zu }", text, len, start, end);
+    debug("strip { Word: '%s', Len: %zu, Start: %zu, End: %zu }", text, len, start, end);
 
     if (start == len)
         return strdup("");
@@ -84,7 +84,7 @@ char *strip(char *text)
 
     out[i] = '\0';
 
-    // debug("{ Output: '%s' }", out);
+    debug("strip { Output: '%s' }", out);
     return out;
 }
 
@@ -110,7 +110,7 @@ int count_tokens_from_text(char *text, char match)
     num_s = 1;
     for (curr = s_text; *curr != '\0'; curr++)
     {
-        // debug("{ Current: %c }", *curr);
+        debug("count_tokens_from_text { Current: %c }", *curr);
         if (*curr == match)
         {
             if (skip)
@@ -123,7 +123,7 @@ int count_tokens_from_text(char *text, char match)
             skip = 0; // indicate that we have hit some non-space and can start counting tokens
     }
 
-    // debug("{ Word: %s, Len: %zu, Num: %d }", s_text, n, num_s);
+    debug("count_tokens_from_text { Word: %s, Len: %zu, Num: %d }", s_text, n, num_s);
     free(s_text);
     return num_s;
 }
@@ -160,7 +160,7 @@ char **tokenize(char *text)
     s_text = strip(text);
     marker = chars = s_text;
 
-    // debug("{ Word: '%s', Stripped: '%s', NumOfTokens: %d }", text, s_text, n_tokens);
+    debug("tokenize { Word: '%s', Stripped: '%s', NumOfTokens: %d }", text, s_text, n_tokens);
 
     for (; *chars != '\0'; chars++)
     {
@@ -182,7 +182,7 @@ char **tokenize(char *text)
             }
             strncpy(output[count], marker, width);
             output[count][width] = '\0';
-            // debug("{ New Word: '%s',  Width: %d }", output[count], width);
+            debug("tokenize { New Word: '%s',  Width: %d }", output[count], width);
             count++;
             marker = chars + 1;
             skip = 1; // indicate that we have hit some space
@@ -223,6 +223,6 @@ char *upper(char *input)
     }
 
     output[c] = '\0';
-    // debug("{ Word: '%s', Len: %d, Out: '%s' }", input, len, output);
+    debug("upper { Word: '%s', Len: %d, Out: '%s' }", input, len, output);
     return output;
 }

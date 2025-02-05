@@ -21,7 +21,7 @@ run() {
 }
 
 run1() {
-    clang -Wall -Wextra -Iheaders -o ./out/main ./src/log.c ./src/main.c && ./out/main ./artifacts/sample0.kysql
+    clang -DDEBUG=1 -Wall -Wextra -Iheaders -o ./out/main ./src/log.c ./src/main.c && ./out/main ./artifacts/sample0.kysql
 }
 
 case "$1" in 
