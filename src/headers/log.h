@@ -1,7 +1,6 @@
 #ifndef LOG_H
 #define LOG_H
 
-
 // Color definitions
 #define COLOR_RED "\x1b[31m"
 #define COLOR_GREEN "\x1b[32m"
@@ -12,7 +11,6 @@
 #define COLOR_RESET "\x1b[0m"
 
 #define MAX_PREFIX_WIDTH 9 // We wrap a max of 10 characters for each log
-
 
 typedef enum LOGTYPE
 {
@@ -25,8 +23,8 @@ typedef enum LOGTYPE
 
 int pf(logType type, const char *str, ...);
 
-#define error_print(...) pf(ERROR, __VA_ARGS__)
-#define info_print(...) pf(INFO, __VA_ARGS__)
-#define debug_print(...) pf(DEBUG, __VA_ARGS__)
+#define error(...) pf(ERROR, __VA_ARGS__)
+#define info(...) pf(INFO, __VA_ARGS__)
+#define debug(...) pf(DEBUG, __VA_ARGS__)
 
 #endif

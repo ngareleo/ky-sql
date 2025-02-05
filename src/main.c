@@ -23,13 +23,13 @@ int main(int argc, char *argv[])
 
     if (make_config(pconfig, argc, argv))
     {
-        error_print("Usage for %s:\n", *argv);
+        error("Usage for %s:\n", *argv);
         return -1;
     }
 
     if ((tstream = fopen(pconfig->target, "r+")) == NULL)
     {
-        error_print("Error opening stream");
+        error("Error opening stream");
         return -1;
     }
 
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
         shell = read_shell_turn(pinput, BUFFER_MAX);
         if (shell)
         {
-            error_print("Error reading input. Try again.");
+            error("Error reading input. Try again.");
             break;
         }
 
@@ -48,19 +48,19 @@ int main(int argc, char *argv[])
 
         if (tokens == NULL)
         {
-            error_print("Couldn't tokenize input text");
+            error("Couldn't tokenize input text");
             break;
         }
 
         parse = parse_shell_input(tokens);
         if (parse < 0)
         {
-            error_print("Trouble parsing input");
+            error("Trouble parsing input");
             break;
         }
         else if (parse == 0)
         {
-            info_print(EXIT_MESSAGE);
+            info(EXIT_MESSAGE);
             break;
         }
 
@@ -111,7 +111,7 @@ int parse_shell_input(Tokens tokens)
 
     if (parse_select_statement(tokens) < 0)
     {
-        info_print("Not select statement");
+        info("Not select statement");
         return -1;
     }
 

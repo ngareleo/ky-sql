@@ -1,4 +1,3 @@
-// Utility functions that are decoupled from the application
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,7 +69,7 @@ char *strip(char *text)
     while (*(text + end) == SPACE)
         end--;
 
-    // printf("\n{ Word: '%s', Len: %zu, Start: %zu, End: %zu }\n", text, len, start, end);
+    // debug("{ Word: '%s', Len: %zu, Start: %zu, End: %zu }", text, len, start, end);
 
     if (start == len)
         return strdup("");
@@ -85,7 +84,7 @@ char *strip(char *text)
 
     out[i] = '\0';
 
-    // printf("\n{ Output: '%s' }\n", out);
+    // debug("{ Output: '%s' }", out);
     return out;
 }
 
@@ -111,7 +110,7 @@ int count_tokens_from_text(char *text, char match)
     num_s = 1;
     for (curr = s_text; *curr != '\0'; curr++)
     {
-        // printf("\n { Current: %c }", *curr);
+        // debug("{ Current: %c }", *curr);
         if (*curr == match)
         {
             if (skip)
@@ -124,7 +123,7 @@ int count_tokens_from_text(char *text, char match)
             skip = 0; // indicate that we have hit some non-space and can start counting tokens
     }
 
-    // printf("\n{ Word: %s, Len: %zu, Num: %d }\n", s_text, n, num_s);
+    // debug("{ Word: %s, Len: %zu, Num: %d }", s_text, n, num_s);
     free(s_text);
     return num_s;
 }
@@ -161,7 +160,7 @@ char **tokenize(char *text)
     s_text = strip(text);
     marker = chars = s_text;
 
-    // printf("\n { Word: '%s', Stripped: '%s', NumOfTokens: %d } \n", text, s_text, n_tokens);
+    // debug("{ Word: '%s', Stripped: '%s', NumOfTokens: %d }", text, s_text, n_tokens);
 
     for (; *chars != '\0'; chars++)
     {
@@ -183,7 +182,7 @@ char **tokenize(char *text)
             }
             strncpy(output[count], marker, width);
             output[count][width] = '\0';
-            // printf("\n { New Word: '%s',  Width: %d } \n", output[count], width);
+            // debug("{ New Word: '%s',  Width: %d }", output[count], width);
             count++;
             marker = chars + 1;
             skip = 1; // indicate that we have hit some space
@@ -224,6 +223,6 @@ char *upper(char *input)
     }
 
     output[c] = '\0';
-    // debug_print("{ Word: '%s', Len: %d, Out: '%s' }", input, len, output);
+    // debug("{ Word: '%s', Len: %d, Out: '%s' }", input, len, output);
     return output;
 }

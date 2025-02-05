@@ -12,14 +12,14 @@ static void pr_argv(int argc, char **argv)
     int count;
     if (argv == NULL)
         return;
-    debug_print("pr_agv { Argc: %d }", argc);
+    debug("pr_agv { Argc: %d }", argc);
     for (count = 0; argv[count] != NULL; count++)
-        debug_print("pr_agv { Loc: %d, Val: '%s' }", count + 1, argv[count]);
+        debug("pr_agv { Loc: %d, Val: '%s' }", count + 1, argv[count]);
 }
 
 static void pr_config(Config *config)
 {
-    debug_print("pr_config { Target file: '%s' }", config->target);
+    debug("pr_config { Target file: '%s' }", config->target);
 }
 
 int make_config(Config *config, int argc, char *argv[])
@@ -39,7 +39,7 @@ int make_config(Config *config, int argc, char *argv[])
         if (errno == ENOENT)
         {
             // we setup a file
-            info_print("We setup a file at path %s", *(argv + 1));
+            info("We setup a file at path %s", *(argv + 1));
         }
     }
 
