@@ -136,6 +136,20 @@ void test_count_tokens_from_single_list()
     printf("✅ \n");
 }
 
+void test_capitalize()
+{
+    printf(">> Test it doesn't capitalize NULL");
+    assert(upper(NULL) == NULL);
+    printf("✅ \n");
+
+    printf(">> Test it capitalizes properly");
+    char *mock = "Hello World", *out;
+    out = upper(mock);
+    assert(strcmp(out, "HELLO WORLD") == 0);
+    printf("✅ \n");
+    free(out);
+}
+
 int main()
 {
     if (signal(SIGABRT, sig_handler) == SIG_ERR)
@@ -149,6 +163,7 @@ int main()
     execute_suite("Test strip", test_strip);
     execute_suite("Test count tokens from text", test_count_tokens_from_text);
     execute_suite("Test tokenize", test_tokenize);
+    execute_suite("Test capitalize", test_capitalize);
 
     return 0;
 }

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "headers/log.h"
 
 #define SPACE ' '
 #define SEMICOLON ';'
@@ -160,7 +161,7 @@ char **tokenize(char *text)
     s_text = strip(text);
     marker = chars = s_text;
 
-    printf("\n { Word: '%s', Stripped: '%s', NumOfTokens: %d } \n", text, s_text, n_tokens);
+    // printf("\n { Word: '%s', Stripped: '%s', NumOfTokens: %d } \n", text, s_text, n_tokens);
 
     for (; *chars != '\0'; chars++)
     {
@@ -182,7 +183,7 @@ char **tokenize(char *text)
             }
             strncpy(output[count], marker, width);
             output[count][width] = '\0';
-            printf("\n { New Word: '%s',  Width: %d } \n", output[count], width);
+            // printf("\n { New Word: '%s',  Width: %d } \n", output[count], width);
             count++;
             marker = chars + 1;
             skip = 1; // indicate that we have hit some space
@@ -195,5 +196,34 @@ char **tokenize(char *text)
 
     free(s_text);
     output[count] = NULL;
+    return output;
+}
+
+char *upper(char *input)
+{
+    char *output;
+    int c, len;
+
+    if (input == NULL)
+        return NULL;
+
+    len = strlen(input);
+    if (len == 0)
+        return strdup("");
+
+    output = (char *)malloc(sizeof(char) * (len + 1));
+    if (output == NULL)
+        return NULL;
+
+    for (c = 0; input[c] != '\0'; c++)
+    {
+        if (input[c] >= 97 && input[c] <= 122)
+            output[c] = input[c] - 32;
+        else
+            output[c] = input[c];
+    }
+
+    output[c] = '\0';
+    // debug_print("{ Word: '%s', Len: %d, Out: '%s' }", input, len, output);
     return output;
 }

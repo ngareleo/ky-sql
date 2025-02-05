@@ -1,26 +1,8 @@
+#include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
-
-// Color definitions
-#define COLOR_RED "\x1b[31m"
-#define COLOR_GREEN "\x1b[32m"
-#define COLOR_YELLOW "\x1b[33m"
-#define COLOR_BLUE "\x1b[34m"
-#define COLOR_MAGENTA "\x1b[35m"
-#define COLOR_CYAN "\x1b[36m"
-#define COLOR_RESET "\x1b[0m"
-
-#define MAX_PREFIX_WIDTH 10 // We wrap a max of 10 characters for each log
-
-typedef enum LOGTYPE
-{
-    DEBUG,
-    INFO,
-    LOG,
-    WARN,
-    ERROR
-} logType;
+#include "headers/log.h"
 
 int pf(logType type, const char *str, ...)
 {
@@ -65,7 +47,3 @@ int pf(logType type, const char *str, ...)
     printf("%s", COLOR_RESET);
     return result;
 }
-
-#define error_print(...) pf(ERROR, __VA_ARGS__)
-#define info_print(...) pf(INFO, __VA_ARGS__)
-#define debug_print(...) pf(DEBUG, __VA_ARGS__)

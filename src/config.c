@@ -1,6 +1,6 @@
 #include <errno.h>
 #include <sys/stat.h>
-#include "./log.c"
+#include "headers/log.h"
 
 typedef struct config
 {
@@ -12,14 +12,14 @@ static void pr_argv(int argc, char **argv)
     int count;
     if (argv == NULL)
         return;
-    debug_print("{ Argc: %d }", argc);
+    debug_print("pr_agv { Argc: %d }", argc);
     for (count = 0; argv[count] != NULL; count++)
-        debug_print("{ Loc: %d, Val: '%s' }", count + 1, argv[count]);
+        debug_print("pr_agv { Loc: %d, Val: '%s' }", count + 1, argv[count]);
 }
 
 static void pr_config(Config *config)
 {
-    debug_print("{ Target file: '%s' }", config->target);
+    debug_print("pr_config { Target file: '%s' }", config->target);
 }
 
 int make_config(Config *config, int argc, char *argv[])

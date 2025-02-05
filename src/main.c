@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "utilities.c"
 #include "config.c"
 
@@ -15,56 +16,56 @@ int parse_select_statement(Tokens tokens);
 
 int main(int argc, char *argv[])
 {
-    char input[BUFFER_MAX],
-        *pinput = input;
-    Tokens tokens;
+    int shell, parse;
+    char input[BUFFER_MAX], *pinput = input, *upred_input, **tokens;
     FILE *tstream;
     Config conf, *pconfig = &conf;
 
     if (make_config(pconfig, argc, argv))
     {
-        fprintf(stderr, "Usage for %s:\n", *argv);
+        error_print("Usage for %s:\n", *argv);
         return -1;
     }
 
     if ((tstream = fopen(pconfig->target, "r+")) == NULL)
     {
-        fprintf(stderr, "Error opening stream\n");
+        error_print("Error opening stream");
         return -1;
     }
 
     while (1)
     {
-        int in, parse;
-
-        if ((in = read_shell_turn(pinput, BUFFER_MAX)) < 0)
+        shell = read_shell_turn(pinput, BUFFER_MAX);
+        if (shell)
         {
-            fprintf(stderr, "Error reading input. Try again.\n");
+            error_print("Error reading input. Try again.");
             break;
         }
 
-        tokens = tokenize(pinput);
+        upred_input = upper(pinput);
+        tokens = tokenize(upred_input);
         pr_tokens(tokens);
 
         if (tokens == NULL)
         {
-            fprintf(stderr, "Couldn't tokenize input text\n");
+            error_print("Couldn't tokenize input text");
             break;
         }
 
         parse = parse_shell_input(tokens);
         if (parse < 0)
         {
-            fprintf(stderr, "Trouble parsing input\n");
+            error_print("Trouble parsing input");
             break;
         }
         else if (parse == 0)
         {
-            printf(EXIT_MESSAGE);
+            info_print(EXIT_MESSAGE);
             break;
         }
 
-        memset(pinput, '\0', in);
+        free(upred_input);
+        memset(pinput, '\0', shell);
     }
 
     // cleanups
@@ -110,7 +111,7 @@ int parse_shell_input(Tokens tokens)
 
     if (parse_select_statement(tokens) < 0)
     {
-        fprintf(stderr, "Not select statement\n");
+        info_print("Not select statement");
         return -1;
     }
 
@@ -119,15 +120,10 @@ int parse_shell_input(Tokens tokens)
 
 int parse_select_statement(Tokens tokens)
 {
-    char *t_select = "select",
-         *ut_select = "SELECT",
-         *t_from = "from",
-         *ut_from = "FROM";
-
-    if (strcmp(*tokens, t_select) || strcmp(*tokens, ut_select))
-    {
-        return -1;
-    }
+    // char *t_select = "select",
+    //      *ut_select = "SELECT",
+    //      *t_from = "from",
+    //      *ut_from = "FROM";
 
     return 0;
 }

@@ -9,7 +9,7 @@ usage(){
 }
 
 build() {
-    clang ./src/main.c -o ./out/main -g
+    clang -Wall -Wextra -Iheaders -o ./src/log.c ./src/main.c
 }
 
 test() {
@@ -17,11 +17,11 @@ test() {
 }
 
 run() {
-    clang ./src/main.c -o ./out/main && ./out/main 
+    clang -Wall -Wextra -Iheaders -o ./src/log.c ./src/main.c && ./out/main 
 }
 
 run1() {
-    clang ./src/main.c -o ./out/main && ./out/main ./artifacts/sample0.kysql
+    clang -Wall -Wextra -Iheaders -o ./out/main ./src/log.c ./src/main.c && ./out/main ./artifacts/sample0.kysql
 }
 
 case "$1" in 
