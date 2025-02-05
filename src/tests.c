@@ -100,7 +100,23 @@ void test_tokenize()
     assert(strcmp(out[2], "To") == 0);
     assert(strcmp(out[3], "my") == 0);
     assert(strcmp(out[4], "People") == 0);
-    free_tokens(out, 2);
+    free_tokens(out, 5);
+    printf("✅ \n");
+
+    printf(">> Should work properly with non-alphanumerics and single characters");
+    mock = "a f gs gs * fs    fs ss s @;";
+    out = tokenize(mock);
+    assert(strcmp(out[0], "a") == 0);
+    assert(strcmp(out[1], "f") == 0);
+    assert(strcmp(out[2], "gs") == 0);
+    assert(strcmp(out[3], "gs") == 0);
+    assert(strcmp(out[4], "*") == 0);
+    assert(strcmp(out[5], "fs") == 0);
+    assert(strcmp(out[6], "fs") == 0);
+    assert(strcmp(out[7], "ss") == 0);
+    assert(strcmp(out[8], "s") == 0);
+    assert(strcmp(out[9], "@") == 0);
+    free_tokens(out, 10);
     printf("✅ \n");
 }
 
