@@ -71,7 +71,7 @@ char *strip(char *text)
 int count_tokens_from_text(char *text, char match)
 {
     size_t n;
-    char *s_text = strip(text);
+    char *s_text = strip(text), *curr;
     int num_s, // Number of tokens so far
         skip;  // should skip?
 
@@ -87,7 +87,7 @@ int count_tokens_from_text(char *text, char match)
 
     skip = 0;
     num_s = 1;
-    for (char *curr = s_text; *curr != '\0'; curr++)
+    for (curr = s_text; *curr != '\0'; curr++)
     {
         // printf("\n { Current: %c }", *curr);
         if (*curr == match)
