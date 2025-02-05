@@ -111,6 +111,7 @@ int count_tokens_from_text(char *text, char match)
     }
 
     // printf("\n{ Word: %s, Len: %zu, Num: %d }\n", s_text, n, num_s);
+    free(s_text);
     return num_s;
 }
 
@@ -179,6 +180,7 @@ char **tokenize(char *text)
         }
     }
 
+    free(s_text);
     output[count] = NULL;
     return output;
 }
