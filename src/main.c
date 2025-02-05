@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     FILE *tstream;
     Config conf, *pconfig = &conf;
 
-    if (!make_config(pconfig, argc, argv))
+    if (make_config(pconfig, argc, argv))
     {
         fprintf(stderr, "Usage for %s:\n", *argv);
         return -1;
@@ -43,14 +43,16 @@ int main(int argc, char *argv[])
             break;
         }
 
-        if ((tokens = tokenize(pinput)) == NULL)
+        tokens = tokenize(pinput);
+        pr_tokens(tokens);
+
+        if (tokens == NULL)
         {
             fprintf(stderr, "Couldn't tokenize input text\n");
             break;
         }
 
         parse = parse_shell_input(tokens);
-
         if (parse < 0)
         {
             fprintf(stderr, "Trouble parsing input\n");
@@ -69,7 +71,7 @@ int main(int argc, char *argv[])
 
     int tokencount = count_tokens_flat_list(tokens);
     if (tokencount > 0)
-        free_tokens(tokens, tokencount);
+        free_tokens(tokens);
 
     fclose(tstream);
     return 0;
@@ -90,11 +92,14 @@ int read_shell_turn(char *buffer, int max)
             *(buffer + i++) = ' ';
         }
         else if (c == ';')
+        {
+            *(buffer + i++) = ';';
             break;
+        }
         else
             *(buffer + i++) = c;
     }
-
+    *(buffer + i) = '\0';
     return i;
 }
 
@@ -118,8 +123,6 @@ int parse_select_statement(Tokens tokens)
          *ut_select = "SELECT",
          *t_from = "from",
          *ut_from = "FROM";
-
-    printf("Value of 0 --> %s", *tokens);
 
     if (strcmp(*tokens, t_select) || strcmp(*tokens, ut_select))
     {

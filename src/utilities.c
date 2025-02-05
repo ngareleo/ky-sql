@@ -10,6 +10,19 @@
 typedef char *Token;
 typedef char **Tokens;
 
+void pr_tokens(Tokens tokens)
+{
+    int count;
+
+    if (tokens == NULL)
+        return;
+
+    printf("\n[ ");
+    for (count = 0; tokens[count] != NULL; count++)
+        printf("'%s', ", tokens[count]);
+    printf("]\n");
+}
+
 int count_tokens_flat_list(Tokens tokens)
 {
     int count;
@@ -147,7 +160,7 @@ char **tokenize(char *text)
     s_text = strip(text);
     marker = chars = s_text;
 
-    // printf("\n { Word: '%s', Stripped: '%s', NumOfTokens: %d } \n", text, s_text, n_tokens);
+    printf("\n { Word: '%s', Stripped: '%s', NumOfTokens: %d } \n", text, s_text, n_tokens);
 
     for (; *chars != '\0'; chars++)
     {
@@ -169,7 +182,7 @@ char **tokenize(char *text)
             }
             strncpy(output[count], marker, width);
             output[count][width] = '\0';
-            // printf("\n { New Word: '%s',  Width: %d } \n", output[count], width);
+            printf("\n { New Word: '%s',  Width: %d } \n", output[count], width);
             count++;
             marker = chars + 1;
             skip = 1; // indicate that we have hit some space

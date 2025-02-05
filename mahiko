@@ -17,12 +17,20 @@ test() {
 }
 
 run() {
-    clang ./src/main.c -o ./out/main && ./out/main
+    clang ./src/main.c -o ./out/main && ./out/main 
+}
+
+run1() {
+    clang ./src/main.c -o ./out/main && ./out/main ./artifacts/sample0.kysql
 }
 
 case "$1" in 
     "run")
         run
+        ;;
+
+    "run1")
+        run1
         ;;
 
     "build")
