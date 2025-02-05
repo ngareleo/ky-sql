@@ -31,11 +31,17 @@ int count_tokens_flat_list(Tokens tokens)
 
 char *strip(char *text)
 {
-    size_t len = strlen(text);
-    int start = 0, end = len - 1;
+    size_t len, i, start, end;
+    char *out;
+
+    if (text == NULL)
+        return NULL;
+
+    len = strlen(text);
+    start = 0, end = len - 1;
 
     if (len == 0)
-        return NULL;
+        return strdup("");
 
     while (*(text + start) == SPACE)
         start++;
@@ -46,13 +52,17 @@ char *strip(char *text)
     // printf("\n{ Word: '%s', Len: %d, Start: %d, End: %d }\n", text, len, start, end);
 
     if (start == len)
-        return "";
+        return strdup("");
 
     // copy over from start to end
-    char *out = malloc(sizeof(char) * end - start);
+    out = malloc(sizeof(char) * end - start + 1);
+    if (out == NULL)
+        return NULL;
 
-    for (int i = 0; start <= end; i++, start++)
+    for (i = 0; start <= end; i++, start++)
         out[i] = text[start];
+
+    out[i] = '\0';
 
     // printf("\n{ Output: '%s' }\n", out);
     return out;
@@ -60,37 +70,36 @@ char *strip(char *text)
 
 int count_tokens_from_text(char *text, char match)
 {
+    size_t n;
+    char *s_text = strip(text);
+    int num_s, // Number of tokens so far
+        skip;  // should skip?
+
     if (text == NULL)
         return -1;
-    char *s_text = strip(text);
+
     if (s_text == NULL)
         return -1;
 
-    size_t n = strlen(s_text);
+    n = strlen(s_text);
     if (n <= 0)
         return -1;
 
-    int num_s = 1, // Number of tokens so far
-        skip = 0;
-
+    skip = 0;
+    num_s = 1;
     for (char *curr = s_text; *curr != '\0'; curr++)
     {
         // printf("\n { Current: %c }", *curr);
         if (*curr == match)
         {
             if (skip)
-            {
                 continue;
-            }
+
             num_s++;
-            // indicate that we have hit some space
-            skip = 1;
+            skip = 1; // indicate that we have hit some space
         }
         else
-        {
-            // indicate that we have hit some non-space and can start counting tokens
-            skip = 0;
-        }
+            skip = 0; // indicate that we have hit some non-space and can start counting tokens
     }
 
     // printf("\n{ Word: %s, Len: %zu, Num: %d }\n", s_text, n, num_s);
