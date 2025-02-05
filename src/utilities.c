@@ -49,7 +49,7 @@ char *strip(char *text)
     while (*(text + end) == SPACE)
         end--;
 
-    // printf("\n{ Word: '%s', Len: %d, Start: %d, End: %d }\n", text, len, start, end);
+    // printf("\n{ Word: '%s', Len: %zu, Start: %zu, End: %zu }\n", text, len, start, end);
 
     if (start == len)
         return strdup("");
@@ -82,6 +82,7 @@ int count_tokens_from_text(char *text, char match)
         return -1;
 
     n = strlen(s_text);
+
     if (n <= 0)
         return -1;
 
@@ -106,45 +107,61 @@ int count_tokens_from_text(char *text, char match)
     return num_s;
 }
 
-///
-///  Assumes there's a semicolon
-///
 char **tokenize(char *text)
 {
-    int ns = 0,
-        skip = 0,
-        count = 0,
-        num = count_tokens_from_text(text, SPACE);
 
-    if (num < 0)
+    int skip,
+        count,
+        len, // len of text
+        n_tokens = count_tokens_from_text(text, SPACE);
+
+    char **output,
+        *marker, // marks word boundaries to copy over
+        *chars,  // used by loop to step through the string
+        *s_text; // stripped down text
+
+    if (text == NULL)
         return NULL;
 
-    char **out = (char **)malloc(sizeof(char *) * num);
+    if (n_tokens < 0)
+        return NULL;
 
-    for (const char *marker = text, *chars = text; count < num + 1; chars++)
+    len = strlen(text);
+    if (*(text + len - 1) != ';') // should terminate string with semicolon
+        return NULL;
+
+    output = (char **)malloc(sizeof(char *) * n_tokens + 1);
+
+    if (output == NULL)
+        return NULL;
+
+    skip = count = 0;
+    s_text = strip(text);
+    marker = chars = s_text;
+
+    // printf("\n { Word: '%s', Stripped: '%s', NumOfTokens: %d } \n", text, s_text, n_tokens);
+
+    for (; *chars != '\0'; chars++)
     {
         if (*chars == SPACE || *chars == SEMICOLON)
         {
-
             if (skip)
             {
+                marker++; // move marker forward as well
                 continue;
             }
 
-            int width = chars - marker; // word width
+            int width = chars - marker; // the word width
 
-            out[count] = (char *)malloc(sizeof(char) * width);
-
-            if (out[count] == NULL)
+            output[count] = (char *)malloc(sizeof(char) * width + 1);
+            if (output[count] == NULL)
             {
-                free_tokens(out, count + 1);
+                free_tokens(output, count + 1);
                 return NULL;
             }
-
-            strncpy(out[count], marker, width);
-
-            out[count][width] = '\0';
-
+            strncpy(output[count], marker, width);
+            output[count][width] = '\0';
+            // printf("\n { New Word: '%s',  Width: %d } \n", output[count], width);
             count++;
             marker = chars + 1;
             skip = 1; // indicate that we have hit some space
@@ -155,6 +172,6 @@ char **tokenize(char *text)
         }
     }
 
-    out[count] = NULL;
-    return out;
+    output[count] = NULL;
+    return output;
 }

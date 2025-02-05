@@ -78,23 +78,28 @@ void test_tokenize()
     assert(tokenize("         ") == NULL);
     printf("✅ \n");
 
-    printf(">> Test that it checks input for termination ");
-    assert(tokenize("test") == NULL);
+    printf(">> Test that word is not tokenized without trailing semicolon");
+
+    assert(tokenize("Hello World") == NULL);
     printf("✅ \n");
 
     char *mock = "Hello;", **out;
-
-    printf(">> Test that one word is tokenized correctly ");
-    out = tokenize(mock);
-    assert(strcmp(out[0], "Hello") == 0);
-    free_tokens(out, 1);
-    printf("✅ \n");
-
     printf(">> Test that hello world is tokenized correctly");
     mock = "Hello World;";
     out = tokenize(mock);
     assert(strcmp(out[0], "Hello") == 0);
     assert(strcmp(out[1], "World") == 0);
+    free_tokens(out, 2);
+    printf("✅ \n");
+
+    printf(">> Test that long random string is tokenized correctly");
+    mock = "Hello      World To my People;";
+    out = tokenize(mock);
+    assert(strcmp(out[0], "Hello") == 0);
+    assert(strcmp(out[1], "World") == 0);
+    assert(strcmp(out[2], "To") == 0);
+    assert(strcmp(out[3], "my") == 0);
+    assert(strcmp(out[4], "People") == 0);
     free_tokens(out, 2);
     printf("✅ \n");
 }

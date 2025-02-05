@@ -1,6 +1,8 @@
 {
     "cSpell.words": ["kysql"],
     "files.associations": {
-        "string.h": "c"
+        "string.h": "c",
+        "assert.h": "c",
+        "stdio.h": "c"
     }
 }
