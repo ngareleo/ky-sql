@@ -11,6 +11,8 @@
 #define COLOR_CYAN "\x1b[36m"
 #define COLOR_RESET "\x1b[0m"
 
+#define MAX_PREFIX_WIDTH 10 // We wrap a max of 10 characters for each log
+
 typedef enum LOGTYPE
 {
     DEBUG,
@@ -22,7 +24,7 @@ typedef enum LOGTYPE
 
 int pf(logType type, const char *str, ...)
 {
-    char *color = COLOR_RESET, in[strlen(str) + 15], pre[6], *prefix = pre;
+    char *color = COLOR_RESET, in[strlen(str) + MAX_PREFIX_WIDTH], prefix[6];
     va_list args;
     int result;
 
@@ -30,29 +32,36 @@ int pf(logType type, const char *str, ...)
     {
     case DEBUG:
         color = COLOR_BLUE;
-        prefix = "DEBUG";
+        strcpy(prefix, "DEBUG");
         break;
     case ERROR:
         color = COLOR_RED;
-        prefix = "RED";
+        strcpy(prefix, "ERROR");
         break;
     case INFO:
         color = COLOR_CYAN;
-        prefix = "INFO";
+        strcpy(prefix, "INFO");
         break;
     case WARN:
         color = COLOR_MAGENTA;
-        prefix = "WARN";
+        strcpy(prefix, "WARN");
         break;
     default:
         break;
     }
 
+    // add the color
     printf("%s", color);
+
+    // wrap with extra info
     sprintf(in, "\n[%s] %s\n", prefix, str);
+
+    // output
     va_start(args, str);
     result = vprintf(in, args);
     va_end(args);
+
+    // reset
     printf("%s", COLOR_RESET);
     return result;
 }
