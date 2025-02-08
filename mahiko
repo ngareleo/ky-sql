@@ -9,11 +9,7 @@ usage(){
 }
 
 build() {
-    clang -Wall -Wextra -Iheaders -o ./src/log.c ./src/main.c
-}
-
-test() {
-    clang ./src/tests.c -o ./out/tests && ./out/tests
+    clang -Wall -Wextra -Iheaders -o ./out/main ./src/log.c ./src/main.c
 }
 
 run() {
