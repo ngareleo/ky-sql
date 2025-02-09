@@ -5,6 +5,23 @@
 #include "mahiko/headers/testing.h"
 #include "utilities.c"
 
+void strip_should_remove_a_single_empty_space();
+void strip_should_remove_multiple_empty_spaces();
+void strip_should_handle_empty_spaces();
+void strip_should_do_nothing_on_strings_with_no_padding();
+void count_tokens_should_return_neg_for_empty_strings();
+void count_tokens_should_count_single_token_properly();
+void count_tokens_should_count_single_token_with_padding();
+void count_tokens_should_count_multiple_tokens();
+void count_tokens_should_count_multiple_single_characters();
+void tokenize_should_n_tokenize_empty_strings();
+void tokenize_should_tokenize_text_with_no_padding();
+void tokenize_should_tokenize_random_unevenly_spaced_strings_properly();
+void count_tokens_should_flag_nulls();
+void count_tokens_should_count_tokens();
+void upper_should_flag_nulls();
+void upper_should_uppercase();
+
 void strip_should_remove_a_single_empty_space()
 {
     assert(strcmp(strip(" Hello   "), "Hello") == 0);
