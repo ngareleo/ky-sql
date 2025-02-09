@@ -14,7 +14,7 @@ static void pr_argv(int argc, char **argv)
         return;
     debug("pr_agv { Argc: %d }", argc);
     for (count = 0; argv[count] != NULL; count++)
-        debug("pr_agv { Loc: %d, Val: '%s' }", count + 1, argv[count]);
+        debug("pr_agv { Argv no: %d, Val: '%s' }", count + 1, argv[count]);
 }
 
 static void pr_config(Config *config)

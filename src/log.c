@@ -11,6 +11,11 @@ int pf(logType type, const char *str, ...)
     va_list args;
     int result;
 
+#ifndef DEBUG
+    if (type == DEBUG)
+        return 0;
+#endif
+
     switch (type)
     {
     case DEBUG:
