@@ -13,9 +13,10 @@ const char *tests[] = {
     "utilities_test",
 };
 
-int build_test_file(char *abspath);
-int execute_test_case(char *abspath);
-void main()
+int build_test_file(char *path, char *dest);
+int execute_test_case(char *path);
+
+int main()
 {
     char *testcase, *cwd;
     cwd = getcwd(NULL, 0);
@@ -27,18 +28,15 @@ void main()
 
     for (testcase = tests; testcase != NULL; testcase++)
     {
-        pid_t pid;
-        char *file_path, *test_build_path;
-        int ret, buffersize, build, test;
+        int buffersize = sizeof(char) * (strlen(cwd) + strlen(testcase) + SIZE_PADDING),
+            build,
+            test;
+        char file_path[buffersize], test_build_path[buffersize];
 
-        buffersize = sizeof(char) * (strlen(cwd) + strlen(testcase) + SIZE_PADDING);
-        file_path = (char *)malloc(buffersize);
-        test_build_path = (char *)malloc(buffersize);
-
+        sprintf(test_build_path, "%s/out/testbuilds/%s", cwd, testcase);
         sprintf(file_path, "%s/src/%s.c", cwd, testcase);
-        sprintf(test_build_path, "%s/out/testbuilds/%s.c", cwd, testcase);
 
-        build = build_test_file(file_path);
+        build = build_test_file(file_path, test_build_path);
 
         if (build)
         {
@@ -47,43 +45,38 @@ void main()
 
         test = execute_test_case(test_build_path);
 
-        free(file_path);
-        free(test_build_path);
+        if (test == 1)
+            fprintf(stderr, "\nTest suite '%s' failed\n", testcase);
+        else if (test == -1)
+            fprintf(stderr, "\nCouldn't execute test suite '%s' \n", testcase);
     }
 
     free(cwd);
+    return 0;
 }
 
 int execute_test_case(char *path)
 {
     pid_t pid = fork();
-    char *cmd;
     int status, ret, signal, core_dump;
 
     if (pid == -1)
     {
         perror("fork");
-        return;
+        return pid;
     }
-
-    sprintf(cmd, "./%s", path);
 
     if (!pid)
     {
-        ret = execl(cmd, NULL);
+        ret = execl(path, NULL);
         if (ret == -1)
-        {
-            fprintf(stderr, "\n Couldn't execute test\n");
-        }
+            return ret;
     }
 
     pid = wait(&status);
 
     if (WIFEXITED(status))
-    {
-        printf("Normal termination with exit status=%d\n", WEXITSTATUS(status));
         return 0;
-    }
 
     if (WIFSIGNALED(status))
     {
@@ -91,29 +84,29 @@ int execute_test_case(char *path)
         core_dump = WCOREDUMP(status);
 
         if (signal == SIGABRT)
-        {
-            fprintf(stderr, "Test case failed");
             return 1;
-        }
     }
 
     return -1;
 }
 
-int build_test_file(char *path)
+int build_test_file(char *path, char *dest)
 {
     pid_t pid;
-    int status, ret, signal, core_dump;
+    int status, ret;
+    char destpath[strlen(path) + SIZE_PADDING];
 
     if ((pid = fork()) == -1)
     {
         perror("fork");
         return -1;
     }
+    sprintf(destpath, "-o %s", dest);
 
     if (!pid)
     {
-        ret = execl("/usr/bin/clang", "clang", "-o ./out/testbuilds/main", path, NULL);
+        ret = execl("/usr/bin/clang", "clang", destpath, path, NULL);
+
         if (ret == -1)
         {
             fprintf(stderr, "\nCouldn't compile file at %s\n", path);
@@ -130,7 +123,7 @@ int build_test_file(char *path)
     }
     else
     {
-        fprintf(stderr, "\nCouldn't compile test case at %s\n");
+        fprintf(stderr, "\nCouldn't compile test case at %s\n", path);
         return 1;
     }
 }

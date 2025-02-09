@@ -20,6 +20,10 @@ run1() {
     clang -DDEBUG=1 -Wall -Wextra -Iheaders -o ./out/main ./src/log.c ./src/main.c && ./out/main ./artifacts/sample0.kysql
 }
 
+test() {
+    clang -Wall -Wextra -Iheaders -o ./out/testing ./src/mahiko/testing.c && ./out/testing
+}
+
 case "$1" in 
     "run")
         run
