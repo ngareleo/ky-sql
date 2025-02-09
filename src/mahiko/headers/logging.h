@@ -1,5 +1,5 @@
-#ifndef LOG_H
-#define LOG_H
+#ifndef LOGGING_H
+#define LOGGING_H
 
 // Color definitions
 #define COLOR_RED "\x1b[31m"

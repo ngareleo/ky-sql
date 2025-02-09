@@ -1,1 +1,0 @@
-void test_case(char *testcase, void(func)());

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include "headers/log.h"
+#include "headers/logging.h"
 
 // Todo: Use flags to run debug conditionally by compiling this conditionally
 int pf(logType type, const char *str, ...)

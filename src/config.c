@@ -1,6 +1,6 @@
 #include <errno.h>
 #include <sys/stat.h>
-#include "headers/log.h"
+#include "mahiko/headers/logging.h"
 
 typedef struct config
 {
