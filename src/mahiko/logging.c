@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include "headers/log.h"
+#include "headers/logging.h"
 
 // Todo: Use flags to run debug conditionally by compiling this conditionally
 int pf(logType type, const char *str, ...)
@@ -10,6 +10,11 @@ int pf(logType type, const char *str, ...)
     char *color = COLOR_RESET, in[strlen(str) + MAX_PREFIX_WIDTH], prefix[6];
     va_list args;
     int result;
+
+#ifndef DEBUG
+    if (type == DEBUG)
+        return 0;
+#endif
 
     switch (type)
     {
