@@ -3,6 +3,8 @@
 #include <time.h>
 #include <string.h>
 
+#define OFFSET_TXT_WITH_PADDING 60
+
 #pragma pack(1)
 struct TableOffset
 {
@@ -33,7 +35,17 @@ struct TableOffset *NewTableOffset(const char *tableName, int offset)
     return tableOffset;
 }
 
-const char *FormatTableOffset() {}
+char *FormatTableOffset(const struct TableOffset const *tableOffset)
+{
+    size_t wBytes = sizeof(char *) * OFFSET_TXT_WITH_PADDING + strlen(tableOffset->TableName) + sizeof(int);
+    char *str = malloc(wBytes);
+    if (str == NULL)
+    {
+        return NULL;
+    }
+    sprintf(str, "<TableOffset> Tablename: %s, Offset: %d\n", tableOffset->TableName, tableOffset->Offset);
+    return str;
+}
 
 #pragma pack(1)
 struct Offset
@@ -65,6 +77,7 @@ struct FileMetadata
     struct Offset *Offset; /* Offset values*/
     time_t CreatedAt;      /* When was this database created */
     time_t LastModified;   /* When was this last modified */
+    int TableCount;        /** Number of tables in database */
 };
 #pragma pack()
 
@@ -89,17 +102,30 @@ struct FileMetadata *NewFileMetadata(struct Offset *offset)
 
     fMetadata->CreatedAt = now;
     fMetadata->LastModified = now;
+    fMetadata->TableCount = 1;
 
     return fMetadata;
 }
 
-void IntrospectMetadata(struct FileMetadata *metadata)
+void IntrospectMetadata(const struct FileMetadata *metadata)
 {
+    int count = 0;
+    struct TableOffset *currOffset = metadata->Offset->Offsets;
+
+    if (currOffset != NULL)
+    {
+        for (; count < metadata->TableCount; count++)
+        {
+            fprintf(stdout, "<FileMetadata Introspection> %s", FormatTableOffset(currOffset));
+        }
+    }
+    fprintf(stdout, "<FileMetadata Introspection> Immediate-Write-Buffer Offset: %d\n", metadata->Offset->ImwebOffset);
     fprintf(
         stdout,
-        "FileMetadata Introspection: createdAt %ld, lastModified %ld\n",
+        "<FileMetadata Introspection> CreatedAt: %ld, LastModified: %ld, TableCount: %d\n",
         (long)metadata->CreatedAt,
-        (long)metadata->LastModified);
+        (long)metadata->LastModified,
+        metadata->TableCount);
 }
 
 void WriteMetadataToFile(struct FileMetadata *metadata, FILE file) {}
