@@ -50,12 +50,12 @@ char *FormatTableOffset(const struct TableOffset const *tableOffset)
 #pragma pack(1)
 struct Offset
 {
-    struct TableOffset *Offsets; /** Offsets to tables */
-    int ImwebOffset;             /** Offset to the immediate-write-buffer */
+    struct TableOffset **Offsets; /** Offsets to tables */
+    int ImwebOffset;              /** Offset to the immediate-write-buffer */
 };
 #pragma pack(0)
 
-struct Offset *NewOffset(struct TableOffset *offsets, int imwebOffset)
+struct Offset *NewOffset(struct TableOffset **offsets, int imwebOffset)
 {
     struct Offset *offset;
     offset = malloc(sizeof(struct Offset));
@@ -77,11 +77,11 @@ struct FileMetadata
     struct Offset *Offset; /* Offset values*/
     time_t CreatedAt;      /* When was this database created */
     time_t LastModified;   /* When was this last modified */
-    int TableCount;        /** Number of tables in database */
+    int TableCount;        /* Number of tables in database */
 };
 #pragma pack()
 
-struct FileMetadata *NewFileMetadata(struct Offset *offset)
+struct FileMetadata *NewFileMetadata(struct Offset *offset, int tableCount)
 {
     struct FileMetadata *fMetadata;
     time_t now;
@@ -102,7 +102,7 @@ struct FileMetadata *NewFileMetadata(struct Offset *offset)
 
     fMetadata->CreatedAt = now;
     fMetadata->LastModified = now;
-    fMetadata->TableCount = 1;
+    fMetadata->TableCount = tableCount;
 
     return fMetadata;
 }
@@ -110,13 +110,13 @@ struct FileMetadata *NewFileMetadata(struct Offset *offset)
 void IntrospectMetadata(const struct FileMetadata *metadata)
 {
     int count = 0;
-    struct TableOffset *currOffset = metadata->Offset->Offsets;
+    struct TableOffset *currOffset = *(metadata->Offset->Offsets);
 
     if (currOffset != NULL)
     {
         for (; count < metadata->TableCount; count++)
         {
-            fprintf(stdout, "<FileMetadata Introspection> %s", FormatTableOffset(currOffset));
+            fprintf(stdout, "<FileMetadata Introspection> %s", FormatTableOffset(*(metadata->Offset->Offsets++)));
         }
     }
     fprintf(stdout, "<FileMetadata Introspection> Immediate-Write-Buffer Offset: %d\n", metadata->Offset->ImwebOffset);
@@ -133,21 +133,23 @@ void ReadMetadataToFile(struct FileMetadata *metadata, FILE file) {}
 
 int main()
 {
-    struct TableOffset *sampleOffset = NewTableOffset("animals", 0);
-    if (sampleOffset == NULL)
+    struct TableOffset *animalsOffset = NewTableOffset("animals", 0);
+    struct TableOffset *carsOffset = NewTableOffset("cars", 1);
+    if (animalsOffset == NULL || carsOffset == NULL)
     {
         fprintf(stderr, "Could not create a table offset");
         return -1;
     }
 
-    struct Offset *offset = NewOffset(sampleOffset, 1);
+    struct TableOffset *allOffsets[] = {animalsOffset, carsOffset};
+    struct Offset *offset = NewOffset(allOffsets, 1);
     if (offset == NULL)
     {
         fprintf(stderr, "Could not create an offset");
         return -1;
     }
 
-    struct FileMetadata *metadata = NewFileMetadata(offset);
+    struct FileMetadata *metadata = NewFileMetadata(offset, 2);
     if (metadata == NULL)
     {
         fprintf(stderr, "Could not create metadata");
@@ -156,7 +158,8 @@ int main()
 
     IntrospectMetadata(metadata);
 
-    free(sampleOffset);
+    free(animalsOffset);
+    free(carsOffset);
     free(offset);
     free(metadata);
 }
