@@ -11,6 +11,7 @@ These are the values:
 
 1. The Database-Schema
 2. FP-Offsets
+
    a. Data Section (Table-Offsets)
    b. Immediate-Write-Buffer Offset (IM-WEB-Offset)
 
@@ -41,10 +42,12 @@ Let's break this down into smaller tasks:
 7. Implement `Immediate-Write-Buffer` and allow write operations.
 8. Allow deletions on the `Immediate-Write-Buffer`.
 9. Implement reconciliation between `Immediate-Write-Buffer` and `Data-Section` based on certain factors.
+
    a. High level water mark. (Later: 1)
    b. Time-based scheduling. (Later: 2)
    c. When engine is idle. (Later: 3)
    d. During engine shutdown.
+
 10. Allow reconciliation for operations between the `Data-Section` and the `Immediate-Write-Buffer`.
 11. Implement cursor for pagination.
 
