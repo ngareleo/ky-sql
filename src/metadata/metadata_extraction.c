@@ -13,6 +13,65 @@ struct TableOffset
 };
 #pragma pack(0)
 
+#pragma pack(1)
+struct Offset
+{
+    struct TableOffset **Offsets; /** Offsets to tables */
+    int ImwebOffset;              /** Offset to the immediate-write-buffer */
+};
+#pragma pack(0)
+
+#pragma pack(1)
+struct FileMetadata
+{
+    struct Offset *Offset; /* Offset values*/
+    time_t CreatedAt;      /* When was this database created */
+    time_t LastModified;   /* When was this last modified */
+    int TableCount;        /* Number of tables in database */
+};
+#pragma pack()
+
+struct TableOffset *NewTableOffset(const char *tableName, int offset);
+struct Offset *NewOffset(struct TableOffset **offsets, int imwebOffset);
+struct FileMetadata *NewFileMetadata(struct Offset *offset, int tableCount);
+char *FormatTableOffset(const struct TableOffset const *tableOffset);
+void IntrospectMetadata(const struct FileMetadata *metadata);
+void WriteMetadataToFile(struct FileMetadata *metadata, FILE file);
+void ReadMetadataToFile(struct FileMetadata *metadata, FILE file);
+
+int main()
+{
+    struct TableOffset *animalsOffset = NewTableOffset("animals", 0);
+    struct TableOffset *carsOffset = NewTableOffset("cars", 1);
+    if (animalsOffset == NULL || carsOffset == NULL)
+    {
+        fprintf(stderr, "Could not create a table offset");
+        return -1;
+    }
+
+    struct TableOffset *allOffsets[] = {animalsOffset, carsOffset};
+    struct Offset *offset = NewOffset(allOffsets, 1);
+    if (offset == NULL)
+    {
+        fprintf(stderr, "Could not create an offset");
+        return -1;
+    }
+
+    struct FileMetadata *metadata = NewFileMetadata(offset, 2);
+    if (metadata == NULL)
+    {
+        fprintf(stderr, "Could not create metadata");
+        return -1;
+    }
+
+    IntrospectMetadata(metadata);
+
+    free(animalsOffset);
+    free(carsOffset);
+    free(offset);
+    free(metadata);
+}
+
 struct TableOffset *NewTableOffset(const char *tableName, int offset)
 {
     struct TableOffset *tableOffset;
@@ -47,14 +106,6 @@ char *FormatTableOffset(const struct TableOffset const *tableOffset)
     return str;
 }
 
-#pragma pack(1)
-struct Offset
-{
-    struct TableOffset **Offsets; /** Offsets to tables */
-    int ImwebOffset;              /** Offset to the immediate-write-buffer */
-};
-#pragma pack(0)
-
 struct Offset *NewOffset(struct TableOffset **offsets, int imwebOffset)
 {
     struct Offset *offset;
@@ -70,16 +121,6 @@ struct Offset *NewOffset(struct TableOffset **offsets, int imwebOffset)
 
     return offset;
 }
-
-#pragma pack(1)
-struct FileMetadata
-{
-    struct Offset *Offset; /* Offset values*/
-    time_t CreatedAt;      /* When was this database created */
-    time_t LastModified;   /* When was this last modified */
-    int TableCount;        /* Number of tables in database */
-};
-#pragma pack()
 
 struct FileMetadata *NewFileMetadata(struct Offset *offset, int tableCount)
 {
@@ -130,36 +171,3 @@ void IntrospectMetadata(const struct FileMetadata *metadata)
 
 void WriteMetadataToFile(struct FileMetadata *metadata, FILE file) {}
 void ReadMetadataToFile(struct FileMetadata *metadata, FILE file) {}
-
-int main()
-{
-    struct TableOffset *animalsOffset = NewTableOffset("animals", 0);
-    struct TableOffset *carsOffset = NewTableOffset("cars", 1);
-    if (animalsOffset == NULL || carsOffset == NULL)
-    {
-        fprintf(stderr, "Could not create a table offset");
-        return -1;
-    }
-
-    struct TableOffset *allOffsets[] = {animalsOffset, carsOffset};
-    struct Offset *offset = NewOffset(allOffsets, 1);
-    if (offset == NULL)
-    {
-        fprintf(stderr, "Could not create an offset");
-        return -1;
-    }
-
-    struct FileMetadata *metadata = NewFileMetadata(offset, 2);
-    if (metadata == NULL)
-    {
-        fprintf(stderr, "Could not create metadata");
-        return -1;
-    }
-
-    IntrospectMetadata(metadata);
-
-    free(animalsOffset);
-    free(carsOffset);
-    free(offset);
-    free(metadata);
-}
