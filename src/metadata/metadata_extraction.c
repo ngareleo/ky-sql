@@ -23,6 +23,11 @@ struct TableOffset *NewTableOffset(const char *tableName, int offset)
 
     tableOffset->Offset = offset;
     tableOffset->TableName = malloc(strlen(tableName) + 1);
+    if (tableOffset->TableName == NULL)
+    {
+        free(tableOffset);
+        return NULL;
+    }
     strcpy(tableOffset->TableName, tableName);
 
     return tableOffset;
