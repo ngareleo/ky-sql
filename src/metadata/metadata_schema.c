@@ -54,7 +54,6 @@ struct TableColDefinition *NewTableColumn(char *name, enum SchemaType schemaType
         colDef->ColumnDefaultValue = (bool *)defaultValue;
 
     case INTEGER:
-
         colDef->ColumnDefaultValue = (int *)defaultValue; // Keeping things simple for now.
 
     case FLOAT:
