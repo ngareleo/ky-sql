@@ -49,7 +49,7 @@ struct PersistedFileMetadata
 
 struct TableOffset *NewTableOffset(const char *, int);
 struct Offset *NewOffset(struct TableOffset **, int);
-void FreeOffset(struct Offset *);
+void FreeOffset(struct Offset *, int);
 struct FileMetadata *NewFileMetadata(struct Offset *, int);
 void FreeFileMetadata(struct FileMetadata *);
 char *FormatTableOffset(const struct TableOffset *);
@@ -157,9 +157,21 @@ struct TableOffset *NewTableOffset(const char *tableName, int offset)
     return tableOffset;
 }
 
+void FreeTableOffset(struct TableOffset *offset)
+{
+    if (!offset)
+    {
+        return;
+    }
+
+    free(offset->TableName);
+    free(offset);
+}
+
+const size_t wBytes = 1000;
+
 char *FormatTableOffset(const struct TableOffset const *tableOffset)
 {
-    size_t wBytes = sizeof(char *) * OFFSET_TXT_WITH_PADDING + strlen(tableOffset->TableName) + sizeof(int);
     char *str = malloc(wBytes);
     if (str == NULL)
     {
@@ -185,12 +197,17 @@ struct Offset *NewOffset(struct TableOffset **offsets, int imwebOffset)
     return offset;
 }
 
-void FreeOffset(struct Offset *offset)
+void FreeOffset(struct Offset *offset, int n)
 {
 
     if (offset == NULL)
     {
         return;
+    }
+
+    for (int c = 0; c < n; c++)
+    {
+        FreeTableOffset(offset->Offsets[c]);
     }
 
     free(offset);
@@ -229,7 +246,7 @@ void FreeFileMetadata(struct FileMetadata *metadata)
         return;
     }
 
-    FreeOffset(metadata->Offset);
+    FreeOffset(metadata->Offset, metadata->TableCount);
     free(metadata);
 }
 
@@ -352,8 +369,8 @@ struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata
     target->Offset->Offsets = malloc(sizeof(struct TableOffset *) * metadata->TableCount);
     if (!target->Offset->Offsets)
     {
-        free(target);
         free(target->Offset);
+        free(target);
         return NULL;
     }
 
@@ -362,11 +379,9 @@ struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata
         target->Offset->Offsets[count] = NewTableOffset(metadata->Offsets[count].TableName, metadata->Offsets[count].Offset);
         if (!target->Offset->Offsets[count])
         {
-            while (count >= 0)
-            {
-                FreeOffset(target->Offset);
-                free(target);
-            }
+            FreeOffset(target->Offset, count);
+            free(target->Offset);
+            free(target);
         }
     }
 
