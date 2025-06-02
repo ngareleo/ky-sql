@@ -59,12 +59,12 @@ void IntrospectMetadata(const struct FileMetadata *);
  * Also takes a mapping function that constructs the PersistedFileMetadata struct.
  * Does the required stack allocation.
  */
-const int WriteMetadataToFile(FILE *, struct FileMetadata *, struct PersistedFileMetadata *(const struct FileMetadata *));
+int WriteMetadataToFile(FILE *, struct FileMetadata *, struct PersistedFileMetadata *(const struct FileMetadata *));
 /**
  * Reads out a FileMetadata struct from the 'file' into 'in'.
  * Also takes a mapping function that constructs the output struct.
  */
-const int ReadMetadataFromFile(FILE *, struct FileMetadata *, struct FileMetadata *(const struct PersistedFileMetadata *));
+int ReadMetadataFromFile(FILE *, struct FileMetadata **, struct FileMetadata *(const struct PersistedFileMetadata *));
 struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata *);
 struct PersistedFileMetadata *LoadFileMetadataIntoFile(const struct FileMetadata *);
 
@@ -97,7 +97,7 @@ int main()
 
     IntrospectMetadata(metadata);
 
-    struct FileMetadata *metaFromFile;
+    struct FileMetadata *metaFromFile = NULL;
     FILE *writableNoop, *readableNoop;
     writableNoop = fopen(NOOP_FILE, "w");
 
@@ -121,7 +121,7 @@ int main()
             break;
         }
 
-        if (ReadMetadataFromFile(readableNoop, metaFromFile, BootFileMetadataFromFile) == 0)
+        if (ReadMetadataFromFile(readableNoop, &metaFromFile, BootFileMetadataFromFile) == 0)
         {
             fprintf(stdout, "<main> FileMetadata read from file success \n");
             IntrospectMetadata(metaFromFile);
@@ -261,7 +261,7 @@ void IntrospectMetadata(const struct FileMetadata *metadata)
     }
 }
 
-const int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFileMetadata *map(const struct FileMetadata *metadata))
+int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFileMetadata *map(const struct FileMetadata *metadata))
 {
     int status = -1;
     struct PersistedFileMetadata *target;
@@ -291,7 +291,7 @@ const int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct Persis
     return status;
 }
 
-const int ReadMetadataFromFile(FILE *file, struct FileMetadata *out, struct FileMetadata *map(const struct PersistedFileMetadata *metadata))
+int ReadMetadataFromFile(FILE *file, struct FileMetadata **out, struct FileMetadata *map(const struct PersistedFileMetadata *metadata))
 {
     struct PersistedFileMetadata *buffer;
     int status = -1;
@@ -310,7 +310,7 @@ const int ReadMetadataFromFile(FILE *file, struct FileMetadata *out, struct File
             break;
         }
 
-        if (map == NULL || (out = map(buffer)) == NULL)
+        if (map == NULL || (*out = map(buffer)) == NULL)
         {
             break;
         }
@@ -342,19 +342,34 @@ struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata
     target->LastModified = metadata->LastModified;
     target->TableCount = metadata->TableCount;
 
-    if ((target->Offset = malloc(sizeof(struct Offset))) == NULL)
+    target->Offset = malloc(sizeof(struct Offset));
+    if (!target->Offset)
     {
+        free(target);
         return NULL;
     }
 
-    struct TableOffset *tOffsets[metadata->TableCount];
-    for (int count = 0; count < metadata->TableCount; count++)
+    target->Offset->Offsets = malloc(sizeof(struct TableOffset *) * metadata->TableCount);
+    if (!target->Offset->Offsets)
     {
-        tOffsets[count] = NewTableOffset(metadata->Offsets[count].TableName, metadata->Offsets[count].Offset);
+        free(target);
+        free(target->Offset);
+        return NULL;
     }
 
-    target->Offset = NewOffset(tOffsets, metadata->ImwebOffset);
-    fprintf(stdout, "<debug> Introspect within BootFileMetadataFromFile\n");
+    for (int count = 0; count < metadata->TableCount; count++)
+    {
+        target->Offset->Offsets[count] = NewTableOffset(metadata->Offsets[count].TableName, metadata->Offsets[count].Offset);
+        if (!target->Offset->Offsets[count])
+        {
+            while (count >= 0)
+            {
+                FreeOffset(target->Offset);
+                free(target);
+            }
+        }
+    }
+
     IntrospectMetadata(target);
     return target;
 }
