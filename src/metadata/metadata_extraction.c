@@ -54,77 +54,19 @@ struct FileMetadata *NewFileMetadata(struct Offset *, int);
 void FreeFileMetadata(struct FileMetadata *);
 char *FormatTableOffset(const struct TableOffset *);
 void IntrospectMetadata(const struct FileMetadata *);
-
 /**
  * Writes a FileMetadata struct into a 'file' in-form of a PersistedFileMetadata
  * Also takes a mapping function that constructs the PersistedFileMetadata struct.
  * Does the required stack allocation.
  */
-int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFileMetadata *map(struct FileMetadata *metadata));
-
+const int WriteMetadataToFile(FILE *, struct FileMetadata *, struct PersistedFileMetadata *(const struct FileMetadata *));
 /**
  * Reads out a FileMetadata struct from the 'file' into 'in'.
  * Also takes a mapping function that constructs the output struct.
  */
-int ReadMetadataFromFile(FILE *file, struct FileMetadata *out, struct FileMetadata *map(struct PersistedFileMetadata *metadata));
-
-struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata *metadata)
-{
-    if (metadata == NULL)
-    {
-        return NULL;
-    }
-
-    struct FileMetadata *target;
-    if ((target = malloc(sizeof(struct FileMetadata))) == NULL)
-    {
-        return NULL;
-    }
-
-    target->CreatedAt = metadata->CreatedAt;
-    target->LastModified = metadata->LastModified;
-    target->TableCount = metadata->TableCount;
-
-    if ((target->Offset = malloc(sizeof(struct FileMetadata) * metadata->TableCount)) == NULL)
-    {
-        return NULL;
-    }
-
-    for (int count = 0; count < metadata->TableCount; count++)
-    {
-        target->Offset->Offsets[count]->Offset = metadata->Offsets[count].Offset;
-        strcpy(target->Offset->Offsets[count]->Offset, metadata->Offsets[count].TableName);
-    }
-
-    return target;
-}
-
-struct PersistedFileMetadata *LoadFileMetadataIntoFile(const struct FileMetadata *metadata)
-{
-    if (metadata == NULL)
-    {
-        return NULL;
-    }
-
-    struct PersistedFileMetadata *target;
-    if ((target = malloc(sizeof(struct PersistedFileMetadata))) == NULL)
-    {
-        return NULL;
-    }
-
-    target->CreatedAt = metadata->CreatedAt;
-    target->LastModified = metadata->LastModified;
-    target->TableCount = metadata->TableCount;
-    target->ImwebOffset = metadata->Offset->ImwebOffset;
-
-    for (int count = 0; count < metadata->TableCount; count++)
-    {
-        target->Offsets[count].Offset = metadata->Offset->Offsets[count]->Offset;
-        strcpy(target->Offsets[count].TableName, metadata->Offset->Offsets[count]->TableName);
-    }
-
-    return target;
-}
+const int ReadMetadataFromFile(FILE *, struct FileMetadata *, struct FileMetadata *(const struct PersistedFileMetadata *));
+struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata *);
+struct PersistedFileMetadata *LoadFileMetadataIntoFile(const struct FileMetadata *);
 
 const char *NOOP_FILE = "noop.kysql";
 
@@ -161,7 +103,7 @@ int main()
 
     do
     {
-        if (!WriteMetadataToFile(writableNoop, metadata, &LoadFileMetadataIntoFile) == 0)
+        if (!WriteMetadataToFile(writableNoop, metadata, LoadFileMetadataIntoFile) == 0)
         {
             fclose(writableNoop);
             break;
@@ -179,9 +121,9 @@ int main()
             break;
         }
 
-        if (ReadMetadataFromFile(readableNoop, metaFromFile, &BootFileMetadataFromFile) == 0)
+        if (ReadMetadataFromFile(readableNoop, metaFromFile, BootFileMetadataFromFile) == 0)
         {
-            fprintf(stdout, "<main> LOG ;) FileMetadata read from file\n");
+            fprintf(stdout, "<main> FileMetadata read from file success \n");
             IntrospectMetadata(metaFromFile);
         }
 
@@ -245,14 +187,10 @@ struct Offset *NewOffset(struct TableOffset **offsets, int imwebOffset)
 
 void FreeOffset(struct Offset *offset)
 {
+
     if (offset == NULL)
     {
         return;
-    }
-
-    for (int count = 0;; count++)
-    {
-        free(offset->Offsets[count]->TableName);
     }
 
     free(offset);
@@ -297,16 +235,15 @@ void FreeFileMetadata(struct FileMetadata *metadata)
 
 void IntrospectMetadata(const struct FileMetadata *metadata)
 {
-    int count = 0;
+
+    if (metadata == NULL)
+    {
+        fprintf(stderr, "Cannot introspect null value\n");
+        return;
+    }
+
     struct TableOffset *currOffset = *(metadata->Offset->Offsets);
 
-    if (currOffset != NULL)
-    {
-        for (; count < metadata->TableCount; count++)
-        {
-            fprintf(stdout, "<FileMetadata Introspection> %s", FormatTableOffset(*(metadata->Offset->Offsets++)));
-        }
-    }
     fprintf(stdout, "<FileMetadata Introspection> Immediate-Write-Buffer Offset: %d\n", metadata->Offset->ImwebOffset);
     fprintf(
         stdout,
@@ -314,19 +251,28 @@ void IntrospectMetadata(const struct FileMetadata *metadata)
         (long)metadata->CreatedAt,
         (long)metadata->LastModified,
         metadata->TableCount);
+
+    if (currOffset != NULL)
+    {
+        for (int count = 0; count < metadata->TableCount; count++)
+        {
+            fprintf(stdout, "<FileMetadata Introspection> %s", FormatTableOffset(*(metadata->Offset->Offsets + count)));
+        }
+    }
 }
 
-int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFileMetadata *map(struct FileMetadata *metadata))
+const int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFileMetadata *map(const struct FileMetadata *metadata))
 {
     int status = -1;
-    if (map == NULL)
-    {
-        return -1;
-    }
+    struct PersistedFileMetadata *target;
 
-    struct PersistedFileMetadata *target = map(in);
     do
     {
+        if (map == NULL || (target = map(in)) == NULL)
+        {
+            break;
+        }
+
         if (!fwrite(target, sizeof(struct PersistedFileMetadata), 1, file))
         {
             fprintf(stderr, "ERR! <WriteMetadataToFile> Could not write metadata to file \n");
@@ -334,14 +280,18 @@ int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFil
             break;
         }
 
+        fprintf(stdout, "<WriteMetadataToFile> Metadata written into file\n");
         status = 0;
     } while (0);
 
-    free(target);
+    if (target != NULL)
+    {
+        free(target);
+    }
     return status;
 }
 
-int ReadMetadataFromFile(FILE *file, struct FileMetadata *out, struct FileMetadata *map(struct PersistedFileMetadata *metadata))
+const int ReadMetadataFromFile(FILE *file, struct FileMetadata *out, struct FileMetadata *map(const struct PersistedFileMetadata *metadata))
 {
     struct PersistedFileMetadata *buffer;
     int status = -1;
@@ -360,7 +310,7 @@ int ReadMetadataFromFile(FILE *file, struct FileMetadata *out, struct FileMetada
             break;
         }
 
-        if ((out = map(buffer)) == NULL)
+        if (map == NULL || (out = map(buffer)) == NULL)
         {
             break;
         }
@@ -368,6 +318,70 @@ int ReadMetadataFromFile(FILE *file, struct FileMetadata *out, struct FileMetada
         status = 0;
     } while (0);
 
-    free(buffer);
+    if (buffer != NULL)
+    {
+        free(buffer);
+    }
     return status;
+}
+
+struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata *metadata)
+{
+    if (metadata == NULL)
+    {
+        return NULL;
+    }
+
+    struct FileMetadata *target;
+    if ((target = malloc(sizeof(struct FileMetadata))) == NULL)
+    {
+        return NULL;
+    }
+
+    target->CreatedAt = metadata->CreatedAt;
+    target->LastModified = metadata->LastModified;
+    target->TableCount = metadata->TableCount;
+
+    if ((target->Offset = malloc(sizeof(struct Offset))) == NULL)
+    {
+        return NULL;
+    }
+
+    struct TableOffset *tOffsets[metadata->TableCount];
+    for (int count = 0; count < metadata->TableCount; count++)
+    {
+        tOffsets[count] = NewTableOffset(metadata->Offsets[count].TableName, metadata->Offsets[count].Offset);
+    }
+
+    target->Offset = NewOffset(tOffsets, metadata->ImwebOffset);
+    fprintf(stdout, "<debug> Introspect within BootFileMetadataFromFile\n");
+    IntrospectMetadata(target);
+    return target;
+}
+
+struct PersistedFileMetadata *LoadFileMetadataIntoFile(const struct FileMetadata *metadata)
+{
+    if (metadata == NULL)
+    {
+        return NULL;
+    }
+
+    struct PersistedFileMetadata *target;
+    if ((target = malloc(sizeof(struct PersistedFileMetadata))) == NULL)
+    {
+        return NULL;
+    }
+
+    target->CreatedAt = metadata->CreatedAt;
+    target->LastModified = metadata->LastModified;
+    target->TableCount = metadata->TableCount;
+    target->ImwebOffset = metadata->Offset->ImwebOffset;
+
+    for (int count = 0; count < metadata->TableCount; count++)
+    {
+        target->Offsets[count].Offset = metadata->Offset->Offsets[count]->Offset;
+        strcpy(target->Offsets[count].TableName, metadata->Offset->Offsets[count]->TableName);
+    }
+
+    return target;
 }
