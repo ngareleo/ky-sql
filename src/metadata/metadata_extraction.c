@@ -161,7 +161,7 @@ int main()
 
     do
     {
-        if (!WriteMetadataToFile(metadata, writableNoop, &LoadFileMetadataIntoFile) == 0)
+        if (!WriteMetadataToFile(writableNoop, metadata, &LoadFileMetadataIntoFile) == 0)
         {
             fclose(writableNoop);
             break;
@@ -179,7 +179,7 @@ int main()
             break;
         }
 
-        if (ReadMetadataFromFile(metaFromFile, readableNoop, &BootFileMetadataFromFile) == 0)
+        if (ReadMetadataFromFile(readableNoop, metaFromFile, &BootFileMetadataFromFile) == 0)
         {
             fprintf(stdout, "<main> LOG ;) FileMetadata read from file\n");
             IntrospectMetadata(metaFromFile);
