@@ -64,7 +64,7 @@ struct TableColDefinition *NewTableColumn(char *name, enum SchemaType schemaType
         strcpy(colDef->ColumnDefaultValue, defaultValue);
 
     case DATE:
-        colDef->ColumnDefaultValue = (time_t)defaultValue;
+        colDef->ColumnDefaultValue = (time_t *)defaultValue;
     }
 
     return colDef;
@@ -103,7 +103,7 @@ struct TableDefinition *NewTableDefinition(char *name, ...)
         return NULL;
     }
 
-    tableDef->TableName = malloc(sizeof(char *) * strlen(name));
+    tableDef->TableName = malloc(strlen(name) + 1);
     if (!tableDef->TableName)
     {
         free(tableDef);
