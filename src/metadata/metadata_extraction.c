@@ -4,40 +4,129 @@
 #include <string.h>
 
 #define OFFSET_TXT_WITH_PADDING 60
+#define MAX_TABLENAME_LENGTH 100
+#define MAX_TABLE_COUNT 100
 
-#pragma pack(1)
 struct TableOffset
 {
-    char *TableName; /* The name of the table */
-    int Offset;      /* The offset of the file position from 0 */
+    int Offset;      /** The offset of the file position from 0 */
+    char *TableName; /** The name of the table */
 };
-#pragma pack(0)
 
-#pragma pack(1)
 struct Offset
 {
     struct TableOffset **Offsets; /** Offsets to tables */
     int ImwebOffset;              /** Offset to the immediate-write-buffer */
 };
-#pragma pack(0)
 
-#pragma pack(1)
 struct FileMetadata
 {
-    struct Offset *Offset; /* Offset values*/
-    time_t CreatedAt;      /* When was this database created */
-    time_t LastModified;   /* When was this last modified */
-    int TableCount;        /* Number of tables in database */
+    struct Offset *Offset; /** Offset values*/
+    time_t CreatedAt;      /** When was this database created */
+    time_t LastModified;   /** When was this last modified */
+    int TableCount;        /** Number of tables in database */
 };
-#pragma pack()
 
-struct TableOffset *NewTableOffset(const char *tableName, int offset);
-struct Offset *NewOffset(struct TableOffset **offsets, int imwebOffset);
-struct FileMetadata *NewFileMetadata(struct Offset *offset, int tableCount);
-char *FormatTableOffset(const struct TableOffset const *tableOffset);
-void IntrospectMetadata(const struct FileMetadata *metadata);
-void WriteMetadataToFile(struct FileMetadata *metadata, FILE file);
-void ReadMetadataToFile(struct FileMetadata *metadata, FILE file);
+#pragma pack(1)
+struct PersistedFileMetadata
+{
+    // Offsets
+    struct PersistedTableOffset
+    {
+        char TableName[1000];   /**  The name of the table */
+        int Offset;             /** The offset of the file position from 0 */
+    } Offsets[MAX_TABLE_COUNT]; /** Offsets to tables */
+    int ImwebOffset;            /** Offset values*/
+
+    // Table Information
+    int TableCount; /** Number of tables in database */
+
+    // File Metadata
+    time_t CreatedAt;    /** When was this database created */
+    time_t LastModified; /** When was this last modified */
+};
+#pragma pack(0)
+
+struct TableOffset *NewTableOffset(const char *, int);
+struct Offset *NewOffset(struct TableOffset **, int);
+void FreeOffset(struct Offset *);
+struct FileMetadata *NewFileMetadata(struct Offset *, int);
+void FreeFileMetadata(struct FileMetadata *);
+char *FormatTableOffset(const struct TableOffset *);
+void IntrospectMetadata(const struct FileMetadata *);
+
+/**
+ * Writes a FileMetadata struct into a 'file' in-form of a PersistedFileMetadata
+ * Also takes a mapping function that constructs the PersistedFileMetadata struct.
+ * Does the required stack allocation.
+ */
+int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFileMetadata *map(struct FileMetadata *metadata));
+
+/**
+ * Reads out a FileMetadata struct from the 'file' into 'in'.
+ * Also takes a mapping function that constructs the output struct.
+ */
+int ReadMetadataFromFile(FILE *file, struct FileMetadata *out, struct FileMetadata *map(struct PersistedFileMetadata *metadata));
+
+struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata *metadata)
+{
+    if (metadata == NULL)
+    {
+        return NULL;
+    }
+
+    struct FileMetadata *target;
+    if ((target = malloc(sizeof(struct FileMetadata))) == NULL)
+    {
+        return NULL;
+    }
+
+    target->CreatedAt = metadata->CreatedAt;
+    target->LastModified = metadata->LastModified;
+    target->TableCount = metadata->TableCount;
+
+    if ((target->Offset = malloc(sizeof(struct FileMetadata) * metadata->TableCount)) == NULL)
+    {
+        return NULL;
+    }
+
+    for (int count = 0; count < metadata->TableCount; count++)
+    {
+        target->Offset->Offsets[count]->Offset = metadata->Offsets[count].Offset;
+        strcpy(target->Offset->Offsets[count]->Offset, metadata->Offsets[count].TableName);
+    }
+
+    return target;
+}
+
+struct PersistedFileMetadata *LoadFileMetadataIntoFile(const struct FileMetadata *metadata)
+{
+    if (metadata == NULL)
+    {
+        return NULL;
+    }
+
+    struct PersistedFileMetadata *target;
+    if ((target = malloc(sizeof(struct PersistedFileMetadata))) == NULL)
+    {
+        return NULL;
+    }
+
+    target->CreatedAt = metadata->CreatedAt;
+    target->LastModified = metadata->LastModified;
+    target->TableCount = metadata->TableCount;
+    target->ImwebOffset = metadata->Offset->ImwebOffset;
+
+    for (int count = 0; count < metadata->TableCount; count++)
+    {
+        target->Offsets[count].Offset = metadata->Offset->Offsets[count]->Offset;
+        strcpy(target->Offsets[count].TableName, metadata->Offset->Offsets[count]->TableName);
+    }
+
+    return target;
+}
+
+const char *NOOP_FILE = "noop.kysql";
 
 int main()
 {
@@ -45,7 +134,7 @@ int main()
     struct TableOffset *carsOffset = NewTableOffset("cars", 1);
     if (animalsOffset == NULL || carsOffset == NULL)
     {
-        fprintf(stderr, "Could not create a table offset");
+        fprintf(stderr, "<main> Could not create a table offset");
         return -1;
     }
 
@@ -53,23 +142,55 @@ int main()
     struct Offset *offset = NewOffset(allOffsets, 1);
     if (offset == NULL)
     {
-        fprintf(stderr, "Could not create an offset");
+        fprintf(stderr, "<main> Could not create an offset");
         return -1;
     }
 
     struct FileMetadata *metadata = NewFileMetadata(offset, 2);
     if (metadata == NULL)
     {
-        fprintf(stderr, "Could not create metadata");
+        fprintf(stderr, "<main> Could not create metadata");
         return -1;
     }
 
     IntrospectMetadata(metadata);
 
-    free(animalsOffset);
-    free(carsOffset);
-    free(offset);
-    free(metadata);
+    struct FileMetadata *metaFromFile;
+    FILE *writableNoop, *readableNoop;
+    writableNoop = fopen(NOOP_FILE, "w");
+
+    do
+    {
+        if (!WriteMetadataToFile(metadata, writableNoop, &LoadFileMetadataIntoFile) == 0)
+        {
+            fclose(writableNoop);
+            break;
+        }
+
+        // Close it before we open readable stream on the same file
+        fclose(writableNoop);
+
+        readableNoop = fopen(NOOP_FILE, "r");
+
+        if (!readableNoop)
+        {
+            perror("fopen");
+            fprintf(stderr, "<main> ERR! Couldn't open file :( \n");
+            break;
+        }
+
+        if (ReadMetadataFromFile(metaFromFile, readableNoop, &BootFileMetadataFromFile) == 0)
+        {
+            fprintf(stdout, "<main> LOG ;) FileMetadata read from file\n");
+            IntrospectMetadata(metaFromFile);
+        }
+
+        fclose(readableNoop);
+
+    } while (0);
+
+    FreeFileMetadata(metadata);
+    FreeFileMetadata(metaFromFile);
 }
 
 struct TableOffset *NewTableOffset(const char *tableName, int offset)
@@ -122,6 +243,21 @@ struct Offset *NewOffset(struct TableOffset **offsets, int imwebOffset)
     return offset;
 }
 
+void FreeOffset(struct Offset *offset)
+{
+    if (offset == NULL)
+    {
+        return;
+    }
+
+    for (int count = 0;; count++)
+    {
+        free(offset->Offsets[count]->TableName);
+    }
+
+    free(offset);
+}
+
 struct FileMetadata *NewFileMetadata(struct Offset *offset, int tableCount)
 {
     struct FileMetadata *fMetadata;
@@ -148,6 +284,17 @@ struct FileMetadata *NewFileMetadata(struct Offset *offset, int tableCount)
     return fMetadata;
 }
 
+void FreeFileMetadata(struct FileMetadata *metadata)
+{
+    if (metadata == NULL)
+    {
+        return;
+    }
+
+    FreeOffset(metadata->Offset);
+    free(metadata);
+}
+
 void IntrospectMetadata(const struct FileMetadata *metadata)
 {
     int count = 0;
@@ -169,5 +316,58 @@ void IntrospectMetadata(const struct FileMetadata *metadata)
         metadata->TableCount);
 }
 
-void WriteMetadataToFile(struct FileMetadata *metadata, FILE file) {}
-void ReadMetadataToFile(struct FileMetadata *metadata, FILE file) {}
+int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFileMetadata *map(struct FileMetadata *metadata))
+{
+    int status = -1;
+    if (map == NULL)
+    {
+        return -1;
+    }
+
+    struct PersistedFileMetadata *target = map(in);
+    do
+    {
+        if (!fwrite(target, sizeof(struct PersistedFileMetadata), 1, file))
+        {
+            fprintf(stderr, "ERR! <WriteMetadataToFile> Could not write metadata to file \n");
+            perror("fwrite");
+            break;
+        }
+
+        status = 0;
+    } while (0);
+
+    free(target);
+    return status;
+}
+
+int ReadMetadataFromFile(FILE *file, struct FileMetadata *out, struct FileMetadata *map(struct PersistedFileMetadata *metadata))
+{
+    struct PersistedFileMetadata *buffer;
+    int status = -1;
+
+    do
+    {
+        if ((buffer = malloc(sizeof(struct PersistedFileMetadata))) == NULL)
+        {
+            break;
+        }
+
+        if (fread(buffer, sizeof(struct PersistedFileMetadata), 1, file) == 0)
+        {
+            fprintf(stderr, "ERR! <ReadMetadataFromFile> Could not read metadata from file \n");
+            perror("fread");
+            break;
+        }
+
+        if ((out = map(buffer)) == NULL)
+        {
+            break;
+        }
+
+        status = 0;
+    } while (0);
+
+    free(buffer);
+    return status;
+}
