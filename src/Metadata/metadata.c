@@ -6,8 +6,59 @@
 #include "metadata_offsets.h"
 #include "metadata_schema.h"
 
-const struct Offset *CreateMocKOffset()
+const struct SchemaDefinition *CreateMockMetadata(time_t *duration)
 {
+
+    /**
+     * Define tables here
+     */
+
+    // Song table
+    struct TableColDefinition *idCol, *nameCol, *durationCol, *relaseDateCol;
+    struct TableDefinition *songTableDef;
+
+    // Another table
+
+    /**
+     * Constuct the schema
+     */
+    struct SchemaDefinition *music;
+
+    /**
+     * Initialize all the structs
+     */
+    if ((music = (
+                     // Start of song table
+                     (idCol = NewTableColumn("Id", ID, true, NULL)) == NULL ||
+                     (nameCol = NewTableColumn("Name", STRING, false, NULL)) == NULL ||
+                     (durationCol = NewTableColumn("Duration", FLOAT, false, duration)) == NULL ||
+                     (relaseDateCol = NewTableColumn("Release Date", DATE, false, NULL)) == NULL ||
+                     (songTableDef = NewTableDefinition("Songs", idCol, nameCol, durationCol, relaseDateCol)) ==
+                         NULL) ==
+                 // End of song table
+                 NULL)
+            ? NULL
+            : NewSchemaDefinition(songTableDef)) /** Register tables here and pass schema info */
+    {
+        /**
+         * Handle cleanup incase init fails
+         */
+        if (songTableDef)
+        {
+            FreeTableDefinition(songTableDef);
+        }
+        else
+        {
+            FreeTableColDefinition(idCol);
+            FreeTableColDefinition(durationCol);
+            FreeTableColDefinition(relaseDateCol);
+            FreeTableColDefinition(nameCol);
+        }
+    }
+
+    /**
+     * Create the offsets based on the schema
+     */
     struct TableOffset *animalsOffset, *carsOffset;
     if ((animalsOffset = NewTableOffset("animals", 0)) == NULL ||
         (carsOffset = NewTableOffset("cars", 1)) == NULL)
@@ -25,39 +76,10 @@ const struct Offset *CreateMocKOffset()
     all[0] = animalsOffset;
     all[1] = carsOffset;
     struct Offset *offset = NewOffset(all, 2);
-    return offset;
-}
 
-const struct SchemaDefinition *CreateMockSchema(time_t *duration)
-{
-    struct TableColDefinition *idCol, *nameCol, *durationCol, *relaseDateCol;
-    struct TableDefinition *songTableDef;
-    struct SchemaDefinition *music;
-
-    music = ((idCol = NewTableColumn("Id", ID, true, NULL)) == NULL ||
-             (nameCol = NewTableColumn("Name", STRING, false, NULL)) == NULL ||
-             (durationCol = NewTableColumn("Duration", FLOAT, false, duration)) == NULL ||
-             (relaseDateCol = NewTableColumn("Release Date", DATE, false, NULL)) == NULL ||
-             (songTableDef = NewTableDefinition("Songs", idCol, nameCol, durationCol, relaseDateCol)) == NULL)
-                ? NULL
-                : NewSchemaDefinition(songTableDef);
-
-    if (!music)
-    {
-        if (songTableDef)
-        {
-            FreeTableDefinition(songTableDef);
-        }
-        else
-        {
-            FreeTableColDefinition(idCol);
-            FreeTableColDefinition(durationCol);
-            FreeTableColDefinition(relaseDateCol);
-            FreeTableColDefinition(nameCol);
-        }
-    }
-
-    return music;
+    /**
+     * Create the rest of the metadata
+     */
 }
 
 const char *NOOP_FILE = "noop.kysql";

@@ -39,21 +39,27 @@ struct TableColDefinition *NewTableColumn(char *name, enum SchemaType schemaType
     {
     case BOOL:
         colDef->ColumnDefaultValue = (bool *)defaultValue;
+        break;
 
     case INTEGER:
         colDef->ColumnDefaultValue = (int *)defaultValue; // Keeping things simple for now.
+        break;
 
     case FLOAT:
         colDef->ColumnDefaultValue = (double *)defaultValue;
+        break;
 
     case STRING:
         strcpy(colDef->ColumnDefaultValue, defaultValue);
+        break;
 
     case DATE:
         colDef->ColumnDefaultValue = (time_t *)defaultValue;
+        break;
 
     case ID:
         colDef->ColumnDefaultValue = (long)defaultValue; // ID Generation kicks in here
+        break;
     }
 
     return colDef;

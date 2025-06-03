@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <time.h>
 #include "metadata_offsets.h"
+#include "metadata_schema.h"
 
 #define OFFSET_TXT_WITH_PADDING 60
 #define MAX_TABLENAME_LENGTH 100
 #define MAX_TABLE_COUNT 100
+#define MAX_PROPERTY_NAME_SIZE 100
 
 struct FileMetadata
 {
@@ -18,13 +20,34 @@ struct FileMetadata
 #pragma pack(1)
 struct PersistedFileMetadata
 {
+    struct PersistedSchema
+    {
+        struct PersistedTableDefinition
+        {
+            struct PersistedTableColDefinition
+            {
+                char ColumnName[MAX_PROPERTY_NAME_SIZE];
+                enum SchemaType ColumnType;
+                bool ColumnIsUnique;
+                char ColumnDefaultValue[MAX_PROPERTY_NAME_SIZE]; /** We will perform casting according to the type */
+                time_t ColumnCreatedAt;
+                time_t ColumnLastModified;
+            } ColumnDefs[MAX_TABLE_COLUMN_COUNT];
+            char TableName[MAX_PROPERTY_NAME_SIZE];
+            time_t CreatedAt;
+            time_t LastModified;
+        } TableDefs[MAX_TABLE_COUNT];
+        char TagName[MAX_PROPERTY_NAME_SIZE];
+        time_t CreatedAt;
+        time_t LastModified;
+    } Schema;
     // Offsets
     struct PersistedTableOffset
     {
-        char TableName[1000];   /**  The name of the table */
-        int Offset;             /** The offset of the file position from 0 */
-    } Offsets[MAX_TABLE_COUNT]; /** Offsets to tables */
-    int ImwebOffset;            /** Offset values*/
+        char TableName[MAX_PROPERTY_NAME_SIZE]; /**  The name of the table */
+        int Offset;                             /** The offset of the file position from 0 */
+    } Offsets[MAX_TABLE_COUNT];                 /** Offsets to tables */
+    int ImwebOffset;                            /** Offset values*/
 
     // Table Information
     int TableCount; /** Number of tables in database */
