@@ -4,104 +4,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
-
-#define MAX_TABLE_COLUMN_COUNT 100
-#define MAX_TABLE_COUNT 100
-
-enum SchemaType
-{
-    ID,
-    BOOL,
-    INTEGER,
-    FLOAT,
-    STRING,
-    DATE,
-};
-
-struct TableColDefinition
-{
-    char *ColumnName;
-    enum SchemaType ColumnType;
-    bool ColumnIsUnique;
-    void *ColumnDefaultValue;
-    time_t ColumnCreatedAt;
-    time_t ColumnLastModified;
-};
-
-struct TableDefinition
-{
-    char *TableName;
-    struct TableColDefinition **Columns;
-    time_t CreatedAt;
-    time_t LastModified;
-};
-
-struct SchemaDefinition
-{
-    struct TableDefinition **TableDefs;
-    char *TagName;
-    time_t CreatedAt;
-    time_t LastModified;
-};
-
-struct TableColDefinition *NewTableColumn(char *, enum SchemaType, bool, const void *);
-char *FormatTableColDefinition(struct TableColDefinition *);
-void FreeTableColDefinition(struct TableColDefinition *);
-
-struct TableDefinition *NewTableDefinition(char *, ...);
-char *FormatTableDefinition(struct TableDefinition *);
-int CountColumns(struct TableDefinition *def);
-void FreeTableDefinition(struct TableDefinition *);
-
-struct SchemaDefinition *NewSchemaDefinition(char *, ...);
-void IntrospectSchema(struct SchemaDefinition *);
-void FreeSchemaDefinition(struct SchemaDefinition *);
-int CountTables(struct SchemaDefinition *def);
-
-const MAX_LOG_BUFFER = 1000;
-
-int main()
-{
-    float duration = 3.2;
-
-    struct TableColDefinition *idCol = NewTableColumn("Id", ID, true, NULL);
-    if (!idCol)
-    {
-        return -1;
-    }
-
-    struct TableColDefinition *nameCol = NewTableColumn("Name", STRING, false, NULL);
-    if (!nameCol)
-    {
-        return -1;
-    }
-
-    struct TableColDefinition *durationCol = NewTableColumn("Duration", FLOAT, false, &duration);
-    if (!durationCol)
-    {
-        return -1;
-    }
-
-    struct TableColDefinition *relaseDateCol = NewTableColumn("Release Date", DATE, false, NULL);
-    if (!relaseDateCol)
-    {
-        return -1;
-    }
-
-    struct TableDefinition *songTableDef = NewTableDefinition("Songs", idCol, nameCol, durationCol, relaseDateCol);
-    if (!songTableDef)
-    {
-        return -1;
-    }
-
-    struct SchemaDefinition *music = NewSchemaDefinition(songTableDef);
-    if (!music)
-    {
-        return -1;
-    }
-
-    FreeSchemaDefinition(music);
-}
+#include "metadata_schema.h"
 
 struct TableColDefinition *NewTableColumn(char *name, enum SchemaType schemaType, bool isUnique, const void *defaultValue)
 {
@@ -206,8 +109,8 @@ struct TableDefinition *NewTableDefinition(char *name, ...)
         free(tableDef);
         return NULL;
     }
-
     strcpy(tableDef->TableName, name);
+
     tableDef->Columns = malloc(sizeof(struct TableColDefinition *) * count);
     if (!tableDef->Columns)
     {
@@ -216,7 +119,6 @@ struct TableDefinition *NewTableDefinition(char *name, ...)
         free(tableDef);
         return NULL;
     }
-
     for (int c = 0; c < count; c++)
     {
         tableDef->Columns[c] = allCols[c];
@@ -242,26 +144,29 @@ char *FormatTableDefinition(struct TableDefinition *def)
     TABLE DEFINITION\n\
     \n\
     - name         = %s\n\
-    - lastModified = %s\n\
+    - created      = %ld\n\
+    - lastModified = %ld\n\
     - columns      = \n\
     \t%s\"",
-         *out, buffer[MAX_LOG_BUFFER];
+         *out,
+         colBuff[MAX_LOG_BUFFER],
+         buffer[MAX_LOG_BUFFER * 2]; // Super assumption the first buffer will be enough
 
     for (int c = 0; c < CountColumns(def); c++)
     {
-        sprintf(buffer, "\t%s\n", FormatTableColDefinition(def->Columns[c]));
+        sprintf(colBuff, "\t%s\n", FormatTableColDefinition(def->Columns[c]));
     }
 
-    const int buffSize = strlen(template + 1) + strlen(buffer) + PADDING;
+    sprintf(buffer, template, def->TableName, def->CreatedAt, def->LastModified, colBuff);
 
-    out = malloc(buffSize);
-
+    out = malloc(strlen(buffer));
     if (!out)
     {
         sprintf(stderr, "Error formating table: malloc failed");
         return NULL;
     }
-    sprintf(out, template);
+
+    strcpy(buffer, out);
     return out;
 }
 

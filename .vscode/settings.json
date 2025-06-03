@@ -1,8 +1,8 @@
 {
-    "cSpell.words": ["kysql"],
-    "files.associations": {
-        "string.h": "c",
-        "assert.h": "c",
-        "stdio.h": "c"
-    }
+  "cSpell.words": ["kysql"],
+  "files.associations": {
+    "metadata_offsets.h": "c",
+    "metadata_extraction.h": "c",
+    "metadata_schema.h": "c"
+  }
 }
