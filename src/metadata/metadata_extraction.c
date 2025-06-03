@@ -382,6 +382,7 @@ struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata
             FreeOffset(target->Offset, count);
             free(target->Offset);
             free(target);
+            return NULL;
         }
     }
 
