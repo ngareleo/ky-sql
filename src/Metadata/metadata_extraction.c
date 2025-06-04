@@ -135,54 +135,48 @@ void FreeFileMetadata(struct FileMetadata *metadata)
     free(metadata);
 }
 
-char *IntrospectMetadata(const struct FileMetadata *metadata)
+void IntrospectMetadata(const struct FileMetadata *metadata)
 {
-    FILE *memstream;
-    char *buffer;
-    size_t size;
-
     if (!metadata)
     {
         fprintf(stderr, "[IntrospectMetadata] Couldn't introspect metadata. metadata is null.\n");
         return NULL;
     }
 
-    memstream = open_memstream(&buffer, &size);
-    if (!memstream)
-    {
-        fprintf(stderr, "[IntrospectMetadata] Couldn't introspect metadata. metadata is null. open_memstream failed.\n");
-        return NULL;
-    }
-
-    fprintf(memstream, "[IntrospectMetadata] ############# Start of log #############\n\n");
-
-    fprintf(memstream, "immediate-write-buffer-offset = %s\n", metadata->Offset->ImwebOffset);
-    fprintf(memstream, "created-at                    = %s\n", metadata->CreatedAt);
-    fprintf(memstream, "last-modified                 = %s\n", metadata->LastModified);
-    fprintf(memstream, "table-count                   = %d\n", metadata->TableCount);
-    fprintf(memstream, "offsets                       = \n");
+    fprintf(stdout, "[IntrospectMetadata] ############# Start of log #############\n\
+                                                                                  \n");
+    fprintf(stdout, "immediate-write-buffer-offset = %s\n", metadata->Offset->ImwebOffset);
+    fprintf(stdout, "created-at                    = %s\n", metadata->CreatedAt);
+    fprintf(stdout, "last-modified                 = %s\n", metadata->LastModified);
+    fprintf(stdout, "table-count                   = %d\n", metadata->TableCount);
+    fprintf(stdout, "offsets                       = \n");
     for (int c = 0; c < metadata->TableCount; c++)
     {
         char *formatted = FormatTableOffset(metadata->Offset->Offsets[c]);
         if (formatted)
         {
-            fprintf(memstream, "\t%s\n", formatted);
+            fprintf(stdout, "\t%s\n", formatted);
         }
     }
-    fprintf(memstream, "[IntrospectMetadata] ############# End of log #############\n\n");
-    fclose(memstream);
-    return buffer;
+    fprintf(stdout, "[IntrospectMetadata] ############# End of log #############\n\n");
 }
 
 int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFileMetadata *map(const struct FileMetadata *metadata))
 {
     int status = -1;
     struct PersistedFileMetadata *target;
+    if (!map)
+    {
+        fprintf(stderr, "[WriteMetadataToFile] Could not write metadata to file. map is null \n");
+        return status;
+    }
 
     do
     {
-        if (map == NULL || (target = map(in)) == NULL)
+        target = map(in);
+        if (!map)
         {
+            fprintf(stderr, "[WriteMetadataToFile] Could not write metadata to file. mapping to persisted format failed \n");
             break;
         }
 
@@ -191,6 +185,7 @@ int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFil
             fprintf(stderr, "[WriteMetadataToFile] Could not write metadata to file. fwrite failed \n");
             break;
         }
+
         status = 0;
     } while (0);
 
@@ -226,7 +221,7 @@ int ReadMetadataFromFile(FILE *file, struct FileMetadata **out, struct FileMetad
         *out = map(buffer);
         if (!out)
         {
-            fprintf(stderr, "[ReadMetadataFromFile] Could not read metadata from file. malloc failed \n");
+            fprintf(stderr, "[ReadMetadataFromFile] Could not read metadata from file. mapping from persisted format failed  \n");
         }
 
         status = 0;

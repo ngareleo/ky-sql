@@ -69,7 +69,6 @@ void FreeTableColDefinition(struct TableColDefinition *def)
 {
     if (!def)
     {
-        sprintf(stderr, "Error freeing column definition: cannot free NULL value");
         return;
     }
 
@@ -90,7 +89,13 @@ struct TableDefinition *NewTableDefinition(char *name, ...)
 
     if (!name)
     {
-        fprintf(stderr, "Error creating Table. name is NULL. \n");
+        fprintf(stderr, "[NewTableDefinition] Error creating Table. name is NULL. \n");
+        return NULL;
+    }
+
+    if (!time(&now))
+    {
+        fprintf(stderr, "[NewTableDefinition] Error creating Table. time failed. \n");
         return NULL;
     }
 
@@ -102,16 +107,16 @@ struct TableDefinition *NewTableDefinition(char *name, ...)
     va_end(args);
 
     tableDef = malloc(sizeof(struct TableColDefinition));
-    if (!tableDef || !time(&now) || !name)
+    if (!tableDef)
     {
-        fprintf(stderr, "Error creating Table. malloc failed. \n");
+        fprintf(stderr, "[NewTableDefinition] Error creating Table. malloc failed. \n");
         return NULL;
     }
 
     tableDef->TableName = malloc(strlen(name) + 1);
     if (!tableDef->TableName)
     {
-        fprintf(stderr, "Error creating Table. malloc failed. \n");
+        fprintf(stderr, "[NewTableDefinition] Error creating Table. malloc failed. \n");
         free(tableDef);
         return NULL;
     }
@@ -120,7 +125,7 @@ struct TableDefinition *NewTableDefinition(char *name, ...)
     tableDef->Columns = malloc(sizeof(struct TableColDefinition *) * count);
     if (!tableDef->Columns)
     {
-        fprintf(stderr, "Error creating Table. malloc failed. \n");
+        fprintf(stderr, "[NewTableDefinition] Error creating Table. malloc failed. \n");
         free(tableDef->TableName);
         free(tableDef);
         return NULL;
@@ -142,47 +147,41 @@ const int PADDING = 100;
 
 char *FormatTableDefinition(struct TableDefinition *def)
 {
+    char *buffer;
+    size_t size;
+    FILE *memstream;
+
     if (!def)
     {
-        sprintf(stderr, "Error formating table: Cannot format a null value");
+        sprintf(stderr, "[FormatTableDefinition] Error formating table: Cannot format a null value");
         return NULL;
     }
 
-    char *template = "\
-    TABLE DEFINITION\n\
-    \n\
-    - name         = %s\n\
-    - created      = %ld\n\
-    - lastModified = %ld\n\
-    - columns      = \n\
-    \t%s\"",
-         *out,
-         colBuff[MAX_LOG_BUFFER],
-         buffer[MAX_LOG_BUFFER * 2]; // Super assumption the first buffer will be enough
+    memstream = open_memstream(&buffer, &size);
+    if (!memstream)
+    {
+        sprintf(stderr, "[FormatTableDefinition] Error formating table: open_memstream failed");
+        return NULL;
+    }
+
+    fprintf(memstream, "name          = %s\n", def->TableName);
+    fprintf(memstream, "created       = %s\n", def->CreatedAt);
+    fprintf(memstream, "last-modified = %s\n", def->LastModified);
+    fprintf(memstream, "column-count  = %s\n", def->ColumnCount);
+    fprintf(memstream, "columns       = \n", def->Columns);
 
     for (int c = 0; c < CountColumns(def); c++)
     {
-        sprintf(colBuff, "\t%s\n", FormatTableColDefinition(def->Columns[c]));
+        sprintf(memstream, "\t%s\n", FormatTableColDefinition(def->Columns[c]));
     }
 
-    sprintf(buffer, template, def->TableName, def->CreatedAt, def->LastModified, colBuff);
-
-    out = malloc(strlen(buffer));
-    if (!out)
-    {
-        sprintf(stderr, "Error formating table: malloc failed");
-        return NULL;
-    }
-
-    strcpy(buffer, out);
-    return out;
+    return buffer;
 }
 
 void FreeTableDefinition(struct TableDefinition *def)
 {
     if (!def)
     {
-        sprintf(stderr, "Error freeing table: cannot free NULL value");
         return;
     }
 
@@ -200,10 +199,11 @@ struct SchemaDefinition *NewSchemaDefinition(char *name, ...)
     va_list args;
     int count = 0;
     struct TableDefinition *allTables[MAX_TABLE_COUNT], *currentDef;
+    struct SchemaDefinition *def;
 
     if (!name)
     {
-        fprintf(stderr, "Error creating schema definition. name is null\n");
+        fprintf(stderr, "[NewSchemaDefinition] Error creating schema definition. name is null\n");
         return NULL;
     }
 
@@ -214,17 +214,17 @@ struct SchemaDefinition *NewSchemaDefinition(char *name, ...)
     }
     va_end(args);
 
-    struct SchemaDefinition *def = malloc(sizeof(struct SchemaDefinition));
+    def = malloc(sizeof(struct SchemaDefinition));
     if (!def)
     {
-        fprintf(stderr, "Error creating schema definition. malloc failed\n");
+        fprintf(stderr, "[NewSchemaDefinition] Error creating schema definition. malloc failed\n");
         return NULL;
     }
 
     def->TableDefs = malloc(sizeof(struct TableDefinition) * count);
     if (!def->TableDefs)
     {
-        fprintf(stderr, "Error creating schema definition. malloc failed\n");
+        fprintf(stderr, "[NewSchemaDefinition] Error creating schema definition. malloc failed\n");
         free(def);
         return NULL;
     }
@@ -243,7 +243,6 @@ void FreeSchemaDefinition(struct SchemaDefinition *def)
 {
     if (!def)
     {
-        sprintf(stderr, "Error freeing schema: cannot free NULL value");
         return;
     }
 
