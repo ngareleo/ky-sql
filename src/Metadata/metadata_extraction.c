@@ -135,10 +135,6 @@ void FreeFileMetadata(struct FileMetadata *metadata)
     free(metadata);
 }
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 char *IntrospectMetadata(const struct FileMetadata *metadata)
 {
     FILE *memstream;
