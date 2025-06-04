@@ -7,69 +7,82 @@
 
 struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata *metadata)
 {
-    if (metadata == NULL)
-    {
-        return NULL;
-    }
-
     struct FileMetadata *target;
-    if ((target = malloc(sizeof(struct FileMetadata))) == NULL)
+    struct TableOffset **tempTbOff;
+
+    if (!metadata)
     {
         return NULL;
     }
 
-    target->CreatedAt = metadata->CreatedAt;
-    target->LastModified = metadata->LastModified;
-    target->TableCount = metadata->TableCount;
+    tempTbOff = malloc(sizeof(struct TableOffset *) * metadata->OffsetCount);
+    if (!tempTbOff)
+    {
+        fprintf(stderr, "[BootFileMetadataFromFile] Error booting metadata from file. malloc failed. \n");
+        return NULL;
+    }
+
+    for (int c = 0; c < metadata->OffsetCount; c++)
+    {
+        tempTbOff[c] = NewTableOffset(metadata->Offsets[c].TableName, metadata->Offsets[c].Offset);
+        if (!tempTbOff[c])
+        {
+            for (int c2 = 0; c2 < c; c2++)
+            {
+                free(tempTbOff[c2]);
+            }
+            free(tempTbOff);
+            fprintf(stderr, "[BootFileMetadataFromFile] Error booting metadata from file. couldn't create table offset. \n");
+            return NULL;
+        }
+    }
+
+    target = malloc(sizeof(struct FileMetadata));
+    if (!target)
+    {
+        fprintf(stderr, "[BootFileMetadataFromFile] Error booting metadata from file. malloc failed. \n");
+        free(tempTbOff);
+        return NULL;
+    }
 
     target->Offset = malloc(sizeof(struct Offset));
     if (!target->Offset)
     {
+        fprintf(stderr, "[BootFileMetadataFromFile] Error booting metadata from file. malloc failed. \n");
+        free(tempTbOff);
         free(target);
         return NULL;
     }
 
-    target->Offset->Offsets = malloc(sizeof(struct TableOffset *) * metadata->TableCount);
-    if (!target->Offset->Offsets)
-    {
-        free(target->Offset);
-        free(target);
-        return NULL;
-    }
+    // No need for a check. Guranteed tempTbOff is const
+    target->Offset->Offsets = tempTbOff;
 
-    for (int count = 0; count < metadata->TableCount; count++)
-    {
-        target->Offset->Offsets[count] = NewTableOffset(metadata->Offsets[count].TableName, metadata->Offsets[count].Offset);
-        if (!target->Offset->Offsets[count])
-        {
-            FreeOffset(target->Offset, count);
-            free(target->Offset);
-            free(target);
-            return NULL;
-        }
-    }
+    target->Offset->ImwebOffset = metadata->ImwebOffset;
+    target->Offset->OffsetCount = metadata->OffsetCount;
+    target->CreatedAt = metadata->CreatedAt;
+    target->LastModified = metadata->LastModified;
+    target->TableCount = metadata->TableCount;
 
     IntrospectMetadata(target);
     return target;
 }
 
-struct PersistedFileMetadata *LoadFileMetadataIntoFile(const struct FileMetadata *metadata)
+struct PersistedFileMetadata *MapToPersistedMetadata(const struct FileMetadata *metadata)
 {
-    if (metadata == NULL)
-    {
-        return NULL;
-    }
-
     struct PersistedFileMetadata *target;
-    if ((target = malloc(sizeof(struct PersistedFileMetadata))) == NULL)
+
+    if (!metadata)
     {
+        fprintf(stderr, "[MapToPersistedMetadata] Mapping to persisted metadata failed. malloc failed. \n");
         return NULL;
     }
 
-    target->CreatedAt = metadata->CreatedAt;
-    target->LastModified = metadata->LastModified;
-    target->TableCount = metadata->TableCount;
-    target->ImwebOffset = metadata->Offset->ImwebOffset;
+    target = malloc(sizeof(struct PersistedFileMetadata));
+    if (!target)
+    {
+        fprintf(stderr, "[MapToPersistedMetadata] Mapping to persisted metadata failed. malloc failed. \n");
+        return NULL;
+    }
 
     for (int count = 0; count < metadata->TableCount; count++)
     {
@@ -77,10 +90,15 @@ struct PersistedFileMetadata *LoadFileMetadataIntoFile(const struct FileMetadata
         strcpy(target->Offsets[count].TableName, metadata->Offset->Offsets[count]->TableName);
     }
 
+    target->CreatedAt = metadata->CreatedAt;
+    target->LastModified = metadata->LastModified;
+    target->TableCount = metadata->TableCount;
+    target->ImwebOffset = metadata->Offset->ImwebOffset;
+
     return target;
 }
 
-struct FileMetadata *NewFileMetadata(struct Offset *offset, int tableCount)
+struct FileMetadata *NewFileMetadata(struct Offset *offset, struct SchemaDefinition *schema)
 {
     struct FileMetadata *fMetadata;
     time_t now;
@@ -88,20 +106,20 @@ struct FileMetadata *NewFileMetadata(struct Offset *offset, int tableCount)
     fMetadata = malloc(sizeof(struct FileMetadata));
     if (fMetadata == NULL)
     {
+        fprintf(stderr, "[NewFileMetadata] cannot create metadata. malloc failed. \n");
         return NULL;
     }
 
-    fMetadata->Offset = offset;
-
     if (!time(&now))
     {
+        fprintf(stderr, "[NewFileMetadata] cannot create metadata. malloc failed. \n");
         free(fMetadata);
         return NULL;
     }
 
+    fMetadata->Offset = offset;
     fMetadata->CreatedAt = now;
     fMetadata->LastModified = now;
-    fMetadata->TableCount = tableCount;
 
     return fMetadata;
 }
@@ -113,36 +131,51 @@ void FreeFileMetadata(struct FileMetadata *metadata)
         return;
     }
 
-    FreeOffset(metadata->Offset, metadata->TableCount);
+    FreeOffset(metadata->Offset);
     free(metadata);
 }
 
-void IntrospectMetadata(const struct FileMetadata *metadata)
-{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-    if (metadata == NULL)
+char *IntrospectMetadata(const struct FileMetadata *metadata)
+{
+    FILE *memstream;
+    char *buffer;
+    size_t size;
+
+    if (!metadata)
     {
-        fprintf(stderr, "Cannot introspect null value\n");
-        return;
+        fprintf(stderr, "[IntrospectMetadata] Couldn't introspect metadata. metadata is null.\n");
+        return NULL;
     }
 
-    struct TableOffset *currOffset = *(metadata->Offset->Offsets);
-
-    fprintf(stdout, "<FileMetadata Introspection> Immediate-Write-Buffer Offset: %d\n", metadata->Offset->ImwebOffset);
-    fprintf(
-        stdout,
-        "<FileMetadata Introspection> CreatedAt: %ld, LastModified: %ld, TableCount: %d\n",
-        (long)metadata->CreatedAt,
-        (long)metadata->LastModified,
-        metadata->TableCount);
-
-    if (currOffset != NULL)
+    memstream = open_memstream(&buffer, &size);
+    if (!memstream)
     {
-        for (int count = 0; count < metadata->TableCount; count++)
+        fprintf(stderr, "[IntrospectMetadata] Couldn't introspect metadata. metadata is null. open_memstream failed.\n");
+        return NULL;
+    }
+
+    fprintf(memstream, "[IntrospectMetadata] ############# Start of log #############\n\n");
+
+    fprintf(memstream, "immediate-write-buffer-offset = %s\n", metadata->Offset->ImwebOffset);
+    fprintf(memstream, "created-at                    = %s\n", metadata->CreatedAt);
+    fprintf(memstream, "last-modified                 = %s\n", metadata->LastModified);
+    fprintf(memstream, "table-count                   = %d\n", metadata->TableCount);
+    fprintf(memstream, "offsets                       = \n");
+    for (int c = 0; c < metadata->TableCount; c++)
+    {
+        char *formatted = FormatTableOffset(metadata->Offset->Offsets[c]);
+        if (formatted)
         {
-            fprintf(stdout, "<FileMetadata Introspection> %s", FormatTableOffset(*(metadata->Offset->Offsets + count)));
+            fprintf(memstream, "\t%s\n", formatted);
         }
     }
+    fprintf(memstream, "[IntrospectMetadata] ############# End of log #############\n\n");
+    fclose(memstream);
+    return buffer;
 }
 
 int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFileMetadata *map(const struct FileMetadata *metadata))
@@ -159,19 +192,13 @@ int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFil
 
         if (!fwrite(target, sizeof(struct PersistedFileMetadata), 1, file))
         {
-            fprintf(stderr, "ERR! <WriteMetadataToFile> Could not write metadata to file \n");
-            perror("fwrite");
+            fprintf(stderr, "[WriteMetadataToFile] Could not write metadata to file. fwrite failed \n");
             break;
         }
-
-        fprintf(stdout, "<WriteMetadataToFile> Metadata written into file\n");
         status = 0;
     } while (0);
 
-    if (target != NULL)
-    {
-        free(target);
-    }
+    free(target);
     return status;
 }
 
@@ -179,32 +206,36 @@ int ReadMetadataFromFile(FILE *file, struct FileMetadata **out, struct FileMetad
 {
     struct PersistedFileMetadata *buffer;
     int status = -1;
+    if (map == NULL)
+    {
+        fprintf(stderr, "[ReadMetadataFromFile] Could not read metadata from file. map is null \n");
+    }
 
     do
     {
-        if ((buffer = malloc(sizeof(struct PersistedFileMetadata))) == NULL)
+        buffer = malloc(sizeof(struct PersistedFileMetadata));
+        if (!buffer)
         {
+            fprintf(stderr, "[ReadMetadataFromFile] Could not read metadata from file. malloc failed \n");
             break;
         }
 
-        if (fread(buffer, sizeof(struct PersistedFileMetadata), 1, file) == 0)
+        fread(buffer, sizeof(struct PersistedFileMetadata), 1, file);
+        if (!buffer)
         {
-            fprintf(stderr, "ERR! <ReadMetadataFromFile> Could not read metadata from file \n");
-            perror("fread");
+            fprintf(stderr, "[ReadMetadataFromFile] Could not read metadata from file. fread failed \n");
             break;
         }
 
-        if (map == NULL || (*out = map(buffer)) == NULL)
+        *out = map(buffer);
+        if (!out)
         {
-            break;
+            fprintf(stderr, "[ReadMetadataFromFile] Could not read metadata from file. malloc failed \n");
         }
 
         status = 0;
     } while (0);
 
-    if (buffer != NULL)
-    {
-        free(buffer);
-    }
+    free(buffer);
     return status;
 }

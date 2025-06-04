@@ -1,5 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef METADATA_EXTRACTION_H
+#define METADATA_EXTRACTION_H
+
 #include <time.h>
 #include "metadata_offsets.h"
 #include "metadata_schema.h"
@@ -11,15 +12,21 @@
 
 struct FileMetadata
 {
-    struct Offset *Offset; /** Offset values*/
-    time_t CreatedAt;      /** When was this database created */
-    time_t LastModified;   /** When was this last modified */
-    int TableCount;        /** Number of tables in database */
+    struct SchemaDefinition *Schema; /** A repr of the SQL schema */
+    struct Offset *Offset;           /** Offset values*/
+    time_t CreatedAt;                /** When was this database created */
+    time_t LastModified;             /** When was this last modified */
+    int TableCount;                  /** Number of tables in database */
 };
 
 #pragma pack(1)
 struct PersistedFileMetadata
 {
+    struct PersistedTableOffset
+    {
+        char TableName[MAX_PROPERTY_NAME_SIZE]; /**  The name of the table */
+        int Offset;                             /** The offset of the file position from 0 */
+    } Offsets[MAX_TABLE_COUNT];                 /** Offsets to tables */
     struct PersistedSchema
     {
         struct PersistedTableDefinition
@@ -41,24 +48,15 @@ struct PersistedFileMetadata
         time_t CreatedAt;
         time_t LastModified;
     } Schema;
-    // Offsets
-    struct PersistedTableOffset
-    {
-        char TableName[MAX_PROPERTY_NAME_SIZE]; /**  The name of the table */
-        int Offset;                             /** The offset of the file position from 0 */
-    } Offsets[MAX_TABLE_COUNT];                 /** Offsets to tables */
-    int ImwebOffset;                            /** Offset values*/
-
-    // Table Information
-    int TableCount; /** Number of tables in database */
-
-    // File Metadata
+    int OffsetCount;
     time_t CreatedAt;    /** When was this database created */
     time_t LastModified; /** When was this last modified */
+    int ImwebOffset;     /** Offset values*/
+    int TableCount;      /** Number of tables in database */
 };
 #pragma pack(0)
 
-struct FileMetadata *NewFileMetadata(struct Offset *, int);
+struct FileMetadata *NewFileMetadata(struct Offset *, struct SchemaDefinition *schema);
 void FreeFileMetadata(struct FileMetadata *);
 char *FormatTableOffset(const struct TableOffset *);
 void IntrospectMetadata(const struct FileMetadata *);
@@ -74,4 +72,5 @@ int WriteMetadataToFile(FILE *, struct FileMetadata *, struct PersistedFileMetad
  */
 int ReadMetadataFromFile(FILE *, struct FileMetadata **, struct FileMetadata *(const struct PersistedFileMetadata *));
 struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata *);
-struct PersistedFileMetadata *LoadFileMetadataIntoFile(const struct FileMetadata *);
+
+#endif

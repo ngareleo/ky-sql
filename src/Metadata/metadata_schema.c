@@ -130,6 +130,7 @@ struct TableDefinition *NewTableDefinition(char *name, ...)
         tableDef->Columns[c] = allCols[c];
     }
 
+    tableDef->ColumnCount = count;
     tableDef->Columns = colDefs;
     tableDef->LastModified = now;
     tableDef->LastModified = now;
@@ -138,6 +139,7 @@ struct TableDefinition *NewTableDefinition(char *name, ...)
 }
 
 const int PADDING = 100;
+
 char *FormatTableDefinition(struct TableDefinition *def)
 {
     if (!def)
@@ -185,7 +187,7 @@ void FreeTableDefinition(struct TableDefinition *def)
     }
 
     free(def->TableName);
-    for (int c = 0; c < CountColumns(def); c++)
+    for (int c = 0; c < def->ColumnCount; c++)
     {
         FreeTableColDefinition(def->Columns[c]);
     }
@@ -232,6 +234,8 @@ struct SchemaDefinition *NewSchemaDefinition(char *name, ...)
         def->TableDefs[c] = allTables[c];
     }
 
+    def->TableCount = count;
+
     return def;
 }
 
@@ -244,38 +248,10 @@ void FreeSchemaDefinition(struct SchemaDefinition *def)
     }
 
     free(def->TagName);
-    for (int c = 0; c < CountTables(def); c++)
+    for (int c = 0; c < def->TableCount; c++)
     {
         FreeTableDefinition(def->TableDefs[c]);
     }
     free(def->TableDefs);
     free(def);
-}
-
-int CountColumns(struct TableDefinition *def)
-{
-    if (def == NULL)
-    {
-        return 0;
-    }
-
-    int c = 0;
-    struct TableColDefinition *curr = def->Columns[0];
-    for (; curr != NULL; c++)
-        ;
-    return c;
-}
-
-int CountTables(struct SchemaDefinition *def)
-{
-    if (def == NULL)
-    {
-        return 0;
-    }
-
-    int c = 0;
-    struct TableDefinition *curr = def->TableDefs[0];
-    for (; curr != NULL; c++)
-        ;
-    return c;
 }
