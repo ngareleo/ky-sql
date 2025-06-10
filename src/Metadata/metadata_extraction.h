@@ -24,35 +24,36 @@ struct PersistedFileMetadata
 {
     struct PersistedTableOffset
     {
-        char TableName[MAX_PROPERTY_NAME_SIZE]; /**  The name of the table */
-        int Offset;                             /** The offset of the file position from 0 */
-    } Offsets[MAX_TABLE_COUNT];                 /** Offsets to tables */
-    struct PersistedSchema
-    {
-        struct PersistedTableDefinition
-        {
-            struct PersistedTableColDefinition
-            {
-                char ColumnName[MAX_PROPERTY_NAME_SIZE];
-                enum SchemaType ColumnType;
-                bool ColumnIsUnique;
+        char TableName[MAX_PROPERTY_NAME_SIZE];                  /**  The name of the table */
+        int Offset;                                              /** The offset of the file position from 0 */
+    } Offsets[MAX_TABLE_COUNT];                                  /** Offsets to tables */
+    struct PersistedSchema                                       /** */
+    {                                                            /**  */
+        struct PersistedTableDefinition                          /** */
+        {                                                        /** */
+            struct PersistedTableColDefinition                   /** */
+            {                                                    /** */
+                char ColumnName[MAX_PROPERTY_NAME_SIZE];         /** The name of the column */
+                enum SchemaType ColumnType;                      /** The data type of the column */
+                bool ColumnIsUnique;                             /** Is this column unique*/
                 char ColumnDefaultValue[MAX_PROPERTY_NAME_SIZE]; /** We will perform casting according to the type */
-                time_t ColumnCreatedAt;
-                time_t ColumnLastModified;
-            } ColumnDefs[MAX_TABLE_COLUMN_COUNT];
-            char TableName[MAX_PROPERTY_NAME_SIZE];
-            time_t CreatedAt;
-            time_t LastModified;
-        } TableDefs[MAX_TABLE_COUNT];
-        char TagName[MAX_PROPERTY_NAME_SIZE];
-        time_t CreatedAt;
-        time_t LastModified;
-    } Schema;
-    int OffsetCount;
-    time_t CreatedAt;    /** When was this database created */
-    time_t LastModified; /** When was this last modified */
-    int ImwebOffset;     /** Offset values*/
-    int TableCount;      /** Number of tables in database */
+                time_t ColumnCreatedAt;                          /** When was the column created */
+                time_t ColumnLastModified;                       /** When the column was last modified */
+            } ColumnDefs[MAX_TABLE_COLUMN_COUNT];                /** Columns in the table */
+            time_t CreatedAt;                                    /** When was this table created */
+            time_t LastModified;                                 /** When was this table last modified */
+            int ColumnCount;                                     /** The number of columns */
+            char TableName[MAX_PROPERTY_NAME_SIZE];              /** Name of the table */
+        } TableDefs[MAX_TABLE_COUNT];                            /**Tables */
+        char TagName[MAX_PROPERTY_NAME_SIZE];                    /** Unique name for schema  */
+        time_t CreatedAt;                                        /** When was this schema created. Usually when the db file was initialized */
+        time_t LastModified;                                     /** When was this schema last updated */
+    } Schema;                                                    /** The database schema */
+    int OffsetCount;                                             /** Number of offsets */
+    time_t CreatedAt;                                            /** When was this database created */
+    time_t LastModified;                                         /** When was this last modified */
+    int ImwebOffset;                                             /** Offset values*/
+    int TableCount;                                              /** Number of tables in database */
 };
 #pragma pack(0)
 
