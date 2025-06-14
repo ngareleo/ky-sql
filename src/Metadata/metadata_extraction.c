@@ -20,8 +20,6 @@ int BuildSchemaFromPersistedFormat(FileMetadata *meta, const PersistedFileMetada
         return -1;
     }
 
-    meta->Schema->CreatedAt = file->Schema.CreatedAt;
-    meta->Schema->LastModified = file->Schema.LastModified;
     meta->Schema->TagName = malloc(strlen(file->Schema.TagName) + 1);
     if (!meta->Schema->TagName)
     {
@@ -29,7 +27,6 @@ int BuildSchemaFromPersistedFormat(FileMetadata *meta, const PersistedFileMetada
         fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
         return -1;
     }
-    strcpy(meta->Schema->TagName, &file->Schema.TagName);
 
     meta->Schema->TableDefs = malloc(sizeof(TableDefinition *) * file->TableCount);
     if (!meta->Schema->TableDefs)
@@ -58,13 +55,28 @@ int BuildSchemaFromPersistedFormat(FileMetadata *meta, const PersistedFileMetada
             return -1;
         }
 
+        tableDef->TableName = malloc(strlen(file->Schema.TableDefs[ti].TableName) + 1);
+        if (!tableDef->TableName)
+        {
+            free(tableDef);
+            for (int ti2 = 0; ti2 < ti; ti2++)
+            {
+                FreeTableDefinition(meta->Schema->TableDefs[ti2]);
+            }
+            free(meta->Schema->TableDefs);
+            free(meta->Schema->TagName);
+            free(meta->Schema);
+            fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
+            return -1;
+        }
+
         for (int ci = 0; ci < file->Schema.TableDefs[ti].ColumnCount; ci++)
         {
             int converted;
-            TableColDefinition *def;
+            TableColDefinition *colDef;
 
-            def = malloc(sizeof(TableColDefinition));
-            if (!def)
+            colDef = malloc(sizeof(TableColDefinition));
+            if (!colDef)
             {
                 free(tableDef);
                 for (int ti2 = 0; ti2 < ti; ti2++)
@@ -78,28 +90,10 @@ int BuildSchemaFromPersistedFormat(FileMetadata *meta, const PersistedFileMetada
                 return -1;
             }
 
-            def->ColumnName = malloc(strlen(file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnName) + 1);
-            if (!def->ColumnName)
+            colDef->ColumnName = malloc(strlen(file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnName) + 1);
+            if (!colDef->ColumnName)
             {
-                free(def);
-                free(tableDef);
-                for (int ti2 = 0; ti2 < ti; ti2++)
-                {
-                    FreeTableDefinition(meta->Schema->TableDefs[ti2]);
-                }
-                free(meta->Schema->TableDefs);
-                free(meta->Schema->TagName);
-                free(meta->Schema);
-                fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
-                return -1;
-            }
-            strcpy(def->ColumnName, &file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnName);
-
-            converted = ConvertDefaultValue(def, file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnType, file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnDefaultValue);
-            if (converted != 0)
-            {
-                free(def);
-                free(def->ColumnName);
+                free(colDef);
                 free(tableDef);
                 for (int ti2 = 0; ti2 < ti; ti2++)
                 {
@@ -112,75 +106,90 @@ int BuildSchemaFromPersistedFormat(FileMetadata *meta, const PersistedFileMetada
                 return -1;
             }
 
-            def->ColumnCreatedAt = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnCreatedAt;
-            def->ColumnIsUnique = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnIsUnique;
-            def->ColumnLastModified = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnLastModified;
-            def->ColumnType = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnType;
-            tableDef->Columns[ci] = def;
+            strcpy(colDef->ColumnDefaultValue, &file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnDefaultValue);
+            strcpy(colDef->ColumnName, &file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnName);
+            colDef->ColumnCreatedAt = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnCreatedAt;
+            colDef->ColumnIsUnique = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnIsUnique;
+            colDef->ColumnLastModified = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnLastModified;
+            colDef->ColumnType = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnType;
+            tableDef->Columns[ci] = colDef;
         }
-
         tableDef->ColumnCount = file->Schema.TableDefs[ti].ColumnCount;
+        tableDef->CreatedAt = file->Schema.TableDefs[ti].CreatedAt;
+        tableDef->LastModified = file->Schema.TableDefs[ti].LastModified;
+        strcpy(tableDef->TableName, &file->Schema.TableDefs[ti].TableName);
         meta->Schema->TableDefs[ti] = tableDef;
     }
+    meta->Schema->TableCount = file->TableCount;
+    meta->Schema->CreatedAt = file->Schema.CreatedAt;
+    meta->Schema->LastModified = file->Schema.LastModified;
+    strcpy(meta->Schema->TagName, &file->Schema.TagName);
 
     return 0;
 }
 
-int ConvertDefaultValue(TableColDefinition *def, enum SchemaType schemaType, const char *defaultValue)
+void *CreateDefaultValue(enum SchemaType schemaType, const char *defaultValue)
 {
-    if (!def || !defaultValue)
+    void *output;
+    if (!defaultValue)
     {
-        fprintf(stderr, "(convert-default-value-err) malloc failed. \n");
+        fprintf(stderr, "(create-default-value-err) `defaultValue` is null. \n");
         return -1;
     }
 
     switch (schemaType)
     {
     case DATE:
-        def->ColumnDefaultValue = malloc(sizeof(time_t));
-        if (def->ColumnDefaultValue)
+        output = malloc(sizeof(time_t));
+        if (output)
         {
-            *(time_t *)def->ColumnDefaultValue = atol(defaultValue);
-            return 0;
+            *(time_t *)output = atol(defaultValue);
+            return output;
         }
         break;
+
     case INTEGER:
-        def->ColumnDefaultValue = malloc(sizeof(int));
-        if (def->ColumnDefaultValue)
+        output = malloc(sizeof(int));
+        if (output)
         {
-            *(int *)def->ColumnDefaultValue = atoi(defaultValue);
-            return 0;
+            *(int *)output = atoi(defaultValue);
+            return output;
         }
         break;
+
     case STRING:
-        def->ColumnDefaultValue = malloc(strlen(defaultValue) + 1);
-        if (def->ColumnDefaultValue)
+        output = malloc(strlen(defaultValue) + 1);
+        if (output)
         {
-            strcpy(def->ColumnDefaultValue, defaultValue);
-            return 0;
+            strcpy(output, defaultValue);
+            return output;
         }
         break;
+
     case FLOAT:
-        def->ColumnDefaultValue = malloc(sizeof(double));
-        if (def->ColumnDefaultValue)
+        output = malloc(sizeof(double));
+        if (output)
         {
-            *(double *)def->ColumnDefaultValue = atof(defaultValue);
-            return 0;
+            *(double *)output = atof(defaultValue);
+            return output;
         }
         break;
+
     case BOOL:
-        def->ColumnDefaultValue = malloc(sizeof(bool));
-        if (def->ColumnDefaultValue)
+        output = malloc(sizeof(bool));
+        if (output)
         {
-            *(bool *)def->ColumnDefaultValue = strcmp(defaultValue, &"0") ? true : false;
-            return 0;
+            *(bool *)output = strcmp(defaultValue, &"0") ? true : false;
+            return output;
         }
         break;
+
     default:
         break;
     }
 
-    return -1;
+    fprintf(stderr, "(create-default-value-err) malloc failed. \n");
+    return NULL;
 }
 
 int BuildOffsetsFromPersistedFormat(FileMetadata *meta, const PersistedFileMetadata *file)

@@ -198,7 +198,7 @@ Offset *NewOffsetN(int imwebOffset, const TableOffset **offsets)
 
 int AddTableOffset(Offset *offset, const TableOffset *table)
 {
-    TableOffset **newOff;
+    TableOffset **replace;
 
     if (!offset || !table)
     {
@@ -206,8 +206,8 @@ int AddTableOffset(Offset *offset, const TableOffset *table)
         return -1;
     }
 
-    newOff = malloc(sizeof(TableOffset *) * offset->OffsetCount + 1);
-    if (!newOff)
+    replace = malloc(sizeof(TableOffset *) * offset->OffsetCount + 1);
+    if (!replace)
     {
         fprintf(stderr, "(add-offset-err) malloc failed. \n");
         return -1;
@@ -217,13 +217,13 @@ int AddTableOffset(Offset *offset, const TableOffset *table)
     {
         for (int c = 0; c < offset->OffsetCount; c++)
         {
-            newOff[c] = offset->Offsets[c];
+            replace[c] = offset->Offsets[c];
         }
     }
 
-    newOff[offset->OffsetCount] = table;
+    replace[offset->OffsetCount] = table;
     free(offset->Offsets);
-    offset->Offsets = newOff;
+    offset->Offsets = replace;
     offset->OffsetCount++;
 
     return 0;
