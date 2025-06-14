@@ -28,7 +28,7 @@ typedef struct
         int Offset;                                              /** The offset of the file position from 0 */
     } Offsets[MAX_TABLE_COUNT];                                  /** Offsets to tables */
     struct PersistedSchema                                       /** */
-    {                                                            /**  */
+    {                                                            /** */
         struct PersistedTableDefinition                          /** */
         {                                                        /** */
             struct PersistedTableColDefinition                   /** */
@@ -54,7 +54,7 @@ typedef struct
     time_t LastModified;                                         /** When was this last modified */
     int ImwebOffset;                                             /** Offset values*/
     int TableCount;                                              /** Number of tables in database */
-} PersistedFileMetadata;
+} PersistedFileMetadata;                                        
 #pragma pack(0)
 
 FileMetadata *NewFileMetadata(Offset *, SchemaDefinition *schema);

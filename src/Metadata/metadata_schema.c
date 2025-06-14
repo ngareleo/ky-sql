@@ -9,26 +9,39 @@
 TableColDefinition *NewTableColumn(char *name, enum SchemaType schemaType, bool isUnique, const void *defaultValue)
 {
     time_t now;
-    TableColDefinition *colDef = malloc(sizeof(TableColDefinition));
-    if (!name || !colDef || !defaultValue)
+    TableColDefinition *colDef;
+
+    if (!name || !defaultValue)
     {
-        fprintf(stderr, "Error creating column. Passed null values. \n");
+        fprintf(stderr, "(new-table-column-err) Passed null values. \n");
         return NULL;
     }
 
-    if (!time(&now))
+    time(&now);
+    if (now == (time_t)-1)
     {
-        fprintf(stderr, "Error creating column. time failed. \n");
+        fprintf(stderr, "(new-table-column-err) time failed. \n");
+        return NULL;
+    }
+
+    colDef = malloc(sizeof(TableColDefinition));
+    if (!colDef)
+    {
+        fprintf(stderr, "(new-table-column-err) Passed null values. \n");
         return NULL;
     }
 
     colDef->ColumnName = malloc(strlen(name) + 1);
     if (!colDef->ColumnName)
     {
-        fprintf(stderr, "Error creating column. malloc failed. \n");
+        free(colDef);
+        fprintf(stderr, "(new-table-column-err) malloc failed. \n");
         return NULL;
     }
-    strcpy(colDef->ColumnName, name);
+    else
+    {
+        strcpy(colDef->ColumnName, name);
+    }
 
     colDef->ColumnCreatedAt = now;
     colDef->ColumnLastModified = now;
@@ -67,13 +80,11 @@ TableColDefinition *NewTableColumn(char *name, enum SchemaType schemaType, bool 
 
 void FreeTableColDefinition(TableColDefinition *def)
 {
-    if (!def)
+    if (def)
     {
-        return;
+        free(def->ColumnName);
+        free(def);
     }
-
-    free(def->ColumnName);
-    free(def);
 }
 
 TableDefinition *NewTableDefinition(char *name, ...)
@@ -89,13 +100,14 @@ TableDefinition *NewTableDefinition(char *name, ...)
 
     if (!name)
     {
-        fprintf(stderr, "[NewTableDefinition] Error creating Table. name is NULL. \n");
+        fprintf(stderr, "(new-table-defintion-err) name is NULL. \n");
         return NULL;
     }
 
-    if (!time(&now))
+    time(&now);
+    if (now == (time_t)-1)
     {
-        fprintf(stderr, "[NewTableDefinition] Error creating Table. time failed. \n");
+        fprintf(stderr, "(new-table-defintion-err) time failed. \n");
         return NULL;
     }
 
@@ -109,27 +121,31 @@ TableDefinition *NewTableDefinition(char *name, ...)
     tableDef = malloc(sizeof(TableColDefinition));
     if (!tableDef)
     {
-        fprintf(stderr, "[NewTableDefinition] Error creating Table. malloc failed. \n");
+        fprintf(stderr, "(new-table-defintion-err) malloc failed. \n");
         return NULL;
     }
 
     tableDef->TableName = malloc(strlen(name) + 1);
     if (!tableDef->TableName)
     {
-        fprintf(stderr, "[NewTableDefinition] Error creating Table. malloc failed. \n");
+        fprintf(stderr, "(new-table-defintion-err) malloc failed. \n");
         free(tableDef);
         return NULL;
     }
-    strcpy(tableDef->TableName, name);
+    else
+    {
+        strcpy(tableDef->TableName, name);
+    }
 
     tableDef->Columns = malloc(sizeof(TableColDefinition *) * count);
     if (!tableDef->Columns)
     {
-        fprintf(stderr, "[NewTableDefinition] Error creating Table. malloc failed. \n");
+        fprintf(stderr, "(new-table-defintion-err) malloc failed. \n");
         free(tableDef->TableName);
         free(tableDef);
         return NULL;
     }
+
     for (int c = 0; c < count; c++)
     {
         tableDef->Columns[c] = allCols[c];
@@ -143,55 +159,52 @@ TableDefinition *NewTableDefinition(char *name, ...)
     return tableDef;
 }
 
-const int PADDING = 100;
-
 char *FormatTableDefinition(TableDefinition *def)
 {
     char *buffer;
-    size_t size;
     FILE *memstream;
+    size_t size;
 
     if (!def)
     {
-        sprintf(stderr, "[FormatTableDefinition] Error formating table: Cannot format a null value");
+        sprintf(stderr, "(format-table-definition-err) Cannot format a null value");
         return NULL;
     }
 
     memstream = open_memstream(&buffer, &size);
     if (!memstream)
     {
-        sprintf(stderr, "[FormatTableDefinition] Error formating table: open_memstream failed");
+        sprintf(stderr, "(format-table-definition-err) open_memstream failed");
         return NULL;
     }
 
-    fprintf(memstream, "name          = %s\n", def->TableName);
-    fprintf(memstream, "created       = %s\n", def->CreatedAt);
-    fprintf(memstream, "last-modified = %s\n", def->LastModified);
-    fprintf(memstream, "column-count  = %s\n", def->ColumnCount);
-    fprintf(memstream, "columns       = \n", def->Columns);
+    fprintf(memstream, "(log) name          = %s\n", def->TableName);
+    fprintf(memstream, "(log) created       = %s\n", def->CreatedAt);
+    fprintf(memstream, "(log) last-modified = %s\n", def->LastModified);
+    fprintf(memstream, "(log) column-count  = %s\n", def->ColumnCount);
+    fprintf(memstream, "(log) columns       = \n", def->Columns);
 
     for (int c = 0; c < CountColumns(def); c++)
     {
         sprintf(memstream, "\t%s\n", FormatTableColDefinition(def->Columns[c]));
     }
 
+    fclose(memstream);
     return buffer;
 }
 
 void FreeTableDefinition(TableDefinition *def)
 {
-    if (!def)
+    if (def)
     {
-        return;
+        free(def->TableName);
+        for (int c = 0; c < def->ColumnCount; c++)
+        {
+            FreeTableColDefinition(def->Columns[c]);
+        }
+        free(def->Columns);
+        free(def);
     }
-
-    free(def->TableName);
-    for (int c = 0; c < def->ColumnCount; c++)
-    {
-        FreeTableColDefinition(def->Columns[c]);
-    }
-    free(def->Columns);
-    free(def);
 }
 
 SchemaDefinition *NewSchemaDefinition(char *name, ...)
@@ -203,7 +216,7 @@ SchemaDefinition *NewSchemaDefinition(char *name, ...)
 
     if (!name)
     {
-        fprintf(stderr, "[NewSchemaDefinition] Error creating schema definition. name is null\n");
+        fprintf(stderr, "(new-schema-definition-err) name is null\n");
         return NULL;
     }
 
@@ -217,14 +230,14 @@ SchemaDefinition *NewSchemaDefinition(char *name, ...)
     def = malloc(sizeof(SchemaDefinition));
     if (!def)
     {
-        fprintf(stderr, "[NewSchemaDefinition] Error creating schema definition. malloc failed\n");
+        fprintf(stderr, "(new-schema-definition-err) malloc failed\n");
         return NULL;
     }
 
     def->TableDefs = malloc(sizeof(TableDefinition) * count);
     if (!def->TableDefs)
     {
-        fprintf(stderr, "[NewSchemaDefinition] Error creating schema definition. malloc failed\n");
+        fprintf(stderr, "(new-schema-definition-err) malloc failed\n");
         free(def);
         return NULL;
     }
@@ -241,16 +254,14 @@ SchemaDefinition *NewSchemaDefinition(char *name, ...)
 
 void FreeSchemaDefinition(SchemaDefinition *def)
 {
-    if (!def)
+    if (def)
     {
-        return;
+        free(def->TagName);
+        for (int c = 0; c < def->TableCount; c++)
+        {
+            FreeTableDefinition(def->TableDefs[c]);
+        }
+        free(def->TableDefs);
+        free(def);
     }
-
-    free(def->TagName);
-    for (int c = 0; c < def->TableCount; c++)
-    {
-        FreeTableDefinition(def->TableDefs[c]);
-    }
-    free(def->TableDefs);
-    free(def);
 }

@@ -9,24 +9,24 @@ int BuildSchemaFromPersistedFormat(FileMetadata *meta, const PersistedFileMetada
 {
     if (!file || !meta)
     {
-        fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. passed a null value. \n");
+        fprintf(stderr, "(build-schema-from-persisted-format) passed a null value. \n");
         return -1;
     }
 
     meta->Schema = malloc(sizeof(SchemaDefinition));
     if (!meta->Schema)
     {
-        fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. malloc failed. \n");
+        fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
         return -1;
     }
 
     meta->Schema->CreatedAt = file->Schema.CreatedAt;
     meta->Schema->LastModified = file->Schema.LastModified;
-    meta->Schema->TagName = malloc(strlen(file->Schema.TagName + 1));
+    meta->Schema->TagName = malloc(strlen(file->Schema.TagName) + 1);
     if (!meta->Schema->TagName)
     {
         free(meta->Schema);
-        fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. malloc failed. \n");
+        fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
         return -1;
     }
     strcpy(meta->Schema->TagName, &file->Schema.TagName);
@@ -36,25 +36,34 @@ int BuildSchemaFromPersistedFormat(FileMetadata *meta, const PersistedFileMetada
     {
         free(meta->Schema);
         free(meta->Schema->TagName);
-        fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. malloc failed. \n");
+        fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
         return -1;
     }
 
     for (int ti = 0; ti < file->TableCount; ti++)
     {
-        TableDefinition *tableDef = malloc(sizeof(TableDefinition));
+        TableDefinition *tableDef;
+
+        tableDef = malloc(sizeof(TableDefinition));
         if (!tableDef)
         {
+            for (int ti2 = 0; ti2 < ti; ti2++)
+            {
+                FreeTableDefinition(meta->Schema->TableDefs[ti2]);
+            }
             free(meta->Schema->TableDefs);
             free(meta->Schema->TagName);
             free(meta->Schema);
-            fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. malloc failed. \n");
+            fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
             return -1;
         }
 
         for (int ci = 0; ci < file->Schema.TableDefs[ti].ColumnCount; ci++)
         {
-            TableColDefinition *def = malloc(sizeof(TableColDefinition));
+            int converted;
+            TableColDefinition *def;
+
+            def = malloc(sizeof(TableColDefinition));
             if (!def)
             {
                 free(tableDef);
@@ -65,7 +74,7 @@ int BuildSchemaFromPersistedFormat(FileMetadata *meta, const PersistedFileMetada
                 free(meta->Schema->TableDefs);
                 free(meta->Schema->TagName);
                 free(meta->Schema);
-                fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. malloc failed. \n");
+                fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
                 return -1;
             }
 
@@ -81,13 +90,13 @@ int BuildSchemaFromPersistedFormat(FileMetadata *meta, const PersistedFileMetada
                 free(meta->Schema->TableDefs);
                 free(meta->Schema->TagName);
                 free(meta->Schema);
-                fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. malloc failed. \n");
+                fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
                 return -1;
             }
             strcpy(def->ColumnName, &file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnName);
 
-            int converted = ConvertDefaultValue(def, file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnType, file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnDefaultValue);
-            if (!converted)
+            converted = ConvertDefaultValue(def, file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnType, file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnDefaultValue);
+            if (converted != 0)
             {
                 free(def);
                 free(def->ColumnName);
@@ -99,16 +108,17 @@ int BuildSchemaFromPersistedFormat(FileMetadata *meta, const PersistedFileMetada
                 free(meta->Schema->TableDefs);
                 free(meta->Schema->TagName);
                 free(meta->Schema);
-                fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. malloc failed. \n");
+                fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
                 return -1;
             }
 
-            tableDef->Columns[ci] = def;
             def->ColumnCreatedAt = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnCreatedAt;
             def->ColumnIsUnique = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnIsUnique;
             def->ColumnLastModified = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnLastModified;
             def->ColumnType = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnType;
+            tableDef->Columns[ci] = def;
         }
+
         tableDef->ColumnCount = file->Schema.TableDefs[ti].ColumnCount;
         meta->Schema->TableDefs[ti] = tableDef;
     }
@@ -116,8 +126,14 @@ int BuildSchemaFromPersistedFormat(FileMetadata *meta, const PersistedFileMetada
     return 0;
 }
 
-const int ConvertDefaultValue(TableColDefinition *def, const enum SchemaType schemaType, const void *defaultValue)
+int ConvertDefaultValue(TableColDefinition *def, enum SchemaType schemaType, const char *defaultValue)
 {
+    if (!def || !defaultValue)
+    {
+        fprintf(stderr, "(convert-default-value-err) malloc failed. \n");
+        return -1;
+    }
+
     switch (schemaType)
     {
     case DATE:
@@ -156,7 +172,7 @@ const int ConvertDefaultValue(TableColDefinition *def, const enum SchemaType sch
         def->ColumnDefaultValue = malloc(sizeof(bool));
         if (def->ColumnDefaultValue)
         {
-            *(bool *)def->ColumnDefaultValue = defaultValue == "0" ? true : false;
+            *(bool *)def->ColumnDefaultValue = strcmp(defaultValue, &"0") ? true : false;
             return 0;
         }
         break;
@@ -167,14 +183,20 @@ const int ConvertDefaultValue(TableColDefinition *def, const enum SchemaType sch
     return -1;
 }
 
-const int BuildOffsetsFromPersistedFormat(FileMetadata *meta, const PersistedFileMetadata *file)
+int BuildOffsetsFromPersistedFormat(FileMetadata *meta, const PersistedFileMetadata *file)
 {
     TableOffset **offsets;
+
+    if (!meta || !file)
+    {
+        fprintf(stderr, "(build-offsets-from-persisted-format-err) file or meta is null. \n");
+        return -1;
+    }
 
     meta->Offset = malloc(sizeof(Offset));
     if (!meta->Offset)
     {
-        fprintf(stderr, "[BuildOffsetsFromPersistedFormat] Error building metadata from persisted format. malloc failed. \n");
+        fprintf(stderr, "(build-offsets-from-persisted-format-err) malloc failed. \n");
         return -1;
     }
 
@@ -182,7 +204,7 @@ const int BuildOffsetsFromPersistedFormat(FileMetadata *meta, const PersistedFil
     if (!offsets)
     {
         free(meta->Offset);
-        fprintf(stderr, "[BuildOffsetsFromPersistedFormat] Error building metadata from persisted format. malloc failed. \n");
+        fprintf(stderr, "(build-offsets-from-persisted-format-err) malloc failed. \n");
         return -1;
     }
 
@@ -197,7 +219,7 @@ const int BuildOffsetsFromPersistedFormat(FileMetadata *meta, const PersistedFil
             }
             free(meta->Offset);
             free(offsets);
-            fprintf(stderr, "[BuildOffsetsFromPersistedFormat] Error building metadata from persisted format. couldn't create table offset. \n");
+            fprintf(stderr, "(build-offsets-from-persisted-format-err) couldn't create table offset. \n");
             return -1;
         }
     }
@@ -221,21 +243,21 @@ FileMetadata *BootFileMetadataFromFile(const PersistedFileMetadata *metadata)
     target = malloc(sizeof(FileMetadata));
     if (!target)
     {
-        fprintf(stderr, "[BootFileMetadataFromFile] Error booting metadata from file. malloc failed. \n");
+        fprintf(stderr, "(boot-file-metadata-from-file-err) malloc failed. \n");
         return NULL;
     }
 
-    if (!BuildOffsetsFromPersistedFormat(target, metadata))
+    if (BuildOffsetsFromPersistedFormat(target, metadata) != 0)
     {
         free(target);
-        fprintf(stderr, "[BootFileMetadataFromFile] Error booting metadata from file. failed while copying over offsets. \n");
+        fprintf(stderr, "(boot-file-metadata-from-file-err) failed while copying over offsets. \n");
         return NULL;
     }
 
-    if (!BuildSchemaFromPersistedFormat(target, metadata))
+    if (BuildSchemaFromPersistedFormat(target, metadata) != 0)
     {
         free(target);
-        fprintf(stderr, "[BootFileMetadataFromFile] Error booting metadata from file. failed while copying over schema. \n");
+        fprintf(stderr, "(boot-file-from-persisted-format-err) failed while copying over schema. \n");
         return NULL;
     }
 
@@ -253,14 +275,14 @@ PersistedFileMetadata *MapToPersistedMetadata(const FileMetadata *metadata)
 
     if (!metadata)
     {
-        fprintf(stderr, "[MapToPersistedMetadata] Mapping to persisted metadata failed. malloc failed. \n");
+        fprintf(stderr, "(map-to-persited-metadata-err) malloc failed \n");
         return NULL;
     }
 
     target = malloc(sizeof(PersistedFileMetadata));
     if (!target)
     {
-        fprintf(stderr, "[MapToPersistedMetadata] Mapping to persisted metadata failed. malloc failed. \n");
+        fprintf(stderr, "(map-to-persited-metadata-err) malloc failed \n");
         return NULL;
     }
 
@@ -286,13 +308,13 @@ FileMetadata *NewFileMetadata(Offset *offset, SchemaDefinition *schema)
     fMetadata = malloc(sizeof(FileMetadata));
     if (fMetadata == NULL)
     {
-        fprintf(stderr, "[NewFileMetadata] cannot create metadata. malloc failed. \n");
+        fprintf(stderr, "(new-file-metadata-err) malloc failed \n");
         return NULL;
     }
 
     if (!time(&now))
     {
-        fprintf(stderr, "[NewFileMetadata] cannot create metadata. malloc failed. \n");
+        fprintf(stderr, "(new-file-metadata-err) malloc failed \n");
         free(fMetadata);
         return NULL;
     }
@@ -323,13 +345,13 @@ void IntrospectMetadata(const FileMetadata *metadata)
         return NULL;
     }
 
-    fprintf(stdout, "[IntrospectMetadata] ############# Start of log #############\n\
+    fprintf(stdout, "############# Start of log #############\n\
                                                                                   \n");
-    fprintf(stdout, "immediate-write-buffer-offset = %s\n", metadata->Offset->ImwebOffset);
-    fprintf(stdout, "created-at                    = %s\n", metadata->CreatedAt);
-    fprintf(stdout, "last-modified                 = %s\n", metadata->LastModified);
-    fprintf(stdout, "table-count                   = %d\n", metadata->TableCount);
-    fprintf(stdout, "offsets                       = \n");
+    fprintf(stdout, "(log) immediate-write-buffer-offset = %s\n", metadata->Offset->ImwebOffset);
+    fprintf(stdout, "(log) created-at                    = %s\n", metadata->CreatedAt);
+    fprintf(stdout, "(log) last-modified                 = %s\n", metadata->LastModified);
+    fprintf(stdout, "(log) table-count                   = %d\n", metadata->TableCount);
+    fprintf(stdout, "(log) offsets                       = \n");
     for (int c = 0; c < metadata->TableCount; c++)
     {
         char *formatted = FormatTableOffset(metadata->Offset->Offsets[c]);
@@ -338,7 +360,7 @@ void IntrospectMetadata(const FileMetadata *metadata)
             fprintf(stdout, "\t%s\n", formatted);
         }
     }
-    fprintf(stdout, "[IntrospectMetadata] ############# End of log #############\n\n");
+    fprintf(stdout, "############# End of log #############\n\n");
 }
 
 int WriteMetadataToFile(FILE *file, FileMetadata *in, PersistedFileMetadata *map(const FileMetadata *metadata))
@@ -347,7 +369,7 @@ int WriteMetadataToFile(FILE *file, FileMetadata *in, PersistedFileMetadata *map
     PersistedFileMetadata *target;
     if (!map)
     {
-        fprintf(stderr, "[WriteMetadataToFile] Could not write metadata to file. map is null \n");
+        fprintf(stderr, "(write-metadata-to-file) map is null \n");
         return status;
     }
 
@@ -356,13 +378,13 @@ int WriteMetadataToFile(FILE *file, FileMetadata *in, PersistedFileMetadata *map
         target = map(in);
         if (!map)
         {
-            fprintf(stderr, "[WriteMetadataToFile] Could not write metadata to file. mapping to persisted format failed \n");
+            fprintf(stderr, "(write-metadata-to-file) mapping to persisted format failed \n");
             break;
         }
 
         if (!fwrite(target, sizeof(PersistedFileMetadata), 1, file))
         {
-            fprintf(stderr, "[WriteMetadataToFile] Could not write metadata to file. fwrite failed \n");
+            fprintf(stderr, "(write-metadata-to-file) fwrite failed \n");
             break;
         }
 
@@ -379,7 +401,7 @@ int ReadMetadataFromFile(FILE *file, FileMetadata **out, FileMetadata *map(const
     int status = -1;
     if (map == NULL)
     {
-        fprintf(stderr, "[ReadMetadataFromFile] Could not read metadata from file. map is null \n");
+        fprintf(stderr, "(read-metadata-from-file) map is null \n");
     }
 
     do
@@ -387,21 +409,21 @@ int ReadMetadataFromFile(FILE *file, FileMetadata **out, FileMetadata *map(const
         buffer = malloc(sizeof(PersistedFileMetadata));
         if (!buffer)
         {
-            fprintf(stderr, "[ReadMetadataFromFile] Could not read metadata from file. malloc failed \n");
+            fprintf(stderr, "(read-metadata-from-file) malloc failed \n");
             break;
         }
 
         fread(buffer, sizeof(PersistedFileMetadata), 1, file);
         if (!buffer)
         {
-            fprintf(stderr, "[ReadMetadataFromFile] Could not read metadata from file. fread failed \n");
+            fprintf(stderr, "(read-metadata-from-file) fread failed \n");
             break;
         }
 
         *out = map(buffer);
         if (!out)
         {
-            fprintf(stderr, "[ReadMetadataFromFile] Could not read metadata from file. mapping from persisted format failed  \n");
+            fprintf(stderr, "(read-metadata-from-file) mapping from persisted format failed \n");
         }
 
         status = 0;

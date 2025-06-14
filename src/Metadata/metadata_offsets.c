@@ -6,8 +6,6 @@
 #include "metadata_offsets.h"
 #include "../Utilities/utilities.h"
 
-const size_t wBytes = 1000;
-
 TableOffset *NewTableOffset(const char *tableName, int offset)
 {
     TableOffset *tableOffset;
@@ -32,24 +30,31 @@ TableOffset *NewTableOffset(const char *tableName, int offset)
 
 void FreeTableOffset(TableOffset *offset)
 {
-    if (!offset)
+    if (offset)
     {
-        return;
+        free(offset->TableName);
+        free(offset);
     }
-
-    free(offset->TableName);
-    free(offset);
 }
 
 char *FormatTableOffset(const TableOffset *tableOffset)
 {
-    char *str = malloc(wBytes);
-    if (!str)
+    FILE *stream;
+    char *buffer;
+    size_t size;
+
+    stream = open_memstream(&buffer, &size);
+    if (!stream)
     {
+        fprintf(stderr, "(formay-table-offset-err) open_memstream failed.\n");
         return NULL;
     }
-    sprintf(str, "<TableOffset> Tablename: %s, Offset: %d\n", tableOffset->TableName, tableOffset->Offset);
-    return str;
+
+    sprintf(stream, "(log) table-name = %s.\n", tableOffset->TableName);
+    sprintf(stream, "(log) offset     = %d.\n", tableOffset->Offset);
+
+    fclose(stream);
+    return buffer;
 }
 
 Offset *NewOffset(int imwebOffset, ...)
@@ -69,14 +74,14 @@ Offset *NewOffset(int imwebOffset, ...)
     offset = malloc(sizeof(Offset));
     if (!offset)
     {
-        fprintf(stderr, "[NewOffset] Error creating Offset. malloc failed. \n");
+        fprintf(stderr, "(new-offset-err) malloc failed. \n");
         return NULL;
     }
 
     offset->Offsets = malloc(sizeof(TableOffset *) * count);
     if (!offset->Offsets)
     {
-        fprintf(stderr, "[NewOffset] Error creating Offset. malloc failed. \n");
+        fprintf(stderr, "(new-offset-err) malloc failed. \n");
         return NULL;
     }
 
@@ -98,7 +103,7 @@ Offset *NewOffsetN(int imwebOffset, const TableOffset **offsets)
 
     if (!offsets)
     {
-        fprintf(stderr, "[NewOffsetN] Error creating Offset. offsets is NULL. \n");
+        fprintf(stderr, "(new-offset-n-err) offsets is NULL. \n");
         return NULL;
     }
 
@@ -107,7 +112,7 @@ Offset *NewOffsetN(int imwebOffset, const TableOffset **offsets)
     offset = malloc(sizeof(Offset));
     if (!offset)
     {
-        fprintf(stderr, "[NewOffsetN] Error creating Offset. malloc failed. \n");
+        fprintf(stderr, "(new-offset-n-err) malloc failed. \n");
         return NULL;
     }
 
@@ -115,7 +120,7 @@ Offset *NewOffsetN(int imwebOffset, const TableOffset **offsets)
     if (!offset->Offsets)
     {
         free(offset);
-        fprintf(stderr, "[NewOffsetN] Error creating Offset. malloc failed. \n");
+        fprintf(stderr, "(new-offset-n-err) malloc failed. \n");
         return NULL;
     }
 
@@ -133,7 +138,7 @@ Offset *NewOffsetN(int imwebOffset, const TableOffset **offsets)
             }
             free(offset->Offsets);
             free(offset);
-            fprintf(stderr, "[NewOffsetN] Error creating Offset. One of the offset provided is null. \n");
+            fprintf(stderr, "(new-offset-n-err) one of the offset in arguments is a null value. \n");
             return NULL;
         }
     }
@@ -150,14 +155,14 @@ int AddTableOffset(Offset *offset, const TableOffset *table)
 
     if (!offset || !table)
     {
-        fprintf(stderr, "[AddOffset] Error adding Offset. Offset or table is NULL. \n");
+        fprintf(stderr, "(add-offset) offset or table is NULL. \n");
         return -1;
     }
 
     newOff = malloc(sizeof(TableOffset *) * offset->OffsetCount + 1);
     if (!newOff)
     {
-        fprintf(stderr, "[AddOffset] Error adding Offset. malloc failed. \n");
+        fprintf(stderr, "(add-offset) malloc failed. \n");
         return -1;
     }
 
