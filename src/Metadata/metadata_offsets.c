@@ -6,15 +6,9 @@
 #include "metadata_offsets.h"
 #include "../Utilities/utilities.h"
 
-TableOffset *NewTableOffset(const char *tableName, int offset)
+TableOffset *NewTableOffset(int id, int offset)
 {
     TableOffset *tableOffset;
-
-    if (!tableName)
-    {
-        fprintf(stderr, "(new-table-offset-err) tablename is NULL.\n");
-        return NULL;
-    }
 
     tableOffset = malloc(sizeof(TableOffset));
     if (!tableOffset)
@@ -24,27 +18,9 @@ TableOffset *NewTableOffset(const char *tableName, int offset)
     }
 
     tableOffset->Offset = offset;
-
-    tableOffset->TableName = malloc(strlen(tableName) + 1);
-    if (!tableOffset->TableName)
-    {
-        fprintf(stderr, "(new-table-offset-err) malloc failed.\n");
-        free(tableOffset);
-        return NULL;
-    }
-
-    strcpy(tableOffset->TableName, tableName);
+    tableOffset->Id = id;
 
     return tableOffset;
-}
-
-void FreeTableOffset(TableOffset *offset)
-{
-    if (offset)
-    {
-        free(offset->TableName);
-        free(offset);
-    }
 }
 
 char *FormatTableOffset(const TableOffset *tableOffset)
@@ -66,7 +42,7 @@ char *FormatTableOffset(const TableOffset *tableOffset)
         return NULL;
     }
 
-    sprintf(stream, "(log) table-name = %s.\n", tableOffset->TableName);
+    sprintf(stream, "(log) id         = %s.\n", tableOffset->Id);
     sprintf(stream, "(log) offset     = %d.\n", tableOffset->Offset);
 
     fclose(stream);
@@ -93,11 +69,14 @@ char *FormatOffset(const Offset *offset)
     }
 
     sprintf(stream, "(log) immediate-write-buffer-offset = %d.\n", offset->ImwebOffset);
-    sprintf(stream, "(log) offset-count                  = %d.\n", offset->OffsetCount);
 
-    for (int c = 0; c < offset->OffsetCount; c++)
+    for (int c = 0; c < offset->TableCount; c++)
     {
-        sprintf(stream, "(log) table-offset[%d] = %s\n", c, FormatTableOffset(offset->Offsets[c]));
+        fprintf(stream, "############# Start of table offset log  #############\n");
+        fprintf(stdout, "\n");
+        fprintf(stdout, "%s\n", FormatTableOffset(offset->Offsets[c]));
+        fprintf(stdout, "\n");
+        fprintf(stream, "############# End of table offset log    #############\n");
     }
 
     fclose(stream);
@@ -137,7 +116,7 @@ Offset *NewOffset(int imwebOffset, ...)
         offset->Offsets[c] = allOffsets[c];
     }
 
-    offset->OffsetCount = count;
+    offset->TableCount = count;
     offset->ImwebOffset = imwebOffset;
 
     return offset;
@@ -190,7 +169,7 @@ Offset *NewOffsetN(int imwebOffset, const TableOffset **offsets)
         }
     }
 
-    offset->OffsetCount = count;
+    offset->TableCount = count;
     offset->ImwebOffset = imwebOffset;
 
     return offset;
@@ -206,7 +185,7 @@ int AddTableOffset(Offset *offset, const TableOffset *table)
         return -1;
     }
 
-    replace = malloc(sizeof(TableOffset *) * offset->OffsetCount + 1);
+    replace = malloc(sizeof(TableOffset *) * offset->TableCount + 1);
     if (!replace)
     {
         fprintf(stderr, "(add-offset-err) malloc failed. \n");
@@ -215,16 +194,16 @@ int AddTableOffset(Offset *offset, const TableOffset *table)
 
     if (offset->Offsets)
     {
-        for (int c = 0; c < offset->OffsetCount; c++)
+        for (int c = 0; c < offset->TableCount; c++)
         {
             replace[c] = offset->Offsets[c];
         }
     }
 
-    replace[offset->OffsetCount] = table;
+    replace[offset->TableCount] = table;
     free(offset->Offsets);
     offset->Offsets = replace;
-    offset->OffsetCount++;
+    offset->TableCount++;
 
     return 0;
 }
@@ -233,7 +212,7 @@ void FreeOffset(Offset *offset)
 {
     if (offset)
     {
-        for (int c = 0; c < offset->OffsetCount; c++)
+        for (int c = 0; c < offset->TableCount; c++)
         {
             FreeTableOffset(offset->Offsets[c]);
         }

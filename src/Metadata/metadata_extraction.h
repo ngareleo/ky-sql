@@ -21,56 +21,50 @@ typedef struct
 #pragma pack(1)
 typedef struct
 {
-    struct PersistedTableOffset
+    struct WritableTableOffset
     {
-        char TableName[MAX_PROPERTY_NAME_SIZE];                  /**  The name of the table */
-        int Offset;                                              /** The offset of the file position from 0 */
-    } Offsets[MAX_TABLE_COUNT];                                  /** Offsets to tables */
-    struct PersistedSchema                                       /** */
+        int TableOffsetId;                                       /**  The name of the table */
+        int TableOffset;                                         /** The offset of the file position from 0 */
+    } TableOffsets[MAX_TABLE_COUNT];                             /** Offsets to tables */
+    struct WritableSchema                                        /** */
     {                                                            /** */
-        struct PersistedTableDefinition                          /** */
+        struct WritableTableDefinition                           /** */
         {                                                        /** */
-            struct PersistedTableColDefinition                   /** */
+            struct WritableTableColDefinition                    /** */
             {                                                    /** */
                 char ColumnName[MAX_PROPERTY_NAME_SIZE];         /** The name of the column */
                 enum SchemaType ColumnType;                      /** The data type of the column */
-                bool ColumnIsUnique;                             /** Is this column unique*/
+                bool ColumnIsNullable;                           /** Is this column nullable */
+                bool ColumnIsUnique;                             /** Is this column unique */
+                bool ColumnIsPrimaryKey;                         /** Primary key indicator */
                 char ColumnDefaultValue[MAX_PROPERTY_NAME_SIZE]; /** We will perform casting according to the type */
                 time_t ColumnCreatedAt;                          /** When was the column created */
                 time_t ColumnLastModified;                       /** When the column was last modified */
-            } ColumnDefs[MAX_TABLE_COLUMN_COUNT];                /** Columns in the table */
-            time_t CreatedAt;                                    /** When was this table created */
-            time_t LastModified;                                 /** When was this table last modified */
-            int ColumnCount;                                     /** The number of columns */
+                int ColumnId;                                    /** Id of the column */
+            } TableColumnDefs[MAX_TABLE_COLUMN_COUNT];           /** Columns in the table */
+            time_t TableCreatedAt;                               /** When was this table created */
+            time_t TableLastModified;                            /** When was this table last modified */
+            int TablePrimaryKey;                                 /** The column id of the primary key */
+            int TableColumnCount;                                /** The number of columns */
+            int TableId;                                         /** Id of the table */
             char TableName[MAX_PROPERTY_NAME_SIZE];              /** Name of the table */
         } TableDefs[MAX_TABLE_COUNT];                            /**Tables */
-        char TagName[MAX_PROPERTY_NAME_SIZE];                    /** Unique name for schema  */
-        time_t CreatedAt;                                        /** When was this schema created. Usually when the db file was initialized */
-        time_t LastModified;                                     /** When was this schema last updated */
+        int TableCount;                                          /** Number of tables in database */
+        char SchemaTag[MAX_PROPERTY_NAME_SIZE];                  /** Unique name for schema  */
     } Schema;                                                    /** The database schema */
-    int OffsetCount;                                             /** Number of offsets */
-    time_t CreatedAt;                                            /** When was this database created */
-    time_t LastModified;                                         /** When was this last modified */
-    int ImwebOffset;                                             /** Offset values*/
-    int TableCount;                                              /** Number of tables in database */
-} PersistedFileMetadata;
+    time_t FileCreatedAt;                                        /** When was this database created */
+    time_t FileLastModified;                                     /** When was this last modified */
+    int OffsetImweb;                                             /** Offset values*/
+} WritableFileMetadata;
 #pragma pack(0)
 
 FileMetadata *NewFileMetadata(Offset *, SchemaDefinition *schema);
 void FreeFileMetadata(FileMetadata *);
-char *FormatTableOffset(const TableOffset *);
 void IntrospectMetadata(const FileMetadata *);
-/**
- * Writes a FileMetadata struct into a 'file' in-form of a PersistedFileMetadata
- * Also takes a mapping function that constructs the PersistedFileMetadata struct.
- * Does the required stack allocation.
- */
-int WriteMetadataToFile(FILE *, FileMetadata *, PersistedFileMetadata *(const FileMetadata *));
-/**
- * Reads out a FileMetadata struct from the 'file' into 'in'.
- * Also takes a mapping function that constructs the output struct.
- */
-int ReadMetadataFromFile(FILE *, FileMetadata **, FileMetadata *(const PersistedFileMetadata *));
-FileMetadata *BootFileMetadataFromFile(const PersistedFileMetadata *);
+
+int WriteMetadataToFile(FILE *, FileMetadata *, WritableFileMetadata *(const FileMetadata *));
+int ReadMetadataFromFile(FILE *, FileMetadata **, FileMetadata *(const WritableFileMetadata *));
+
+FileMetadata *CreateMetadataFromWritable(const WritableFileMetadata *);
 
 #endif

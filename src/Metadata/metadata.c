@@ -25,7 +25,7 @@ const struct SchemaDefinition *CreateMockMetadata(time_t *duration)
     struct SchemaDefinition *music;
 
     /**
-     * Initialize all the structs
+     * Initialize all the s
      */
     if ((music = (
                      // Start of song table
@@ -75,7 +75,7 @@ const struct SchemaDefinition *CreateMockMetadata(time_t *duration)
 
     all[0] = animalsOffset;
     all[1] = carsOffset;
-    struct Offset *offset = NewOffset(all, 2);
+    struct TableOffset *offset = NewOffset(all, 2);
 
     /**
      * Create the rest of the metadata
@@ -91,7 +91,7 @@ int main()
     const struct SchemaDefinition *music = CreateMockSchema(&duration);
     FreeSchemaDefinition(music);
 
-    struct Offset *offset = CreateMocKOffset();
+    struct TableOffset *offset = CreateMocKOffset();
     struct FileMetadata *metadata = NewFileMetadata(offset, 2);
     if (metadata == NULL)
     {
@@ -125,7 +125,7 @@ int main()
             break;
         }
 
-        if (ReadMetadataFromFile(readableNoop, &metaFromFile, BootFileMetadataFromFile) == 0)
+        if (ReadMetadataFromFile(readableNoop, &metaFromFile, CreateMetadataFromWritable) == 0)
         {
             fprintf(stdout, "<main> FileMetadata read from file success \n");
             IntrospectMetadata(metaFromFile);

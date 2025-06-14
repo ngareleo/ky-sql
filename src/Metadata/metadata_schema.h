@@ -19,18 +19,23 @@ enum SchemaType
 
 typedef struct
 {
-    char *ColumnName;
-    enum SchemaType ColumnType;
-    bool ColumnIsUnique;
-    void *ColumnDefaultValue;
-    time_t ColumnCreatedAt;
-    time_t ColumnLastModified;
+    int Id;
+    char *Name;
+    enum SchemaType Type;
+    bool IsPrimaryKey;
+    bool IsNullable;
+    bool IsUnique;
+    void *DefaultValue;
+    time_t CreatedAt;
+    time_t LastModified;
 } TableColDefinition;
 
 typedef struct
 {
-    char *TableName;
+    int Id;
+    char *Name;
     TableColDefinition **Columns;
+    int PrimaryKeyId;
     int ColumnCount;
     time_t CreatedAt;
     time_t LastModified;
@@ -45,11 +50,11 @@ typedef struct
     time_t LastModified;
 } SchemaDefinition;
 
-TableColDefinition *NewTableColumn(const char *, enum SchemaType, bool, const char *);
+TableColDefinition *NewTableColumn(int, const char *, bool, enum SchemaType, bool, bool, const char *);
 char *FormatTableColDefinition(TableColDefinition *);
 void FreeTableColDefinition(TableColDefinition *);
 
-TableDefinition *NewTableDefinition(char *, ...);
+TableDefinition *NewTableDefinition(char *, int, int, ...);
 char *FormatTableDefinition(const TableDefinition *);
 void FreeTableDefinition(TableDefinition *);
 

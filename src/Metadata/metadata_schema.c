@@ -6,7 +6,14 @@
 #include <stdarg.h>
 #include "metadata_schema.h"
 
-TableColDefinition *NewTableColumn(const char *name, enum SchemaType schemaType, bool isUnique, const char *defaultValue)
+TableColDefinition *NewTableColumn(
+    int id,
+    const char *name,
+    bool isPrimaryKey,
+    enum SchemaType schemaType,
+    bool isNullable,
+    bool isUnique,
+    const char *defaultValue)
 {
     time_t now;
     TableColDefinition *colDef;
@@ -31,30 +38,32 @@ TableColDefinition *NewTableColumn(const char *name, enum SchemaType schemaType,
         return NULL;
     }
 
-    colDef->ColumnName = malloc(strlen(name) + 1);
-    if (!colDef->ColumnName)
+    colDef->Name = malloc(strlen(name) + 1);
+    if (!colDef->Name)
     {
         free(colDef);
         fprintf(stderr, "(new-table-column-err) malloc failed. \n");
         return NULL;
     }
 
-    colDef->ColumnDefaultValue = malloc(strlen(defaultValue) + 1);
-    if (!colDef->ColumnDefaultValue)
+    colDef->DefaultValue = malloc(strlen(defaultValue) + 1);
+    if (!colDef->DefaultValue)
     {
-        free(colDef->ColumnName);
+        free(colDef->Name);
         free(colDef);
         fprintf(stderr, "(new-table-column-err) malloc failed. \n");
         return NULL;
     }
 
-    strcpy(colDef->ColumnDefaultValue, defaultValue);
-    strcpy(colDef->ColumnName, name);
-    colDef->ColumnCreatedAt = now;
-    colDef->ColumnLastModified = now;
-    colDef->ColumnType = schemaType;
-    colDef->ColumnIsUnique = isUnique;
-    colDef->ColumnName = malloc(strlen(name) + 1);
+    strcpy(colDef->Name, name);
+    strcpy(colDef->DefaultValue, defaultValue);
+    colDef->Id = id;
+    colDef->CreatedAt = now;
+    colDef->LastModified = now;
+    colDef->Type = schemaType;
+    colDef->IsUnique = isUnique;
+    colDef->IsNullable = isNullable;
+    colDef->IsPrimaryKey = isPrimaryKey;
 
     return colDef;
 };
@@ -63,12 +72,12 @@ void FreeTableColDefinition(TableColDefinition *def)
 {
     if (def)
     {
-        free(def->ColumnName);
+        free(def->Name);
         free(def);
     }
 }
 
-TableDefinition *NewTableDefinition(char *name, ...)
+TableDefinition *NewTableDefinition(char *name, int id, int primaryKeyId, ...)
 {
     va_list args;
     time_t now;
@@ -89,7 +98,10 @@ TableDefinition *NewTableDefinition(char *name, ...)
         return NULL;
     }
 
-    va_start(args, name);
+    /**
+     * Remember to update this whenever the function def changes
+     */
+    va_start(args, primaryKeyId);
     while ((currCol = va_arg(args, TableColDefinition *)) != NULL)
     {
         allCols[count++] = currCol;
@@ -103,8 +115,8 @@ TableDefinition *NewTableDefinition(char *name, ...)
         return NULL;
     }
 
-    tableDef->TableName = malloc(strlen(name) + 1);
-    if (!tableDef->TableName)
+    tableDef->Name = malloc(strlen(name) + 1);
+    if (!tableDef->Name)
     {
         fprintf(stderr, "(new-table-defintion-err) malloc failed. \n");
         free(tableDef);
@@ -115,7 +127,7 @@ TableDefinition *NewTableDefinition(char *name, ...)
     if (!tableDef->Columns)
     {
         fprintf(stderr, "(new-table-defintion-err) malloc failed. \n");
-        free(tableDef->TableName);
+        free(tableDef->Name);
         free(tableDef);
         return NULL;
     }
@@ -125,12 +137,13 @@ TableDefinition *NewTableDefinition(char *name, ...)
         tableDef->Columns[c] = allCols[c];
     }
 
-    strcpy(tableDef->TableName, name);
+    strcpy(tableDef->Name, name);
+    tableDef->Id = id;
+    tableDef->PrimaryKeyId = primaryKeyId;
     tableDef->ColumnCount = count;
     tableDef->Columns = colDefs;
     tableDef->LastModified = now;
-    tableDef->LastModified = now;
-
+    tableDef->CreatedAt = now;
     return tableDef;
 }
 
@@ -162,12 +175,31 @@ char *FormatSchemaDefinition(const SchemaDefinition *def)
     {
         sprintf(memstream,
                 "(log) schema-table-definition['%s'] = %s\n",
-                def->TableDefs[c]->TableName,
+                def->TableDefs[c]->Name,
                 FormatTableDefinition(def->TableDefs[c]));
     }
 
     fclose(memstream);
     return buffer;
+}
+
+char *GetColumnNameById(TableDefinition *def, int id)
+{
+    if (!def)
+    {
+        sprintf(stderr, "(get-table-name-by-id-err) `def` is null");
+        return NULL;
+    }
+
+    for (int ti = 0; ti < def->ColumnCount; ti++)
+    {
+        if (def->Columns[ti]->Id == id)
+        {
+            return def->Columns[ti]->Name;
+        }
+    }
+
+    return NULL;
 }
 
 char *FormatTableDefinition(const TableDefinition *def)
@@ -189,16 +221,18 @@ char *FormatTableDefinition(const TableDefinition *def)
         return NULL;
     }
 
-    fprintf(memstream, "(log) table-name          = %s\n", def->TableName);
+    fprintf(memstream, "(log) table-id          = %s\n", def->Id);
+    fprintf(memstream, "(log) table-name          = %s\n", def->Name);
+    fprintf(memstream, "(log) table-primary-key   = %s\n", GetColumnNameById(def, def->PrimaryKeyId));
+    fprintf(memstream, "(log) table-column-count  = %s\n", def->ColumnCount);
     fprintf(memstream, "(log) table-created       = %ld\n", def->CreatedAt);
     fprintf(memstream, "(log) table-last-modified = %ld\n", def->LastModified);
-    fprintf(memstream, "(log) table-column-count  = %s\n", def->ColumnCount);
 
     for (int c = 0; c < CountColumns(def); c++)
     {
         sprintf(memstream,
                 "(log) table-column['%s'] = %s\n",
-                def->Columns[c]->ColumnName,
+                def->Columns[c]->Name,
                 FormatTableColDefinition(def->Columns[c]));
     }
 
@@ -225,12 +259,14 @@ char *FormatColDefinition(TableColDefinition *def)
         return NULL;
     }
 
-    fprintf(memstream, "(log) column-name          = %s\n", def->ColumnName);
-    fprintf(memstream, "(log) column-created       = %ld\n", def->ColumnCreatedAt);
-    fprintf(memstream, "(log) column-last-modified = %ld\n", def->ColumnLastModified);
-    fprintf(memstream, "(log) column-default       = %d\n", def->ColumnDefaultValue);
-    fprintf(memstream, "(log) column-is-unique     = %d\n", def->ColumnIsUnique);
-    fprintf(memstream, "(log) column-type          = %d\n", def->ColumnType);
+    fprintf(memstream, "(log) column-id             = %s\n", def->Id);
+    fprintf(memstream, "(log) column-name           = %s\n", def->Name);
+    fprintf(memstream, "(log) column-is-primary-key = %d\n", def->IsPrimaryKey);
+    fprintf(memstream, "(log) column-is-nullable    = %d\n", def->IsNullable);
+    fprintf(memstream, "(log) column-is-unique      = %d\n", def->IsNullable);
+    fprintf(memstream, "(log) column-default-value  = %s\n", def->DefaultValue);
+    fprintf(memstream, "(log) column-created        = %ld\n", def->CreatedAt);
+    fprintf(memstream, "(log) column-last-modified  = %ld\n", def->LastModified);
 
     fclose(memstream);
     return buffer;
@@ -240,7 +276,7 @@ void FreeTableDefinition(TableDefinition *def)
 {
     if (def)
     {
-        free(def->TableName);
+        free(def->Name);
         for (int c = 0; c < def->ColumnCount; c++)
         {
             FreeTableColDefinition(def->Columns[c]);
@@ -291,7 +327,6 @@ SchemaDefinition *NewSchemaDefinition(char *name, ...)
     }
 
     def->TableCount = count;
-
     return def;
 }
 

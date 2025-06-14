@@ -13,25 +13,24 @@
 
 typedef struct
 {
-    int Offset;      /** The offset of the file position from the start */
-    char *TableName; /** The name of the table */
+    int Offset; /** The offset of the file position from the start */
+    int Id;     /** The id of the table */
 } TableOffset;
 
 typedef struct
 {
     TableOffset **Offsets; /** Offsets to tables */
-    int OffsetCount;       /** Number of offsets */
+    int TableCount;        /** Number of offsets */
     int ImwebOffset;       /** Offset to the immediate-write-buffer */
 } Offset;
 
-TableOffset *NewTableOffset(const char *, int);
+TableOffset *NewTableOffset(int, int);
 int AddTableOffset(Offset *, const TableOffset *);
 char *FormatTableOffset(const TableOffset *);
-void FreeTableOffset(TableOffset *);
 
 Offset *NewOffset(int, ...);
 Offset *NewOffsetN(int, const TableOffset **);
 void FreeOffset(Offset *);
-char *FormatOffset(const TableOffset *);
+char *FormatOffset(const Offset *);
 
 #endif
