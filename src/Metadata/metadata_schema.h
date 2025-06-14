@@ -18,7 +18,7 @@ enum SchemaType
     DATE,
 };
 
-struct TableColDefinition
+typedef struct
 {
     char *ColumnName;
     enum SchemaType ColumnType;
@@ -26,36 +26,36 @@ struct TableColDefinition
     void *ColumnDefaultValue;
     time_t ColumnCreatedAt;
     time_t ColumnLastModified;
-};
+} TableColDefinition;
 
-struct TableDefinition
+typedef struct
 {
     char *TableName;
     struct TableColDefinition **Columns;
     int ColumnCount;
     time_t CreatedAt;
     time_t LastModified;
-};
+} TableDefinition;
 
-struct SchemaDefinition
+typedef struct
 {
     struct TableDefinition **TableDefs;
     int TableCount;
     char *TagName;
     time_t CreatedAt;
     time_t LastModified;
-};
+} SchemaDefinition;
 
-struct TableColDefinition *NewTableColumn(char *, enum SchemaType, bool, const void *);
-char *FormatTableColDefinition(struct TableColDefinition *);
-void FreeTableColDefinition(struct TableColDefinition *);
+TableColDefinition *NewTableColumn(char *, enum SchemaType, bool, const void *);
+char *FormatTableColDefinition(TableColDefinition *);
+void FreeTableColDefinition(TableColDefinition *);
 
-struct TableDefinition *NewTableDefinition(char *, ...);
-char *FormatTableDefinition(struct TableDefinition *);
-void FreeTableDefinition(struct TableDefinition *);
+TableDefinition *NewTableDefinition(char *, ...);
+char *FormatTableDefinition(TableDefinition *);
+void FreeTableDefinition(TableDefinition *);
 
-struct SchemaDefinition *NewSchemaDefinition(char *, ...);
-void IntrospectSchema(struct SchemaDefinition *);
-void FreeSchemaDefinition(struct SchemaDefinition *);
+SchemaDefinition *NewSchemaDefinition(char *, ...);
+void IntrospectSchema(SchemaDefinition *);
+void FreeSchemaDefinition(SchemaDefinition *);
 
 #endif

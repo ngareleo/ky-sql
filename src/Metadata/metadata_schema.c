@@ -6,10 +6,10 @@
 #include <stdarg.h>
 #include "metadata_schema.h"
 
-struct TableColDefinition *NewTableColumn(char *name, enum SchemaType schemaType, bool isUnique, const void *defaultValue)
+TableColDefinition *NewTableColumn(char *name, enum SchemaType schemaType, bool isUnique, const void *defaultValue)
 {
     time_t now;
-    struct TableColDefinition *colDef = malloc(sizeof(struct TableColDefinition));
+    TableColDefinition *colDef = malloc(sizeof(TableColDefinition));
     if (!name || !colDef || !defaultValue)
     {
         fprintf(stderr, "Error creating column. Passed null values. \n");
@@ -65,7 +65,7 @@ struct TableColDefinition *NewTableColumn(char *name, enum SchemaType schemaType
     return colDef;
 };
 
-void FreeTableColDefinition(struct TableColDefinition *def)
+void FreeTableColDefinition(TableColDefinition *def)
 {
     if (!def)
     {
@@ -76,12 +76,12 @@ void FreeTableColDefinition(struct TableColDefinition *def)
     free(def);
 }
 
-struct TableDefinition *NewTableDefinition(char *name, ...)
+TableDefinition *NewTableDefinition(char *name, ...)
 {
     va_list args;
     time_t now;
-    struct TableDefinition *tableDef;
-    struct TableColDefinition
+    TableDefinition *tableDef;
+    TableColDefinition
         **colDefs,
         *allCols[MAX_TABLE_COLUMN_COUNT],
         *currCol;
@@ -100,13 +100,13 @@ struct TableDefinition *NewTableDefinition(char *name, ...)
     }
 
     va_start(args, name);
-    while ((currCol = va_arg(args, struct TableColDefinition *)) != NULL)
+    while ((currCol = va_arg(args, TableColDefinition *)) != NULL)
     {
         allCols[count++] = currCol;
     }
     va_end(args);
 
-    tableDef = malloc(sizeof(struct TableColDefinition));
+    tableDef = malloc(sizeof(TableColDefinition));
     if (!tableDef)
     {
         fprintf(stderr, "[NewTableDefinition] Error creating Table. malloc failed. \n");
@@ -122,7 +122,7 @@ struct TableDefinition *NewTableDefinition(char *name, ...)
     }
     strcpy(tableDef->TableName, name);
 
-    tableDef->Columns = malloc(sizeof(struct TableColDefinition *) * count);
+    tableDef->Columns = malloc(sizeof(TableColDefinition *) * count);
     if (!tableDef->Columns)
     {
         fprintf(stderr, "[NewTableDefinition] Error creating Table. malloc failed. \n");
@@ -145,7 +145,7 @@ struct TableDefinition *NewTableDefinition(char *name, ...)
 
 const int PADDING = 100;
 
-char *FormatTableDefinition(struct TableDefinition *def)
+char *FormatTableDefinition(TableDefinition *def)
 {
     char *buffer;
     size_t size;
@@ -178,7 +178,7 @@ char *FormatTableDefinition(struct TableDefinition *def)
     return buffer;
 }
 
-void FreeTableDefinition(struct TableDefinition *def)
+void FreeTableDefinition(TableDefinition *def)
 {
     if (!def)
     {
@@ -194,12 +194,12 @@ void FreeTableDefinition(struct TableDefinition *def)
     free(def);
 }
 
-struct SchemaDefinition *NewSchemaDefinition(char *name, ...)
+SchemaDefinition *NewSchemaDefinition(char *name, ...)
 {
     va_list args;
     int count = 0;
-    struct TableDefinition *allTables[MAX_TABLE_COUNT], *currentDef;
-    struct SchemaDefinition *def;
+    TableDefinition *allTables[MAX_TABLE_COUNT], *currentDef;
+    SchemaDefinition *def;
 
     if (!name)
     {
@@ -208,20 +208,20 @@ struct SchemaDefinition *NewSchemaDefinition(char *name, ...)
     }
 
     va_start(args, name);
-    while ((currentDef = va_arg(args, struct TableDefinition *)) != NULL)
+    while ((currentDef = va_arg(args, TableDefinition *)) != NULL)
     {
         allTables[count++] = currentDef;
     }
     va_end(args);
 
-    def = malloc(sizeof(struct SchemaDefinition));
+    def = malloc(sizeof(SchemaDefinition));
     if (!def)
     {
         fprintf(stderr, "[NewSchemaDefinition] Error creating schema definition. malloc failed\n");
         return NULL;
     }
 
-    def->TableDefs = malloc(sizeof(struct TableDefinition) * count);
+    def->TableDefs = malloc(sizeof(TableDefinition) * count);
     if (!def->TableDefs)
     {
         fprintf(stderr, "[NewSchemaDefinition] Error creating schema definition. malloc failed\n");
@@ -239,7 +239,7 @@ struct SchemaDefinition *NewSchemaDefinition(char *name, ...)
     return def;
 }
 
-void FreeSchemaDefinition(struct SchemaDefinition *def)
+void FreeSchemaDefinition(SchemaDefinition *def)
 {
     if (!def)
     {

@@ -8,19 +8,19 @@
 
 const size_t wBytes = 1000;
 
-struct TableOffset *NewTableOffset(const char *tableName, int offset)
+TableOffset *NewTableOffset(const char *tableName, int offset)
 {
-    struct TableOffset *tableOffset;
-    tableOffset = malloc(sizeof(struct TableOffset));
+    TableOffset *tableOffset;
 
-    if (tableOffset == NULL)
+    tableOffset = malloc(sizeof(TableOffset));
+    if (!tableOffset)
     {
         return NULL;
     }
-
     tableOffset->Offset = offset;
+
     tableOffset->TableName = malloc(strlen(tableName) + 1);
-    if (tableOffset->TableName == NULL)
+    if (!tableOffset->TableName)
     {
         free(tableOffset);
         return NULL;
@@ -30,7 +30,7 @@ struct TableOffset *NewTableOffset(const char *tableName, int offset)
     return tableOffset;
 }
 
-void FreeTableOffset(struct TableOffset *offset)
+void FreeTableOffset(TableOffset *offset)
 {
     if (!offset)
     {
@@ -41,10 +41,10 @@ void FreeTableOffset(struct TableOffset *offset)
     free(offset);
 }
 
-char *FormatTableOffset(const struct TableOffset *tableOffset)
+char *FormatTableOffset(const TableOffset *tableOffset)
 {
     char *str = malloc(wBytes);
-    if (str == NULL)
+    if (!str)
     {
         return NULL;
     }
@@ -52,28 +52,28 @@ char *FormatTableOffset(const struct TableOffset *tableOffset)
     return str;
 }
 
-struct Offset *NewOffset(int imwebOffset, ...)
+Offset *NewOffset(int imwebOffset, ...)
 {
     va_list args;
-    struct Offset *offset;
-    struct TableOffset *curr, *allOffsets[MAX_TABLE_COUNT];
+    Offset *offset;
+    TableOffset *curr, *allOffsets[MAX_TABLE_COUNT];
     int count = 0;
 
     va_start(args, imwebOffset);
-    while ((curr = va_arg(args, struct TableOffset *)) != NULL)
+    while ((curr = va_arg(args, TableOffset *)) != NULL)
     {
         allOffsets[count++] = curr;
     }
     va_end(args);
 
-    offset = malloc(sizeof(struct Offset));
-    if (offset == NULL)
+    offset = malloc(sizeof(Offset));
+    if (!offset)
     {
         fprintf(stderr, "[NewOffset] Error creating Offset. malloc failed. \n");
         return NULL;
     }
 
-    offset->Offsets = malloc(sizeof(struct TableOffset *) * count);
+    offset->Offsets = malloc(sizeof(TableOffset *) * count);
     if (!offset->Offsets)
     {
         fprintf(stderr, "[NewOffset] Error creating Offset. malloc failed. \n");
@@ -91,11 +91,9 @@ struct Offset *NewOffset(int imwebOffset, ...)
     return offset;
 }
 
-struct Offset *NewOffsetN(int imwebOffset, const struct TableOffset **offsets)
+Offset *NewOffsetN(int imwebOffset, const TableOffset **offsets)
 {
-    va_list args;
-    struct Offset *offset;
-    struct TableOffset *curr, *allOffsets[MAX_TABLE_COUNT];
+    Offset *offset;
     int count;
 
     if (!offsets)
@@ -104,25 +102,26 @@ struct Offset *NewOffsetN(int imwebOffset, const struct TableOffset **offsets)
         return NULL;
     }
 
-    offset = malloc(sizeof(struct Offset));
-    if (offset == NULL)
+    count = Count(offsets);
+
+    offset = malloc(sizeof(Offset));
+    if (!offset)
     {
         fprintf(stderr, "[NewOffsetN] Error creating Offset. malloc failed. \n");
         return NULL;
     }
 
-    count = Count(offsets);
-    offset->Offsets = malloc(sizeof(struct TableOffset *) * count);
+    offset->Offsets = malloc(sizeof(TableOffset *) * count);
     if (!offset->Offsets)
     {
-        fprintf(stderr, "[NewOffsetN] Error creating Offset. malloc failed. \n");
         free(offset);
+        fprintf(stderr, "[NewOffsetN] Error creating Offset. malloc failed. \n");
         return NULL;
     }
 
     for (int c = 0; c < count; c++)
     {
-        offset->Offsets[c] = allOffsets[c];
+        offset->Offsets[c] = offsets[c];
 
         // As long as we use Count() we're guranteed this won't hit.
         // Just incase the implementation fails.
@@ -145,9 +144,9 @@ struct Offset *NewOffsetN(int imwebOffset, const struct TableOffset **offsets)
     return offset;
 }
 
-int AddTableOffset(struct Offset *offset, const struct TableOffset *table)
+int AddTableOffset(Offset *offset, const TableOffset *table)
 {
-    struct TableOffset **newOff;
+    TableOffset **newOff;
 
     if (!offset || !table)
     {
@@ -155,26 +154,22 @@ int AddTableOffset(struct Offset *offset, const struct TableOffset *table)
         return -1;
     }
 
-    newOff = malloc(sizeof(struct TableOffset *) * offset->OffsetCount + 1);
+    newOff = malloc(sizeof(TableOffset *) * offset->OffsetCount + 1);
     if (!newOff)
     {
         fprintf(stderr, "[AddOffset] Error adding Offset. malloc failed. \n");
         return -1;
     }
 
-    if (!offset->Offsets)
+    if (offset->Offsets)
     {
-        newOff[0] = table;
-        offset->Offsets = newOff;
-        return 0;
+        for (int c = 0; c < offset->OffsetCount; c++)
+        {
+            newOff[c] = offset->Offsets[c];
+        }
     }
 
-    for (int c = 0; c < offset->OffsetCount; c++)
-    {
-        newOff[c] = offset->Offsets[c];
-    }
     newOff[offset->OffsetCount] = table;
-
     free(offset->Offsets);
     offset->Offsets = newOff;
     offset->OffsetCount++;
@@ -182,19 +177,15 @@ int AddTableOffset(struct Offset *offset, const struct TableOffset *table)
     return 0;
 }
 
-void FreeOffset(struct Offset *offset)
+void FreeOffset(Offset *offset)
 {
-
-    if (offset == NULL)
+    if (offset)
     {
-        return;
+        for (int c = 0; c < offset->OffsetCount; c++)
+        {
+            FreeTableOffset(offset->Offsets[c]);
+        }
+        free(offset->Offsets);
+        free(offset);
     }
-
-    for (int c = 0; c < offset->OffsetCount; c++)
-    {
-        FreeTableOffset(offset->Offsets[c]);
-    }
-
-    free(offset->Offsets);
-    free(offset);
 }

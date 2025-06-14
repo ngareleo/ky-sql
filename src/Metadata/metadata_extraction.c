@@ -5,27 +5,17 @@
 #include "metadata_extraction.h"
 #include "metadata_offsets.h"
 
-const int BuildSchemaFromPersistedFormat(struct FileMetadata *meta, const struct PersistedFileMetadata *file)
+int BuildSchemaFromPersistedFormat(FileMetadata *meta, const PersistedFileMetadata *file)
 {
-    struct TableDefinition *tableDefs;
-
     if (!file || !meta)
     {
         fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. passed a null value. \n");
         return -1;
     }
 
-    tableDefs = malloc(sizeof(struct TableDefinition *) * file->TableCount);
-    if (!tableDefs)
-    {
-        fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. passed a null value. \n");
-        return;
-    }
-
-    meta->Schema = malloc(sizeof(struct SchemaDefinition));
+    meta->Schema = malloc(sizeof(SchemaDefinition));
     if (!meta->Schema)
     {
-        free(tableDefs);
         fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. malloc failed. \n");
         return -1;
     }
@@ -35,17 +25,15 @@ const int BuildSchemaFromPersistedFormat(struct FileMetadata *meta, const struct
     meta->Schema->TagName = malloc(strlen(file->Schema.TagName + 1));
     if (!meta->Schema->TagName)
     {
-        free(tableDefs);
         free(meta->Schema);
         fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. malloc failed. \n");
         return -1;
     }
     strcpy(meta->Schema->TagName, &file->Schema.TagName);
 
-    meta->Schema->TableDefs = malloc(sizeof(struct TableDefinition *) * file->TableCount);
+    meta->Schema->TableDefs = malloc(sizeof(TableDefinition *) * file->TableCount);
     if (!meta->Schema->TableDefs)
     {
-        free(tableDefs);
         free(meta->Schema);
         free(meta->Schema->TagName);
         fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. malloc failed. \n");
@@ -54,10 +42,9 @@ const int BuildSchemaFromPersistedFormat(struct FileMetadata *meta, const struct
 
     for (int ti = 0; ti < file->TableCount; ti++)
     {
-        struct TableDefinition *tableDef = malloc(sizeof(struct TableDefinition));
+        TableDefinition *tableDef = malloc(sizeof(TableDefinition));
         if (!tableDef)
         {
-            free(tableDefs);
             free(meta->Schema->TableDefs);
             free(meta->Schema->TagName);
             free(meta->Schema);
@@ -67,11 +54,9 @@ const int BuildSchemaFromPersistedFormat(struct FileMetadata *meta, const struct
 
         for (int ci = 0; ci < file->Schema.TableDefs[ti].ColumnCount; ci++)
         {
-            struct TableColDefinition *def = malloc(sizeof(struct TableColDefinition));
+            TableColDefinition *def = malloc(sizeof(TableColDefinition));
             if (!def)
             {
-
-                free(tableDefs);
                 free(tableDef);
                 for (int ti2 = 0; ti2 < ti; ti2++)
                 {
@@ -88,7 +73,6 @@ const int BuildSchemaFromPersistedFormat(struct FileMetadata *meta, const struct
             if (!def->ColumnName)
             {
                 free(def);
-                free(tableDefs);
                 free(tableDef);
                 for (int ti2 = 0; ti2 < ti; ti2++)
                 {
@@ -102,53 +86,11 @@ const int BuildSchemaFromPersistedFormat(struct FileMetadata *meta, const struct
             }
             strcpy(def->ColumnName, &file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnName);
 
-            switch (file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnType)
+            int converted = ConvertDefaultValue(def, file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnType, file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnDefaultValue);
+            if (!converted)
             {
-            case DATE:
-                def->ColumnDefaultValue = malloc(sizeof(time_t));
-                if (def->ColumnDefaultValue)
-                {
-                    *(time_t *)def->ColumnDefaultValue = atol(file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnDefaultValue);
-                }
-                break;
-            case INTEGER:
-                def->ColumnDefaultValue = malloc(sizeof(int));
-                if (def->ColumnDefaultValue)
-                {
-                    *(int *)def->ColumnDefaultValue = atoi(file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnDefaultValue);
-                }
-                break;
-            case STRING:
-                def->ColumnDefaultValue = malloc(strlen(file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnDefaultValue) + 1);
-                if (def->ColumnDefaultValue)
-                {
-                    strcpy(def->ColumnDefaultValue, &file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnDefaultValue);
-                }
-                break;
-            case FLOAT:
-                def->ColumnDefaultValue = malloc(sizeof(double));
-                if (def->ColumnDefaultValue)
-                {
-                    *(double *)def->ColumnDefaultValue = atof(file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnDefaultValue);
-                }
-                break;
-            case BOOL:
-                def->ColumnDefaultValue = malloc(sizeof(bool));
-                if (def->ColumnDefaultValue)
-                {
-                    *(bool *)def->ColumnDefaultValue = file->Schema.TableDefs[ti].ColumnDefs[ci].ColumnDefaultValue == "0" ? true : false;
-                }
-                break;
-            default:
-                break;
-            }
-
-            if (!def->ColumnDefaultValue)
-            {
-                fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. malloc failed. \n");
                 free(def);
                 free(def->ColumnName);
-                free(tableDefs);
                 free(tableDef);
                 for (int ti2 = 0; ti2 < ti; ti2++)
                 {
@@ -157,6 +99,7 @@ const int BuildSchemaFromPersistedFormat(struct FileMetadata *meta, const struct
                 free(meta->Schema->TableDefs);
                 free(meta->Schema->TagName);
                 free(meta->Schema);
+                fprintf(stderr, "[BuildSchemaFromPersistedFormat] Cannot build the schema from persisted file. malloc failed. \n");
                 return -1;
             }
 
@@ -173,18 +116,69 @@ const int BuildSchemaFromPersistedFormat(struct FileMetadata *meta, const struct
     return 0;
 }
 
-const int BuildOffsetsFromPersistedFormat(struct FileMetadata *meta, const struct PersistedFileMetadata *file)
+const int ConvertDefaultValue(TableColDefinition *def, const enum SchemaType schemaType, const void *defaultValue)
 {
-    struct TableOffset **offsets;
+    switch (schemaType)
+    {
+    case DATE:
+        def->ColumnDefaultValue = malloc(sizeof(time_t));
+        if (def->ColumnDefaultValue)
+        {
+            *(time_t *)def->ColumnDefaultValue = atol(defaultValue);
+            return 0;
+        }
+        break;
+    case INTEGER:
+        def->ColumnDefaultValue = malloc(sizeof(int));
+        if (def->ColumnDefaultValue)
+        {
+            *(int *)def->ColumnDefaultValue = atoi(defaultValue);
+            return 0;
+        }
+        break;
+    case STRING:
+        def->ColumnDefaultValue = malloc(strlen(defaultValue) + 1);
+        if (def->ColumnDefaultValue)
+        {
+            strcpy(def->ColumnDefaultValue, defaultValue);
+            return 0;
+        }
+        break;
+    case FLOAT:
+        def->ColumnDefaultValue = malloc(sizeof(double));
+        if (def->ColumnDefaultValue)
+        {
+            *(double *)def->ColumnDefaultValue = atof(defaultValue);
+            return 0;
+        }
+        break;
+    case BOOL:
+        def->ColumnDefaultValue = malloc(sizeof(bool));
+        if (def->ColumnDefaultValue)
+        {
+            *(bool *)def->ColumnDefaultValue = defaultValue == "0" ? true : false;
+            return 0;
+        }
+        break;
+    default:
+        break;
+    }
 
-    meta->Offset = malloc(sizeof(struct Offset));
+    return -1;
+}
+
+const int BuildOffsetsFromPersistedFormat(FileMetadata *meta, const PersistedFileMetadata *file)
+{
+    TableOffset **offsets;
+
+    meta->Offset = malloc(sizeof(Offset));
     if (!meta->Offset)
     {
         fprintf(stderr, "[BuildOffsetsFromPersistedFormat] Error building metadata from persisted format. malloc failed. \n");
         return -1;
     }
 
-    offsets = malloc(sizeof(struct TableOffset *) * file->OffsetCount);
+    offsets = malloc(sizeof(TableOffset *) * file->OffsetCount);
     if (!offsets)
     {
         free(meta->Offset);
@@ -215,16 +209,16 @@ const int BuildOffsetsFromPersistedFormat(struct FileMetadata *meta, const struc
     return 0;
 }
 
-struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata *metadata)
+FileMetadata *BootFileMetadataFromFile(const PersistedFileMetadata *metadata)
 {
-    struct FileMetadata *target;
+    FileMetadata *target;
 
     if (!metadata)
     {
         return NULL;
     }
 
-    target = malloc(sizeof(struct FileMetadata));
+    target = malloc(sizeof(FileMetadata));
     if (!target)
     {
         fprintf(stderr, "[BootFileMetadataFromFile] Error booting metadata from file. malloc failed. \n");
@@ -234,7 +228,7 @@ struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata
     if (!BuildOffsetsFromPersistedFormat(target, metadata))
     {
         free(target);
-        fprintf(stderr, "[BootFileMetadataFromFile] Error booting metadata from file. failed while copying over schema. \n");
+        fprintf(stderr, "[BootFileMetadataFromFile] Error booting metadata from file. failed while copying over offsets. \n");
         return NULL;
     }
 
@@ -253,9 +247,9 @@ struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata
     return target;
 }
 
-struct PersistedFileMetadata *MapToPersistedMetadata(const struct FileMetadata *metadata)
+PersistedFileMetadata *MapToPersistedMetadata(const FileMetadata *metadata)
 {
-    struct PersistedFileMetadata *target;
+    PersistedFileMetadata *target;
 
     if (!metadata)
     {
@@ -263,7 +257,7 @@ struct PersistedFileMetadata *MapToPersistedMetadata(const struct FileMetadata *
         return NULL;
     }
 
-    target = malloc(sizeof(struct PersistedFileMetadata));
+    target = malloc(sizeof(PersistedFileMetadata));
     if (!target)
     {
         fprintf(stderr, "[MapToPersistedMetadata] Mapping to persisted metadata failed. malloc failed. \n");
@@ -284,12 +278,12 @@ struct PersistedFileMetadata *MapToPersistedMetadata(const struct FileMetadata *
     return target;
 }
 
-struct FileMetadata *NewFileMetadata(struct Offset *offset, struct SchemaDefinition *schema)
+FileMetadata *NewFileMetadata(Offset *offset, SchemaDefinition *schema)
 {
-    struct FileMetadata *fMetadata;
+    FileMetadata *fMetadata;
     time_t now;
 
-    fMetadata = malloc(sizeof(struct FileMetadata));
+    fMetadata = malloc(sizeof(FileMetadata));
     if (fMetadata == NULL)
     {
         fprintf(stderr, "[NewFileMetadata] cannot create metadata. malloc failed. \n");
@@ -310,7 +304,7 @@ struct FileMetadata *NewFileMetadata(struct Offset *offset, struct SchemaDefinit
     return fMetadata;
 }
 
-void FreeFileMetadata(struct FileMetadata *metadata)
+void FreeFileMetadata(FileMetadata *metadata)
 {
     if (metadata == NULL)
     {
@@ -321,7 +315,7 @@ void FreeFileMetadata(struct FileMetadata *metadata)
     free(metadata);
 }
 
-void IntrospectMetadata(const struct FileMetadata *metadata)
+void IntrospectMetadata(const FileMetadata *metadata)
 {
     if (!metadata)
     {
@@ -347,10 +341,10 @@ void IntrospectMetadata(const struct FileMetadata *metadata)
     fprintf(stdout, "[IntrospectMetadata] ############# End of log #############\n\n");
 }
 
-int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFileMetadata *map(const struct FileMetadata *metadata))
+int WriteMetadataToFile(FILE *file, FileMetadata *in, PersistedFileMetadata *map(const FileMetadata *metadata))
 {
     int status = -1;
-    struct PersistedFileMetadata *target;
+    PersistedFileMetadata *target;
     if (!map)
     {
         fprintf(stderr, "[WriteMetadataToFile] Could not write metadata to file. map is null \n");
@@ -366,7 +360,7 @@ int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFil
             break;
         }
 
-        if (!fwrite(target, sizeof(struct PersistedFileMetadata), 1, file))
+        if (!fwrite(target, sizeof(PersistedFileMetadata), 1, file))
         {
             fprintf(stderr, "[WriteMetadataToFile] Could not write metadata to file. fwrite failed \n");
             break;
@@ -379,9 +373,9 @@ int WriteMetadataToFile(FILE *file, struct FileMetadata *in, struct PersistedFil
     return status;
 }
 
-int ReadMetadataFromFile(FILE *file, struct FileMetadata **out, struct FileMetadata *map(const struct PersistedFileMetadata *metadata))
+int ReadMetadataFromFile(FILE *file, FileMetadata **out, FileMetadata *map(const PersistedFileMetadata *metadata))
 {
-    struct PersistedFileMetadata *buffer;
+    PersistedFileMetadata *buffer;
     int status = -1;
     if (map == NULL)
     {
@@ -390,14 +384,14 @@ int ReadMetadataFromFile(FILE *file, struct FileMetadata **out, struct FileMetad
 
     do
     {
-        buffer = malloc(sizeof(struct PersistedFileMetadata));
+        buffer = malloc(sizeof(PersistedFileMetadata));
         if (!buffer)
         {
             fprintf(stderr, "[ReadMetadataFromFile] Could not read metadata from file. malloc failed \n");
             break;
         }
 
-        fread(buffer, sizeof(struct PersistedFileMetadata), 1, file);
+        fread(buffer, sizeof(PersistedFileMetadata), 1, file);
         if (!buffer)
         {
             fprintf(stderr, "[ReadMetadataFromFile] Could not read metadata from file. fread failed \n");

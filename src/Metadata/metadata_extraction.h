@@ -10,17 +10,17 @@
 #define MAX_TABLE_COUNT 100
 #define MAX_PROPERTY_NAME_SIZE 100
 
-struct FileMetadata
+typedef struct
 {
-    struct SchemaDefinition *Schema; /** A repr of the SQL schema */
-    struct Offset *Offset;           /** Offset values*/
-    time_t CreatedAt;                /** When was this database created */
-    time_t LastModified;             /** When was this last modified */
-    int TableCount;                  /** Number of tables in database */
-};
+    SchemaDefinition *Schema; /** A repr of the SQL schema */
+    Offset *Offset;           /** Offset values*/
+    time_t CreatedAt;         /** When was this database created */
+    time_t LastModified;      /** When was this last modified */
+    int TableCount;           /** Number of tables in database */
+} FileMetadata;
 
 #pragma pack(1)
-struct PersistedFileMetadata
+typedef struct
 {
     struct PersistedTableOffset
     {
@@ -54,24 +54,24 @@ struct PersistedFileMetadata
     time_t LastModified;                                         /** When was this last modified */
     int ImwebOffset;                                             /** Offset values*/
     int TableCount;                                              /** Number of tables in database */
-};
+} PersistedFileMetadata;
 #pragma pack(0)
 
-struct FileMetadata *NewFileMetadata(struct Offset *, struct SchemaDefinition *schema);
-void FreeFileMetadata(struct FileMetadata *);
-char *FormatTableOffset(const struct TableOffset *);
-void IntrospectMetadata(const struct FileMetadata *);
+FileMetadata *NewFileMetadata(Offset *, SchemaDefinition *schema);
+void FreeFileMetadata(FileMetadata *);
+char *FormatTableOffset(const TableOffset *);
+void IntrospectMetadata(const FileMetadata *);
 /**
  * Writes a FileMetadata struct into a 'file' in-form of a PersistedFileMetadata
  * Also takes a mapping function that constructs the PersistedFileMetadata struct.
  * Does the required stack allocation.
  */
-int WriteMetadataToFile(FILE *, struct FileMetadata *, struct PersistedFileMetadata *(const struct FileMetadata *));
+int WriteMetadataToFile(FILE *, FileMetadata *, PersistedFileMetadata *(const FileMetadata *));
 /**
  * Reads out a FileMetadata struct from the 'file' into 'in'.
  * Also takes a mapping function that constructs the output struct.
  */
-int ReadMetadataFromFile(FILE *, struct FileMetadata **, struct FileMetadata *(const struct PersistedFileMetadata *));
-struct FileMetadata *BootFileMetadataFromFile(const struct PersistedFileMetadata *);
+int ReadMetadataFromFile(FILE *, FileMetadata **, FileMetadata *(const PersistedFileMetadata *));
+FileMetadata *BootFileMetadataFromFile(const PersistedFileMetadata *);
 
 #endif
