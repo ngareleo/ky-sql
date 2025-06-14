@@ -6,7 +6,6 @@
 
 #define MAX_TABLE_COLUMN_COUNT 100
 #define MAX_TABLE_COUNT 100
-#define MAX_LOG_BUFFER 10000
 
 enum SchemaType
 {
@@ -31,7 +30,7 @@ typedef struct
 typedef struct
 {
     char *TableName;
-    struct TableColDefinition **Columns;
+    TableColDefinition **Columns;
     int ColumnCount;
     time_t CreatedAt;
     time_t LastModified;
@@ -39,23 +38,23 @@ typedef struct
 
 typedef struct
 {
-    struct TableDefinition **TableDefs;
+    TableDefinition **TableDefs;
     int TableCount;
     char *TagName;
     time_t CreatedAt;
     time_t LastModified;
 } SchemaDefinition;
 
-TableColDefinition *NewTableColumn(char *, enum SchemaType, bool, const void *);
+TableColDefinition *NewTableColumn(const char *, enum SchemaType, bool, const char *);
 char *FormatTableColDefinition(TableColDefinition *);
 void FreeTableColDefinition(TableColDefinition *);
 
 TableDefinition *NewTableDefinition(char *, ...);
-char *FormatTableDefinition(TableDefinition *);
+char *FormatTableDefinition(const TableDefinition *);
 void FreeTableDefinition(TableDefinition *);
 
 SchemaDefinition *NewSchemaDefinition(char *, ...);
-void IntrospectSchema(SchemaDefinition *);
 void FreeSchemaDefinition(SchemaDefinition *);
+char *FormatSchemaDefinition(const SchemaDefinition *);
 
 #endif

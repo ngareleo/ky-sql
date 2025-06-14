@@ -25,10 +25,13 @@ typedef struct
 } Offset;
 
 TableOffset *NewTableOffset(const char *, int);
+int AddTableOffset(Offset *, const TableOffset *);
+char *FormatTableOffset(const TableOffset *);
+void FreeTableOffset(TableOffset *);
+
 Offset *NewOffset(int, ...);
 Offset *NewOffsetN(int, const TableOffset **);
-int AddTableOffset(Offset *, const TableOffset *);
 void FreeOffset(Offset *);
-char *FormatTableOffset(const TableOffset *);
+char *FormatOffset(const TableOffset *);
 
 #endif

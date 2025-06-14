@@ -16,7 +16,6 @@ typedef struct
     Offset *Offset;           /** Offset values*/
     time_t CreatedAt;         /** When was this database created */
     time_t LastModified;      /** When was this last modified */
-    int TableCount;           /** Number of tables in database */
 } FileMetadata;
 
 #pragma pack(1)
@@ -54,7 +53,7 @@ typedef struct
     time_t LastModified;                                         /** When was this last modified */
     int ImwebOffset;                                             /** Offset values*/
     int TableCount;                                              /** Number of tables in database */
-} PersistedFileMetadata;                                        
+} PersistedFileMetadata;
 #pragma pack(0)
 
 FileMetadata *NewFileMetadata(Offset *, SchemaDefinition *schema);

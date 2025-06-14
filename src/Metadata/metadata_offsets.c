@@ -10,19 +10,29 @@ TableOffset *NewTableOffset(const char *tableName, int offset)
 {
     TableOffset *tableOffset;
 
+    if (!tableName)
+    {
+        fprintf(stderr, "(new-table-offset-err) tablename is NULL.\n");
+        return NULL;
+    }
+
     tableOffset = malloc(sizeof(TableOffset));
     if (!tableOffset)
     {
+        fprintf(stderr, "(new-table-offset-err) malloc failed.\n");
         return NULL;
     }
+
     tableOffset->Offset = offset;
 
     tableOffset->TableName = malloc(strlen(tableName) + 1);
     if (!tableOffset->TableName)
     {
+        fprintf(stderr, "(new-table-offset-err) malloc failed.\n");
         free(tableOffset);
         return NULL;
     }
+
     strcpy(tableOffset->TableName, tableName);
 
     return tableOffset;
@@ -43,15 +53,52 @@ char *FormatTableOffset(const TableOffset *tableOffset)
     char *buffer;
     size_t size;
 
+    if (!tableOffset)
+    {
+        fprintf(stderr, "(format-table-offset-err) tableOffset is null.\n");
+        return NULL;
+    }
+
     stream = open_memstream(&buffer, &size);
     if (!stream)
     {
-        fprintf(stderr, "(formay-table-offset-err) open_memstream failed.\n");
+        fprintf(stderr, "(format-table-offset-err) open_memstream failed.\n");
         return NULL;
     }
 
     sprintf(stream, "(log) table-name = %s.\n", tableOffset->TableName);
     sprintf(stream, "(log) offset     = %d.\n", tableOffset->Offset);
+
+    fclose(stream);
+    return buffer;
+}
+
+char *FormatOffset(const Offset *offset)
+{
+    FILE *stream;
+    char *buffer;
+    size_t size;
+
+    if (!offset)
+    {
+        fprintf(stderr, "(format-offset-err) offset is null.\n");
+        return NULL;
+    }
+
+    stream = open_memstream(&buffer, &size);
+    if (!stream)
+    {
+        fprintf(stderr, "(format-offset-err) open_memstream failed.\n");
+        return NULL;
+    }
+
+    sprintf(stream, "(log) immediate-write-buffer-offset = %d.\n", offset->ImwebOffset);
+    sprintf(stream, "(log) offset-count                  = %d.\n", offset->OffsetCount);
+
+    for (int c = 0; c < offset->OffsetCount; c++)
+    {
+        sprintf(stream, "(log) table-offset[%d] = %s\n", c, FormatTableOffset(offset->Offsets[c]));
+    }
 
     fclose(stream);
     return buffer;
@@ -155,14 +202,14 @@ int AddTableOffset(Offset *offset, const TableOffset *table)
 
     if (!offset || !table)
     {
-        fprintf(stderr, "(add-offset) offset or table is NULL. \n");
+        fprintf(stderr, "(add-offset-err) offset or table is NULL. \n");
         return -1;
     }
 
     newOff = malloc(sizeof(TableOffset *) * offset->OffsetCount + 1);
     if (!newOff)
     {
-        fprintf(stderr, "(add-offset) malloc failed. \n");
+        fprintf(stderr, "(add-offset-err) malloc failed. \n");
         return -1;
     }
 

@@ -6,7 +6,7 @@
 #include <stdarg.h>
 #include "metadata_schema.h"
 
-TableColDefinition *NewTableColumn(char *name, enum SchemaType schemaType, bool isUnique, const void *defaultValue)
+TableColDefinition *NewTableColumn(const char *name, enum SchemaType schemaType, bool isUnique, const char *defaultValue)
 {
     time_t now;
     TableColDefinition *colDef;
@@ -38,42 +38,23 @@ TableColDefinition *NewTableColumn(char *name, enum SchemaType schemaType, bool 
         fprintf(stderr, "(new-table-column-err) malloc failed. \n");
         return NULL;
     }
-    else
+
+    colDef->ColumnDefaultValue = malloc(strlen(defaultValue) + 1);
+    if (!colDef->ColumnDefaultValue)
     {
-        strcpy(colDef->ColumnName, name);
+        free(colDef->ColumnName);
+        free(colDef);
+        fprintf(stderr, "(new-table-column-err) malloc failed. \n");
+        return NULL;
     }
 
+    strcpy(colDef->ColumnDefaultValue, defaultValue);
+    strcpy(colDef->ColumnName, name);
     colDef->ColumnCreatedAt = now;
     colDef->ColumnLastModified = now;
     colDef->ColumnType = schemaType;
     colDef->ColumnIsUnique = isUnique;
-
-    switch (schemaType)
-    {
-    case BOOL:
-        colDef->ColumnDefaultValue = (bool *)defaultValue;
-        break;
-
-    case INTEGER:
-        colDef->ColumnDefaultValue = (int *)defaultValue; // Keeping things simple for now.
-        break;
-
-    case FLOAT:
-        colDef->ColumnDefaultValue = (double *)defaultValue;
-        break;
-
-    case STRING:
-        strcpy(colDef->ColumnDefaultValue, defaultValue);
-        break;
-
-    case DATE:
-        colDef->ColumnDefaultValue = (time_t *)defaultValue;
-        break;
-
-    case ID:
-        colDef->ColumnDefaultValue = (long)defaultValue; // ID Generation kicks in here
-        break;
-    }
+    colDef->ColumnName = malloc(strlen(name) + 1);
 
     return colDef;
 };
@@ -92,10 +73,7 @@ TableDefinition *NewTableDefinition(char *name, ...)
     va_list args;
     time_t now;
     TableDefinition *tableDef;
-    TableColDefinition
-        **colDefs,
-        *allCols[MAX_TABLE_COLUMN_COUNT],
-        *currCol;
+    TableColDefinition **colDefs, *allCols[MAX_TABLE_COLUMN_COUNT], *currCol;
     int count = 0;
 
     if (!name)
@@ -132,10 +110,6 @@ TableDefinition *NewTableDefinition(char *name, ...)
         free(tableDef);
         return NULL;
     }
-    else
-    {
-        strcpy(tableDef->TableName, name);
-    }
 
     tableDef->Columns = malloc(sizeof(TableColDefinition *) * count);
     if (!tableDef->Columns)
@@ -151,6 +125,7 @@ TableDefinition *NewTableDefinition(char *name, ...)
         tableDef->Columns[c] = allCols[c];
     }
 
+    strcpy(tableDef->TableName, name);
     tableDef->ColumnCount = count;
     tableDef->Columns = colDefs;
     tableDef->LastModified = now;
@@ -159,7 +134,43 @@ TableDefinition *NewTableDefinition(char *name, ...)
     return tableDef;
 }
 
-char *FormatTableDefinition(TableDefinition *def)
+char *FormatSchemaDefinition(const SchemaDefinition *def)
+{
+    char *buffer;
+    FILE *memstream;
+    size_t size;
+
+    if (!def)
+    {
+        sprintf(stderr, "(format-table-schema-err) cannot format a null value");
+        return NULL;
+    }
+
+    memstream = open_memstream(&buffer, &size);
+    if (!memstream)
+    {
+        sprintf(stderr, "(format-table-schema-err) open_memstream failed");
+        return NULL;
+    }
+
+    fprintf(memstream, "(log) schema-tag-name      = %s\n", def->TagName);
+    fprintf(memstream, "(log) schema-date-created  = %s\n", def->CreatedAt);
+    fprintf(memstream, "(log) schema-last-modified = %s\n", def->LastModified);
+    fprintf(memstream, "(log) schema-table-count   = %s\n", def->TableCount);
+
+    for (int c = 0; c < CountColumns(def); c++)
+    {
+        sprintf(memstream,
+                "(log) schema-table-definition['%s'] = %s\n",
+                def->TableDefs[c]->TableName,
+                FormatTableDefinition(def->TableDefs[c]));
+    }
+
+    fclose(memstream);
+    return buffer;
+}
+
+char *FormatTableDefinition(const TableDefinition *def)
 {
     char *buffer;
     FILE *memstream;
@@ -178,16 +189,48 @@ char *FormatTableDefinition(TableDefinition *def)
         return NULL;
     }
 
-    fprintf(memstream, "(log) name          = %s\n", def->TableName);
-    fprintf(memstream, "(log) created       = %s\n", def->CreatedAt);
-    fprintf(memstream, "(log) last-modified = %s\n", def->LastModified);
-    fprintf(memstream, "(log) column-count  = %s\n", def->ColumnCount);
-    fprintf(memstream, "(log) columns       = \n", def->Columns);
+    fprintf(memstream, "(log) table-name          = %s\n", def->TableName);
+    fprintf(memstream, "(log) table-created       = %ld\n", def->CreatedAt);
+    fprintf(memstream, "(log) table-last-modified = %ld\n", def->LastModified);
+    fprintf(memstream, "(log) table-column-count  = %s\n", def->ColumnCount);
 
     for (int c = 0; c < CountColumns(def); c++)
     {
-        sprintf(memstream, "\t%s\n", FormatTableColDefinition(def->Columns[c]));
+        sprintf(memstream,
+                "(log) table-column['%s'] = %s\n",
+                def->Columns[c]->ColumnName,
+                FormatTableColDefinition(def->Columns[c]));
     }
+
+    fclose(memstream);
+    return buffer;
+}
+
+char *FormatColDefinition(TableColDefinition *def)
+{
+    char *buffer;
+    FILE *memstream;
+    size_t size;
+
+    if (!def)
+    {
+        sprintf(stderr, "(format-table-col-definition-err) Cannot format a null value");
+        return NULL;
+    }
+
+    memstream = open_memstream(&buffer, &size);
+    if (!memstream)
+    {
+        sprintf(stderr, "(format-table-col-definition-err) open_memstream failed");
+        return NULL;
+    }
+
+    fprintf(memstream, "(log) column-name          = %s\n", def->ColumnName);
+    fprintf(memstream, "(log) column-created       = %ld\n", def->ColumnCreatedAt);
+    fprintf(memstream, "(log) column-last-modified = %ld\n", def->ColumnLastModified);
+    fprintf(memstream, "(log) column-default       = %d\n", def->ColumnDefaultValue);
+    fprintf(memstream, "(log) column-is-unique     = %d\n", def->ColumnIsUnique);
+    fprintf(memstream, "(log) column-type          = %d\n", def->ColumnType);
 
     fclose(memstream);
     return buffer;

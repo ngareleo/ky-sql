@@ -263,7 +263,6 @@ FileMetadata *BootFileMetadataFromFile(const PersistedFileMetadata *metadata)
 
     target->CreatedAt = metadata->CreatedAt;
     target->LastModified = metadata->LastModified;
-    target->TableCount = metadata->TableCount;
 
     IntrospectMetadata(target);
     return target;
@@ -286,7 +285,7 @@ PersistedFileMetadata *MapToPersistedMetadata(const FileMetadata *metadata)
         return NULL;
     }
 
-    for (int count = 0; count < metadata->TableCount; count++)
+    for (int count = 0; count < metadata->Schema->TableCount; count++)
     {
         target->Offsets[count].Offset = metadata->Offset->Offsets[count]->Offset;
         strcpy(target->Offsets[count].TableName, metadata->Offset->Offsets[count]->TableName);
@@ -294,7 +293,7 @@ PersistedFileMetadata *MapToPersistedMetadata(const FileMetadata *metadata)
 
     target->CreatedAt = metadata->CreatedAt;
     target->LastModified = metadata->LastModified;
-    target->TableCount = metadata->TableCount;
+    target->TableCount = metadata->Schema->TableCount;
     target->ImwebOffset = metadata->Offset->ImwebOffset;
 
     return target;
@@ -302,89 +301,95 @@ PersistedFileMetadata *MapToPersistedMetadata(const FileMetadata *metadata)
 
 FileMetadata *NewFileMetadata(Offset *offset, SchemaDefinition *schema)
 {
-    FileMetadata *fMetadata;
+    FileMetadata *metadata;
     time_t now;
 
-    fMetadata = malloc(sizeof(FileMetadata));
-    if (fMetadata == NULL)
+    if (!offset || !schema)
+    {
+        fprintf(stderr, "(new-file-metadata-err) offset or schema is null \n");
+        return NULL;
+    }
+
+    time(&now);
+    if (now == (time_t)-1)
+    {
+        fprintf(stderr, "(new-file-metadata-err) now failed \n");
+        return NULL;
+    }
+
+    metadata = malloc(sizeof(FileMetadata));
+    if (!metadata)
     {
         fprintf(stderr, "(new-file-metadata-err) malloc failed \n");
         return NULL;
     }
 
-    if (!time(&now))
-    {
-        fprintf(stderr, "(new-file-metadata-err) malloc failed \n");
-        free(fMetadata);
-        return NULL;
-    }
+    metadata->Offset = offset;
+    metadata->CreatedAt = now;
+    metadata->LastModified = now;
 
-    fMetadata->Offset = offset;
-    fMetadata->CreatedAt = now;
-    fMetadata->LastModified = now;
-
-    return fMetadata;
+    return metadata;
 }
 
 void FreeFileMetadata(FileMetadata *metadata)
 {
-    if (metadata == NULL)
+    if (metadata)
     {
-        return;
+        FreeOffset(metadata->Offset);
+        free(metadata);
     }
-
-    FreeOffset(metadata->Offset);
-    free(metadata);
 }
 
 void IntrospectMetadata(const FileMetadata *metadata)
 {
     if (!metadata)
     {
-        fprintf(stderr, "[IntrospectMetadata] Couldn't introspect metadata. metadata is null.\n");
-        return NULL;
+        fprintf(stderr, "(introspect-metadata-err) metadata is NULL.\n");
+        return;
     }
 
-    fprintf(stdout, "############# Start of log #############\n\
-                                                                                  \n");
-    fprintf(stdout, "(log) immediate-write-buffer-offset = %s\n", metadata->Offset->ImwebOffset);
-    fprintf(stdout, "(log) created-at                    = %s\n", metadata->CreatedAt);
-    fprintf(stdout, "(log) last-modified                 = %s\n", metadata->LastModified);
-    fprintf(stdout, "(log) table-count                   = %d\n", metadata->TableCount);
-    fprintf(stdout, "(log) offsets                       = \n");
-    for (int c = 0; c < metadata->TableCount; c++)
-    {
-        char *formatted = FormatTableOffset(metadata->Offset->Offsets[c]);
-        if (formatted)
-        {
-            fprintf(stdout, "\t%s\n", formatted);
-        }
-    }
-    fprintf(stdout, "############# End of log #############\n\n");
+    fprintf(stdout, "############# Start of metadata log  #############\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "(log) created-at                      = %ld.\n", metadata->CreatedAt);
+    fprintf(stdout, "(log) last-modified                   = %ld.\n", metadata->LastModified);
+    fprintf(stdout, "\n");
+    fprintf(stdout, "############# Start of offsets log #############\n");
+    fprintf(stdout, "%s\n", FormatOffset(metadata->Offset));
+    fprintf(stdout, "############# End of offsets log   #############\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "############# Start of schema log  #############\n");
+    fprintf(stdout, "%s\n", FormatSchemaDefinition(metadata->Schema));
+    fprintf(stdout, "############# End of schema log    #############\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "############# End of metadata log  #############\n");
 }
 
 int WriteMetadataToFile(FILE *file, FileMetadata *in, PersistedFileMetadata *map(const FileMetadata *metadata))
 {
     int status = -1;
     PersistedFileMetadata *target;
-    if (!map)
+
+    if (!map || !file || !in)
     {
-        fprintf(stderr, "(write-metadata-to-file) map is null \n");
+        fprintf(stderr, "(write-metadata-to-file-err) Either `map`, `file`, or `in` could be null \n");
         return status;
     }
 
     do
     {
         target = map(in);
-        if (!map)
+        if (!target)
         {
-            fprintf(stderr, "(write-metadata-to-file) mapping to persisted format failed \n");
+            fprintf(stderr, "(write-metadata-to-file-err) mapping to persisted format failed \n");
             break;
         }
 
-        if (!fwrite(target, sizeof(PersistedFileMetadata), 1, file))
+        if (fwrite(target, sizeof(PersistedFileMetadata), 1, file) != 0)
         {
-            fprintf(stderr, "(write-metadata-to-file) fwrite failed \n");
+            fprintf(stderr, "(write-metadata-to-file-err) fwrite failed \n");
             break;
         }
 
@@ -399,9 +404,11 @@ int ReadMetadataFromFile(FILE *file, FileMetadata **out, FileMetadata *map(const
 {
     PersistedFileMetadata *buffer;
     int status = -1;
-    if (map == NULL)
+
+    if (!map || !out || !file)
     {
-        fprintf(stderr, "(read-metadata-from-file) map is null \n");
+        fprintf(stderr, "(read-metadata-from-file-err) Either `map`, `file`, or `out` could be null \n");
+        return -1;
     }
 
     do
@@ -409,21 +416,21 @@ int ReadMetadataFromFile(FILE *file, FileMetadata **out, FileMetadata *map(const
         buffer = malloc(sizeof(PersistedFileMetadata));
         if (!buffer)
         {
-            fprintf(stderr, "(read-metadata-from-file) malloc failed \n");
+            fprintf(stderr, "(read-metadata-from-file-err) malloc failed \n");
             break;
         }
 
         fread(buffer, sizeof(PersistedFileMetadata), 1, file);
         if (!buffer)
         {
-            fprintf(stderr, "(read-metadata-from-file) fread failed \n");
+            fprintf(stderr, "(read-metadata-from-file-err) fread failed \n");
             break;
         }
 
         *out = map(buffer);
         if (!out)
         {
-            fprintf(stderr, "(read-metadata-from-file) mapping from persisted format failed \n");
+            fprintf(stderr, "(read-metadata-from-file-err) mapping from persisted format failed \n");
         }
 
         status = 0;
