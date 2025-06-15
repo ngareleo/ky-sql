@@ -66,5 +66,6 @@ int WriteMetadataToFile(FILE *, FileMetadata *, WritableFileMetadata *(const Fil
 int ReadMetadataFromFile(FILE *, FileMetadata **, FileMetadata *(const WritableFileMetadata *));
 
 FileMetadata *CreateMetadataFromWritable(const WritableFileMetadata *);
+FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *);
 
 #endif

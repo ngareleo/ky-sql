@@ -5,6 +5,46 @@
 #include "metadata_extraction.h"
 #include "metadata_offsets.h"
 
+FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *schema)
+{
+    FileMetadata *meta;
+    Offset *offset;
+
+    if (!schema)
+    {
+        fprintf(stderr, "(create-new-file-metadata-err) could not create schema\n");
+        return NULL;
+    }
+
+    offset = NewOffset(0); // A default imweb of 0
+    if (!offset)
+    {
+        fprintf(stderr, "(create-new-file-metadata-err) could not create offset\n");
+        return NULL;
+    }
+
+    for (int ti = 0; ti < schema->TableCount; ti++)
+    {
+        TableOffset *tableOff = NewTableOffset(schema->TableDefs[ti]->Id, 0);
+        if (AddTableOffset(offset, tableOff) != 0)
+        {
+            FreeOffset(offset);
+            fprintf(stderr, "(create-new-file-metadata-err) could not add table offset\n");
+            return NULL;
+        }
+    }
+
+    meta = NewFileMetadata(offset, schema);
+    if (!meta)
+    {
+        FreeOffset(offset);
+        fprintf(stderr, "(create-new-file-metadata-err) could not create metadata\n");
+        return NULL;
+    }
+
+    return meta;
+}
+
 int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
 {
     if (!file || !meta)
@@ -112,7 +152,7 @@ int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
             colDef->Id = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnId;
             colDef->IsUnique = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsUnique;
             colDef->IsNullable = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsNullable;
-            colDef->IsPrimaryKey = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsNullable;
+            colDef->IsPrimaryKey = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsPrimaryKey;
             colDef->LastModified = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnLastModified;
             colDef->Type = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnType;
             tableDef->Columns[ci] = colDef;
@@ -301,10 +341,21 @@ WritableFileMetadata *CreateWritableFromMetadata(const FileMetadata *metadata)
 
     if (WriteOffset(target, metadata) != 0)
     {
+        free(target);
         fprintf(stderr, "(map-to-persited-metadata-err) malloc failed \n");
         return NULL;
     }
 
+    if (WriteSchema(target, metadata) != 0)
+    {
+        free(target);
+        fprintf(stderr, "(map-to-persited-metadata-err) malloc failed \n");
+        return NULL;
+    }
+
+    target->FileCreatedAt = metadata->CreatedAt;
+    target->FileLastModified = metadata->LastModified;
+    target->OffsetImweb = metadata->Offset->ImwebOffset;
     return target;
 }
 
@@ -362,6 +413,8 @@ int WriteSchema(WritableFileMetadata *file, const FileMetadata *meta)
     }
     strcpy(&file->Schema.SchemaTag, meta->Schema->TagName);
     file->Schema.TableCount = meta->Schema->TableCount;
+
+    return 0;
 }
 
 FileMetadata *NewFileMetadata(Offset *offset, SchemaDefinition *schema)

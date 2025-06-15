@@ -50,11 +50,17 @@ typedef struct
     time_t LastModified;
 } SchemaDefinition;
 
-TableColDefinition *NewTableColumn(int, const char *, bool, enum SchemaType, bool, bool, const char *);
+TableColDefinition *NewTableColumn(int id,
+                                   const char *name,
+                                   bool isPrimaryKey,
+                                   enum SchemaType,
+                                   bool isNullable,
+                                   bool isUnique,
+                                   const char *defaultValue);
 char *FormatTableColDefinition(TableColDefinition *);
 void FreeTableColDefinition(TableColDefinition *);
 
-TableDefinition *NewTableDefinition(char *, int, int, ...);
+TableDefinition *NewTableDefinition(char *name, int id, int primaryKeyId, ...);
 char *FormatTableDefinition(const TableDefinition *);
 void FreeTableDefinition(TableDefinition *);
 

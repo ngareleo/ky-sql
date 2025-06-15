@@ -1,6 +1,9 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
-const int Count(const void **);
+#include <time.h>
+
+int Count(const void **);
+char *NowDefaultValue();
 
 #endif
