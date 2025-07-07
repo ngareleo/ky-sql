@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include "../Metadata/metadata_schema.h"
-#include "../Metadata/metadata_offsets.h"
-#include "../Metadata/metadata_extraction.h"
+#include "../Metadata/metadata.h"
 #include "../Utilities/utilities.h"
 
 /**
@@ -52,15 +50,15 @@ TableDefinition *CreateBooksTableDefintion()
     BookCreatedAt = NewTableColumn(9, "stock_quality", false, DATE, false, false, NowDefaultValue());
     BookRentalPricePerDay = NewTableColumn(10, "rental_price_per_day", false, INTEGER, false, false, NULL);
 
-    if (!BookId |
-        !BookTitle |
-        !BookAuthor |
-        !BookISBN |
-        !BookGenre |
-        !BookPublicationYear |
-        !BookPrice |
-        !BookStockQuality |
-        !BookCreatedAt |
+    if (!BookId ||
+        !BookTitle ||
+        !BookAuthor ||
+        !BookISBN ||
+        !BookGenre ||
+        !BookPublicationYear ||
+        !BookPrice ||
+        !BookStockQuality ||
+        !BookCreatedAt ||
         !BookRentalPricePerDay)
     {
         FreeTableDefinition(BookId);
@@ -138,12 +136,12 @@ TableDefinition *CreateCustomersTableDefinition()
     CustomerCity = NewTableColumn(5, "city", false, STRING, true, false, NULL);
     CustomerRegistrationDate = NewTableColumn(6, "registration_date", false, DATE, false, false, NowDefaultValue());
 
-    if (!CustomerId |
-        !CustomerFullName |
-        !CustomerEmail |
-        !CustomerPhone |
-        !CustomerAddress |
-        !CustomerCity |
+    if (!CustomerId ||
+        !CustomerFullName ||
+        !CustomerEmail ||
+        !CustomerPhone ||
+        !CustomerAddress ||
+        !CustomerCity ||
         !CustomerRegistrationDate)
     {
         FreeTableDefinition(CustomerId);

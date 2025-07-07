@@ -23,7 +23,7 @@ typedef struct
 {
     struct WritableTableOffset
     {
-        int TableOffsetId;                                       /**  The name of the table */
+        int TableOffsetId;                                       /** The name of the table */
         int TableOffset;                                         /** The offset of the file position from 0 */
     } TableOffsets[MAX_TABLE_COUNT];                             /** Offsets to tables */
     struct WritableSchema                                        /** */
@@ -58,14 +58,16 @@ typedef struct
 } WritableFileMetadata;
 #pragma pack(0)
 
-FileMetadata *NewFileMetadata(Offset *, SchemaDefinition *schema);
 void FreeFileMetadata(FileMetadata *);
 void IntrospectMetadata(const FileMetadata *);
 
 int WriteMetadataToFile(FILE *, FileMetadata *, WritableFileMetadata *(const FileMetadata *));
 int ReadMetadataFromFile(FILE *, FileMetadata **, FileMetadata *(const WritableFileMetadata *));
 
+FileMetadata *NewFileMetadata(Offset *, SchemaDefinition *);
 FileMetadata *CreateMetadataFromWritable(const WritableFileMetadata *);
 FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *);
+
+WritableFileMetadata *CreateWritableFromMetadata(const FileMetadata *);
 
 #endif
