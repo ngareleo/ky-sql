@@ -82,7 +82,7 @@ TableDefinition *NewTableDefinition(char *name, int id, int primaryKeyId, ...)
     va_list args;
     time_t now;
     TableDefinition *tableDef;
-    TableColDefinition **colDefs, *allCols[MAX_TABLE_COLUMN_COUNT], *currCol;
+    TableColDefinition *allCols[MAX_TABLE_COLUMN_COUNT], *currCol;
     int count = 0;
 
     if (!name)
@@ -141,7 +141,6 @@ TableDefinition *NewTableDefinition(char *name, int id, int primaryKeyId, ...)
     tableDef->Id = id;
     tableDef->PrimaryKeyId = primaryKeyId;
     tableDef->ColumnCount = count;
-    tableDef->Columns = colDefs;
     tableDef->LastModified = now;
     tableDef->CreatedAt = now;
     return tableDef;
@@ -171,7 +170,7 @@ char *FormatSchemaDefinition(const SchemaDefinition *def)
     fprintf(memstream, "(log) schema-last-modified = %s\n", def->LastModified);
     fprintf(memstream, "(log) schema-table-count   = %s\n", def->TableCount);
 
-    for (int c = 0; c < CountColumns(def); c++)
+    for (int c = 0; c < def->TableCount; c++)
     {
         sprintf(memstream,
                 "(log) schema-table-definition['%s'] = %s\n",
