@@ -1,16 +1,16 @@
-cmake_minimum_required(VERSION 3.16)
-
 add_executable(run_example_00_filemetadata 00_filemetadata.c)
+
+target_compile_definitions(run_example_00_filemetadata PRIVATE DEBUG_MODE=1)
+
+target_compile_options(run_example_00_filemetadata PRIVATE -Wall -Wextra)
 
 target_include_directories(run_example_00_filemetadata PRIVATE 
 	${CMAKE_SOURCE_DIR}/src/Metadata
 	${CMAKE_SOURCE_DIR}/src/Mocks
 )
 
-target_link_libraries(run_example_00_filemetadata PRIVATE metadata m)
-target_link_libraries(run_example_00_filemetadata PRIVATE mocks)
+target_link_libraries(run_example_00_filemetadata PRIVATE metadata m mocks)
 
-# Custom target to run all examples
 add_custom_target(run_all_examples
 	COMMAND run_example_00_filemetadata
 	DEPENDS run_example_00_filemetadata
