@@ -61,16 +61,16 @@ TableDefinition *CreateBooksTableDefintion()
         !BookCreatedAt ||
         !BookRentalPricePerDay)
     {
-        FreeTableDefinition(BookId);
-        FreeTableDefinition(BookTitle);
-        FreeTableDefinition(BookAuthor);
-        FreeTableDefinition(BookISBN);
-        FreeTableDefinition(BookGenre);
-        FreeTableDefinition(BookPublicationYear);
-        FreeTableDefinition(BookPrice);
-        FreeTableDefinition(BookStockQuality);
-        FreeTableDefinition(BookCreatedAt);
-        FreeTableDefinition(BookRentalPricePerDay);
+        FreeTableColDefinition(BookId);
+        FreeTableColDefinition(BookTitle);
+        FreeTableColDefinition(BookAuthor);
+        FreeTableColDefinition(BookISBN);
+        FreeTableColDefinition(BookGenre);
+        FreeTableColDefinition(BookPublicationYear);
+        FreeTableColDefinition(BookPrice);
+        FreeTableColDefinition(BookStockQuality);
+        FreeTableColDefinition(BookCreatedAt);
+        FreeTableColDefinition(BookRentalPricePerDay);
         fprintf(stderr, "(create-books-table-defintion-info) table column  creation failed\n");
         return NULL;
     }
@@ -89,16 +89,16 @@ TableDefinition *CreateBooksTableDefintion()
 
     if (!table)
     {
-        FreeTableDefinition(BookId);
-        FreeTableDefinition(BookTitle);
-        FreeTableDefinition(BookAuthor);
-        FreeTableDefinition(BookISBN);
-        FreeTableDefinition(BookGenre);
-        FreeTableDefinition(BookPublicationYear);
-        FreeTableDefinition(BookPrice);
-        FreeTableDefinition(BookStockQuality);
-        FreeTableDefinition(BookCreatedAt);
-        FreeTableDefinition(BookRentalPricePerDay);
+        FreeTableColDefinition(BookId);
+        FreeTableColDefinition(BookTitle);
+        FreeTableColDefinition(BookAuthor);
+        FreeTableColDefinition(BookISBN);
+        FreeTableColDefinition(BookGenre);
+        FreeTableColDefinition(BookPublicationYear);
+        FreeTableColDefinition(BookPrice);
+        FreeTableColDefinition(BookStockQuality);
+        FreeTableColDefinition(BookCreatedAt);
+        FreeTableColDefinition(BookRentalPricePerDay);
         fprintf(stderr, "(create-books-table-defintion-info) table creation failed\n");
     }
 
@@ -144,13 +144,13 @@ TableDefinition *CreateCustomersTableDefinition()
         !CustomerCity ||
         !CustomerRegistrationDate)
     {
-        FreeTableDefinition(CustomerId);
-        FreeTableDefinition(CustomerFullName);
-        FreeTableDefinition(CustomerEmail);
-        FreeTableDefinition(CustomerPhone);
-        FreeTableDefinition(CustomerAddress);
-        FreeTableDefinition(CustomerCity);
-        FreeTableDefinition(CustomerRegistrationDate);
+        FreeTableColDefinition(CustomerId);
+        FreeTableColDefinition(CustomerFullName);
+        FreeTableColDefinition(CustomerEmail);
+        FreeTableColDefinition(CustomerPhone);
+        FreeTableColDefinition(CustomerAddress);
+        FreeTableColDefinition(CustomerCity);
+        FreeTableColDefinition(CustomerRegistrationDate);
         fprintf(stderr, "(create-customers-table-defintion-info) table column creation failed\n");
         return NULL;
     }
@@ -168,13 +168,13 @@ TableDefinition *CreateCustomersTableDefinition()
 
     if (!table)
     {
-        FreeTableDefinition(CustomerId);
-        FreeTableDefinition(CustomerFullName);
-        FreeTableDefinition(CustomerEmail);
-        FreeTableDefinition(CustomerPhone);
-        FreeTableDefinition(CustomerAddress);
-        FreeTableDefinition(CustomerCity);
-        FreeTableDefinition(CustomerRegistrationDate);
+        FreeTableColDefinition(CustomerId);
+        FreeTableColDefinition(CustomerFullName);
+        FreeTableColDefinition(CustomerEmail);
+        FreeTableColDefinition(CustomerPhone);
+        FreeTableColDefinition(CustomerAddress);
+        FreeTableColDefinition(CustomerCity);
+        FreeTableColDefinition(CustomerRegistrationDate);
         fprintf(stderr, "(create-customers-table-defintion-info) table creation failed\n");
         return NULL;
     }

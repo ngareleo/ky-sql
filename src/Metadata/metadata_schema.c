@@ -154,25 +154,25 @@ char *FormatSchemaDefinition(const SchemaDefinition *def)
 
     if (!def)
     {
-        sprintf(stderr, "(format-table-schema-err) cannot format a null value");
+        fprintf(stderr, "(format-table-schema-err) cannot format a null value");
         return NULL;
     }
 
     memstream = open_memstream(&buffer, &size);
     if (!memstream)
     {
-        sprintf(stderr, "(format-table-schema-err) open_memstream failed");
+        fprintf(stderr, "(format-table-schema-err) open_memstream failed");
         return NULL;
     }
 
     fprintf(memstream, "(log) schema-tag-name      = %s\n", def->TagName);
-    fprintf(memstream, "(log) schema-date-created  = %s\n", def->CreatedAt);
-    fprintf(memstream, "(log) schema-last-modified = %s\n", def->LastModified);
-    fprintf(memstream, "(log) schema-table-count   = %s\n", def->TableCount);
+    fprintf(memstream, "(log) schema-date-created  = %ld\n", def->CreatedAt);
+    fprintf(memstream, "(log) schema-last-modified = %ld\n", def->LastModified);
+    fprintf(memstream, "(log) schema-table-count   = %d\n", def->TableCount);
 
     for (int c = 0; c < def->TableCount; c++)
     {
-        sprintf(memstream,
+        fprintf(memstream,
                 "(log) schema-table-definition['%s'] = %s\n",
                 def->TableDefs[c]->Name,
                 FormatTableDefinition(def->TableDefs[c]));
@@ -186,7 +186,7 @@ char *GetColumnNameById(TableDefinition *def, int id)
 {
     if (!def)
     {
-        sprintf(stderr, "(get-table-name-by-id-err) `def` is null");
+        fprintf(stderr, "(get-table-name-by-id-err) `def` is null");
         return NULL;
     }
 
@@ -209,27 +209,27 @@ char *FormatTableDefinition(const TableDefinition *def)
 
     if (!def)
     {
-        sprintf(stderr, "(format-table-definition-err) Cannot format a null value");
+        fprintf(stderr, "(format-table-definition-err) Cannot format a null value");
         return NULL;
     }
 
     memstream = open_memstream(&buffer, &size);
     if (!memstream)
     {
-        sprintf(stderr, "(format-table-definition-err) open_memstream failed");
+        fprintf(stderr, "(format-table-definition-err) open_memstream failed");
         return NULL;
     }
 
-    fprintf(memstream, "(log) table-id          = %s\n", def->Id);
+    fprintf(memstream, "(log) table-id            = %d\n", def->Id);
     fprintf(memstream, "(log) table-name          = %s\n", def->Name);
-    fprintf(memstream, "(log) table-primary-key   = %s\n", GetColumnNameById(def, def->PrimaryKeyId));
-    fprintf(memstream, "(log) table-column-count  = %s\n", def->ColumnCount);
+    fprintf(memstream, "(log) table-primary-key   = %s\n", GetColumnNameById((TableDefinition *)def, def->PrimaryKeyId));
+    fprintf(memstream, "(log) table-column-count  = %d\n", def->ColumnCount);
     fprintf(memstream, "(log) table-created       = %ld\n", def->CreatedAt);
     fprintf(memstream, "(log) table-last-modified = %ld\n", def->LastModified);
 
-    for (int c = 0; c < CountColumns(def); c++)
+    for (int c = 0; c < def->ColumnCount; c++)
     {
-        sprintf(memstream,
+        fprintf(memstream,
                 "(log) table-column['%s'] = %s\n",
                 def->Columns[c]->Name,
                 FormatTableColDefinition(def->Columns[c]));
@@ -239,7 +239,7 @@ char *FormatTableDefinition(const TableDefinition *def)
     return buffer;
 }
 
-char *FormatColDefinition(TableColDefinition *def)
+char *FormatTableColDefinition(TableColDefinition *def)
 {
     char *buffer;
     FILE *memstream;
@@ -247,23 +247,23 @@ char *FormatColDefinition(TableColDefinition *def)
 
     if (!def)
     {
-        sprintf(stderr, "(format-table-col-definition-err) Cannot format a null value");
+        fprintf(stderr, "(format-table-col-definition-err) Cannot format a null value");
         return NULL;
     }
 
     memstream = open_memstream(&buffer, &size);
     if (!memstream)
     {
-        sprintf(stderr, "(format-table-col-definition-err) open_memstream failed");
+        fprintf(stderr, "(format-table-col-definition-err) open_memstream failed");
         return NULL;
     }
 
-    fprintf(memstream, "(log) column-id             = %s\n", def->Id);
+    fprintf(memstream, "(log) column-id             = %d\n", def->Id);
     fprintf(memstream, "(log) column-name           = %s\n", def->Name);
     fprintf(memstream, "(log) column-is-primary-key = %d\n", def->IsPrimaryKey);
     fprintf(memstream, "(log) column-is-nullable    = %d\n", def->IsNullable);
     fprintf(memstream, "(log) column-is-unique      = %d\n", def->IsNullable);
-    fprintf(memstream, "(log) column-default-value  = %s\n", def->DefaultValue);
+    fprintf(memstream, "(log) column-default-value  = %s\n", (char *)def->DefaultValue);
     fprintf(memstream, "(log) column-created        = %ld\n", def->CreatedAt);
     fprintf(memstream, "(log) column-last-modified  = %ld\n", def->LastModified);
 

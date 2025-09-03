@@ -9,7 +9,7 @@ target_include_directories(run_example_00_filemetadata PRIVATE
 	${CMAKE_SOURCE_DIR}/src/Mocks
 )
 
-target_link_libraries(run_example_00_filemetadata PRIVATE metadata m mocks)
+target_link_libraries(run_example_00_filemetadata PRIVATE metadata m mocks utilities)
 
 add_custom_target(run_all_examples
 	COMMAND run_example_00_filemetadata
