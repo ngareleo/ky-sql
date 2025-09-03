@@ -1,14 +1,38 @@
 #!/bin/bash
 
+# List your example source files here (without .c extension)
+EXAMPLES=("00_filemetadata")
+
 usage(){
-    echo "Usage: $0 <build|run> examples <example_number>"
+    echo "Usage: $0 <build|run> examples <index|name>"
     echo "Examples:"
-    echo "  $0 build examples 0   # Build example 0"
-    echo "  $0 run examples 0     # Run example 0"
+    echo "  $0 build examples 0         # Build example at index 0"
+    echo "  $0 build examples name      # Build example by name"
+    echo "  $0 run examples 0           # Run example at index 0"
+    echo "  $0 run examples name        # Run example by name"
+    echo "Available examples:"
+    for i in "${!EXAMPLES[@]}"; do
+        echo "  $i: ${EXAMPLES[$i]}"
+    done
+}
+
+get_example_name() {
+    local arg="$1"
+    if [[ "$arg" =~ ^[0-9]+$ ]]; then
+        echo "${EXAMPLES[$arg]}"
+    else
+        echo "$arg"
+    fi
 }
 
 build_example() {
-    EXAMPLE_NUM=$1
+    local name
+    name=$(get_example_name "$1")
+    if [ -z "$name" ]; then
+        echo "Invalid example index or name: $1"
+        usage
+        exit 1
+    fi
     BUILD_DIR="build"
     if [ ! -d "$BUILD_DIR" ]; then
         mkdir "$BUILD_DIR"
@@ -17,14 +41,20 @@ build_example() {
     if [ ! -f Makefile ]; then
         cmake ..
     fi
-    cmake --build . --target run_example_0${EXAMPLE_NUM}_filemetadata
+    cmake --build . --target "run_example_${name}"
 }
 
 run_example() {
-    EXAMPLE_NUM=$1
+    local name
+    name=$(get_example_name "$1")
+    if [ -z "$name" ]; then
+        echo "Invalid example index or name: $1"
+        usage
+        exit 1
+    fi
     BUILD_DIR="build"
     cd "$BUILD_DIR" || exit 1
-    ./src/Examples/run_example_0${EXAMPLE_NUM}_filemetadata
+    "./src/Examples/run_example_${name}"
 }
 
 if [ "$1" = "build" ] && [ "$2" = "examples" ] && [ -n "$3" ]; then
