@@ -1,47 +1,36 @@
-#! /bin/bash
+#!/bin/bash
 
 usage(){
-    echo "Usage: $0 <command> [arguments]"
-    echo "Commands:"
-    echo "  build     - Build the project"
-    echo "  run       - Build and run the project"
-    echo "  test      - Run tests"
+    echo "Usage: $0 <build|run> examples <example_number>"
+    echo "Examples:"
+    echo "  $0 build examples 0   # Build example 0"
+    echo "  $0 run examples 0     # Run example 0"
 }
 
-build() {
-    clang -Wall -Wextra -Iheaders -o ./src/log.c ./src/main.c
+build_example() {
+    EXAMPLE_NUM=$1
+    BUILD_DIR="build"
+    if [ ! -d "$BUILD_DIR" ]; then
+        mkdir "$BUILD_DIR"
+    fi
+    cd "$BUILD_DIR" || exit 1
+    if [ ! -f Makefile ]; then
+        cmake ..
+    fi
+    cmake --build . --target run_example_0${EXAMPLE_NUM}_filemetadata
 }
 
-test() {
-    clang ./src/tests.c -o ./out/tests && ./out/tests
+run_example() {
+    EXAMPLE_NUM=$1
+    BUILD_DIR="build"
+    cd "$BUILD_DIR" || exit 1
+    ./src/Examples/run_example_0${EXAMPLE_NUM}_filemetadata
 }
 
-run() {
-    clang -Wall -Wextra -Iheaders -o ./src/log.c ./src/main.c && ./out/main 
-}
-
-run1() {
-    clang -DDEBUG=1 -Wall -Wextra -Iheaders -o ./out/main ./src/log.c ./src/main.c && ./out/main ./artifacts/sample0.kysql
-}
-
-case "$1" in 
-    "run")
-        run
-        ;;
-
-    "run1")
-        run1
-        ;;
-
-    "build")
-        build
-        ;;
-
-    "test")
-        test
-        ;;
-
-    *)
-        usage
-        ;;
-esac
+if [ "$1" = "build" ] && [ "$2" = "examples" ] && [ -n "$3" ]; then
+    build_example "$3"
+elif [ "$1" = "run" ] && [ "$2" = "examples" ] && [ -n "$3" ]; then
+    run_example "$3"
+else
+    usage
+fi
