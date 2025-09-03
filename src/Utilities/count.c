@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "utilities.h"
 
-const int Count(const void **ptr)
+int Count(void **ptr)
 {
     if (ptr == NULL)
     {

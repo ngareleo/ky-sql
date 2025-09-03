@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include "../Metadata/metadata.h";
-#include "../Mocks/mocks.h";
+#include "../Metadata/metadata.h"
+#include "../Mocks/mocks.h"
 
 const char *NOOP_FILE = "noop.kysql";
 

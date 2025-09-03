@@ -3,7 +3,7 @@
 
 #include <time.h>
 
-int Count(const void **);
+int Count(void **);
 char *NowDefaultValue();
 
 #endif

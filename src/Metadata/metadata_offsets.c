@@ -212,10 +212,6 @@ void FreeOffset(Offset *offset)
 {
     if (offset)
     {
-        for (int c = 0; c < offset->TableCount; c++)
-        {
-            FreeTableOffset(offset->Offsets[c]);
-        }
         free(offset->Offsets);
         free(offset);
     }
