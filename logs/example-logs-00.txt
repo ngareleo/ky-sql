@@ -10,8 +10,8 @@
 (create-new-file-metadata-info) table offsets linked
 (main) Metadata created successfully
 ############# Start of metadata log  #############
-(log) created-at                      = 1757350720.
-(log) last-modified                   = 1757350720.
+(log) created-at                      = 1757354810.
+(log) last-modified                   = 1757354810.
 
 ############# Start of offsets log #############
 (log) immediate-write-buffer-offset = 0.
@@ -50,8 +50,8 @@
 (log) table-name          = books
 (log) table-primary-key   = book_id
 (log) table-column-count  = 8
-(log) table-created       = 1757350720
-(log) table-last-modified = 1757350720
+(log) table-created       = 1757354810
+(log) table-last-modified = 1757354810
 
 @@ table-column['book_id'] @@
 (log) column-id             = 0
@@ -60,8 +60,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757350720
-(log) column-last-modified  = 1757350720
+(log) column-created        = 1757354810
+(log) column-last-modified  = 1757354810
 
 
 @@ table-column['title'] @@
@@ -71,8 +71,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757350720
-(log) column-last-modified  = 1757350720
+(log) column-created        = 1757354810
+(log) column-last-modified  = 1757354810
 
 
 @@ table-column['book_author'] @@
@@ -82,8 +82,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757350720
-(log) column-last-modified  = 1757350720
+(log) column-created        = 1757354810
+(log) column-last-modified  = 1757354810
 
 
 @@ table-column['stock_quality'] @@
@@ -92,9 +92,9 @@
 (log) column-is-primary-key = 0
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
-(log) column-default-value  = 1757350720
-(log) column-created        = 1757350720
-(log) column-last-modified  = 1757350720
+(log) column-default-value  = 1757354810
+(log) column-created        = 1757354810
+(log) column-last-modified  = 1757354810
 
 
 @@ table-column['price'] @@
@@ -104,8 +104,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757350720
-(log) column-last-modified  = 1757350720
+(log) column-created        = 1757354810
+(log) column-last-modified  = 1757354810
 
 
 @@ table-column['rental_price_per_day'] @@
@@ -115,8 +115,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757350720
-(log) column-last-modified  = 1757350720
+(log) column-created        = 1757354810
+(log) column-last-modified  = 1757354810
 
 
 @@ table-column['stock_quality'] @@
@@ -126,8 +126,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = 0
-(log) column-created        = 1757350720
-(log) column-last-modified  = 1757350720
+(log) column-created        = 1757354810
+(log) column-last-modified  = 1757354810
 
 
 @@ table-column['isdn'] @@
@@ -137,3 +137,8 @@
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
 (log) column-default-value  = ((write-schema-log) starting table copy 
+(write-schema-log) table columns written over 
+(write-schema-log) table written over 
+(write-schema-log) starting table copy 
+(write-schema-log) table columns written over 
+(write-schema-log) table written over 
