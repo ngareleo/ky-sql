@@ -46,15 +46,29 @@ build_example() {
 
 run_example() {
     local name
+    local idx
     name=$(get_example_name "$1")
-    if [ -z "$name" ]; then
+    if [[ "$1" =~ ^[0-9]+$ ]]; then
+        idx=$(printf "%02d" "$1")
+    else
+        # Find index by name
+        for i in "${!EXAMPLES[@]}"; do
+            if [[ "${EXAMPLES[$i]}" == "$1" ]]; then
+                idx=$(printf "%02d" "$i")
+                break
+            fi
+        done
+    fi
+    if [ -z "$name" ] || [ -z "$idx" ]; then
         echo "Invalid example index or name: $1"
         usage
         exit 1
     fi
+    LOG_DIR="logs"
+    [ -d "$LOG_DIR" ] || mkdir -p "$LOG_DIR"
     BUILD_DIR="build"
     cd "$BUILD_DIR" || exit 1
-    "./src/Examples/run_example_${name}"
+    "./src/Examples/run_example_${name}" > "../$LOG_DIR/example-logs-${idx}.txt" 2>&1
 }
 
 if [ "$1" = "build" ] && [ "$2" = "examples" ] && [ -n "$3" ]; then
