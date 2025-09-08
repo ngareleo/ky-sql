@@ -17,7 +17,7 @@ int main()
     bookstoreSchema = CreateBookStoreSchemaDefinition();
     if (!bookstoreSchema)
     {
-        fprintf(stderr, "(main-err) Could not create book store schema");
+        fprintf(stderr, "(main-err) Could not create book store schema\n");
         return -1;
     }
 
@@ -25,12 +25,13 @@ int main()
     if (!meta)
     {
         FreeSchemaDefinition(bookstoreSchema);
-        fprintf(stderr, "(main-err) Could not create file metadata");
+        fprintf(stderr, "(main-err) Could not create file metadata\n");
         return -1;
     }
 
-    IntrospectMetadata(meta);
+    fprintf(stdout, "(main) Metadata created successfully\n");
 
+    IntrospectMetadata(meta);
     writableNoop = fopen(NOOP_FILE, "w");
 
     do

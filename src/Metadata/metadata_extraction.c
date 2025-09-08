@@ -4,6 +4,7 @@
 #include <string.h>
 #include "metadata_extraction.h"
 #include "metadata_offsets.h"
+#include "../Utilities/utilities.h"
 
 FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *schema)
 {
@@ -23,9 +24,18 @@ FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *schema)
         return NULL;
     }
 
+    fprintf(stdout, "(create-new-file-metadata-info) offset creation success\n");
+    fprintf(stderr, "(create-new-file-metadata-log) schema table count --> %d \n", schema->TableCount);
     for (int ti = 0; ti < schema->TableCount; ti++)
     {
-        TableOffset *tableOff = NewTableOffset(schema->TableDefs[ti]->Id, 0);
+
+        // Todo: Optimize this. AddTableOffset is not suitable for batch updates
+        // Todo: Since we know the table count ahead of time, we don't have to link a table
+        // Todo: One by one, we can do one allocation
+        TableOffset *tableOff = NewTableOffset(
+            schema->TableDefs[ti]->Id,
+            0 // Todo: Compute this value based on real offsets
+        );
         if (AddTableOffset(offset, tableOff) != 0)
         {
             FreeOffset(offset);
@@ -34,6 +44,7 @@ FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *schema)
         }
     }
 
+    fprintf(stdout, "(create-new-file-metadata-info) table offsets linked\n");
     meta = NewFileMetadata(offset, schema);
     if (!meta)
     {
@@ -445,7 +456,8 @@ FileMetadata *NewFileMetadata(Offset *offset, SchemaDefinition *schema)
     metadata->Offset = offset;
     metadata->CreatedAt = now;
     metadata->LastModified = now;
-
+    metadata->Schema = schema;
+    fprintf(stderr, "(new-file-metadata-info) file metadata creation success \n");
     return metadata;
 }
 
@@ -467,20 +479,16 @@ void IntrospectMetadata(const FileMetadata *metadata)
     }
 
     fprintf(stdout, "############# Start of metadata log  #############\n");
-    fprintf(stdout, "\n");
-    fprintf(stdout, "\n");
     fprintf(stdout, "(log) created-at                      = %ld.\n", metadata->CreatedAt);
     fprintf(stdout, "(log) last-modified                   = %ld.\n", metadata->LastModified);
     fprintf(stdout, "\n");
     fprintf(stdout, "############# Start of offsets log #############\n");
-    fprintf(stdout, "%s\n", FormatOffset(metadata->Offset));
+    fprintf(stdout, "%s\n", NullGuardStr(FormatOffset(metadata->Offset)));
     fprintf(stdout, "############# End of offsets log   #############\n");
     fprintf(stdout, "\n");
-    fprintf(stdout, "\n");
     fprintf(stdout, "############# Start of schema log  #############\n");
-    fprintf(stdout, "%s\n", FormatSchemaDefinition(metadata->Schema));
+    fprintf(stdout, "%s\n", NullGuardStr(FormatSchemaDefinition(metadata->Schema)));
     fprintf(stdout, "############# End of schema log    #############\n");
-    fprintf(stdout, "\n");
     fprintf(stdout, "\n");
     fprintf(stdout, "############# End of metadata log  #############\n");
 }

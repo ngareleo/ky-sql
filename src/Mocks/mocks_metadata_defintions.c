@@ -71,10 +71,11 @@ TableDefinition *CreateBooksTableDefintion()
         FreeTableColDefinition(BookStockQuality);
         FreeTableColDefinition(BookCreatedAt);
         FreeTableColDefinition(BookRentalPricePerDay);
-        fprintf(stderr, "(create-books-table-defintion-info) table column  creation failed\n");
+        fprintf(stderr, "(create-books-table-defintion-info) table column creation failed\n");
         return NULL;
     }
 
+    fprintf(stdout, "(create-books-table-defintion-info) table columns creation success\n");
     table = NewTableDefinition("books",
                                0,
                                BookId->Id,
@@ -85,7 +86,8 @@ TableDefinition *CreateBooksTableDefintion()
                                BookPrice,
                                BookRentalPricePerDay,
                                BookStockQuality,
-                               BookISBN);
+                               BookISBN,
+                               NULL);
 
     if (!table)
     {
@@ -102,6 +104,7 @@ TableDefinition *CreateBooksTableDefintion()
         fprintf(stderr, "(create-books-table-defintion-info) table creation failed\n");
     }
 
+    fprintf(stdout, "(create-books-table-defintion-info) table creation success\n");
     return table;
 }
 
@@ -164,7 +167,8 @@ TableDefinition *CreateCustomersTableDefinition()
                                CustomerPhone,
                                CustomerAddress,
                                CustomerCity,
-                               CustomerRegistrationDate);
+                               CustomerRegistrationDate,
+                               NULL);
 
     if (!table)
     {
@@ -194,7 +198,10 @@ SchemaDefinition *CreateBookStoreSchemaDefinition()
         return NULL;
     }
 
-    def = NewSchemaDefinition("bookstore-schema", booksTable, customersTable);
+    def = NewSchemaDefinition("bookstore-schema",
+                              booksTable,
+                              customersTable,
+                              NULL);
     if (!def)
     {
         FreeTableDefinition(booksTable);
@@ -203,5 +210,6 @@ SchemaDefinition *CreateBookStoreSchemaDefinition()
         return NULL;
     }
 
+    fprintf(stdout, "(create-bookstore-schema-defintion-info) schema creation success\n");
     return def;
 }

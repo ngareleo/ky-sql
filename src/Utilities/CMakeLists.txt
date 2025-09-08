@@ -1,6 +1,7 @@
 set(SOURCES
 	count.c
 	now_default_value.c
+	null_guard_str.c
 )
 
 add_library(utilities STATIC ${SOURCES})
