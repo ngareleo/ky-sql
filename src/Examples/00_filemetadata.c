@@ -44,6 +44,7 @@ int main()
         }
 
         fclose(writableNoop);
+        fprintf(stderr, "<main>  metadata written to file :) \n");
 
         readableNoop = fopen(NOOP_FILE, "r");
         if (!readableNoop)

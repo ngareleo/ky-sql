@@ -339,30 +339,32 @@ WritableFileMetadata *CreateWritableFromMetadata(const FileMetadata *metadata)
 
     if (!metadata)
     {
-        fprintf(stderr, "(map-to-persited-metadata-err) metadata is null \n");
+        fprintf(stderr, "(create-writable-from-metadata) metadata is null \n");
         return NULL;
     }
 
     target = malloc(sizeof(WritableFileMetadata));
     if (!target)
     {
-        fprintf(stderr, "(map-to-persited-metadata-err) malloc for target failed \n");
+        fprintf(stderr, "(create-writable-from-metadata) malloc for target failed \n");
         return NULL;
     }
 
     if (WriteOffset(target, metadata) != 0)
     {
         free(target);
-        fprintf(stderr, "(map-to-persited-metadata-err) failed to write offset \n");
+        fprintf(stderr, "(create-writable-from-metadata) failed to write offset \n");
         return NULL;
     }
+    fprintf(stdout, "(create-writable-from-metadata) written offset to writable \n");
 
     if (WriteSchema(target, metadata) != 0)
     {
         free(target);
-        fprintf(stderr, "(map-to-persited-metadata-err) failed to write schema \n");
+        fprintf(stderr, "(create-writable-from-metadata) failed to write schema \n");
         return NULL;
     }
+    fprintf(stdout, "(create-writable-from-metadata) written schema to writable \n");
 
     target->FileCreatedAt = metadata->CreatedAt;
     target->FileLastModified = metadata->LastModified;
@@ -396,6 +398,8 @@ int WriteOffset(WritableFileMetadata *file, const FileMetadata *meta)
         file->TableOffsets[ti].TableOffset = meta->Offset->Offsets[ti]->Offset;
         file->TableOffsets[ti].TableOffsetId = meta->Offset->Offsets[ti]->Id;
     }
+
+    return 0;
 }
 
 int WriteSchema(WritableFileMetadata *file, const FileMetadata *meta)
@@ -408,24 +412,32 @@ int WriteSchema(WritableFileMetadata *file, const FileMetadata *meta)
 
     for (int ti = 0; ti < meta->Schema->TableCount; ti++)
     {
+        fprintf(stderr, "(write-schema-log) starting table copy \n");
         for (int ci = 0; ci < meta->Schema->TableDefs[ci]->ColumnCount; ci++)
         {
             file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnId = meta->Schema->TableDefs[ti]->Columns[ci]->Id;
             file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnCreatedAt = meta->Schema->TableDefs[ti]->Columns[ci]->CreatedAt;
-            strcpy(&file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnDefaultValue, meta->Schema->TableDefs[ti]->Columns[ci]->DefaultValue);
             strcpy(&file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnName, meta->Schema->TableDefs[ti]->Columns[ci]->Name);
             file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsNullable = meta->Schema->TableDefs[ti]->Columns[ci]->IsNullable;
             file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsPrimaryKey = meta->Schema->TableDefs[ti]->Columns[ci]->IsPrimaryKey;
             file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsUnique = meta->Schema->TableDefs[ti]->Columns[ci]->IsUnique;
             file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnLastModified = meta->Schema->TableDefs[ti]->Columns[ci]->LastModified;
             file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnType = meta->Schema->TableDefs[ti]->Columns[ci]->Type;
+            if (meta->Schema->TableDefs[ti]->Columns[ci]->DefaultValue)
+            {
+                fprintf(stderr, "(write-schema-log) starting table col copy 1\n");
+                strcpy(&file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnDefaultValue, meta->Schema->TableDefs[ti]->Columns[ci]->DefaultValue);
+                fprintf(stderr, "(write-schema-log) starting table col copy 2\n");
+            }
         }
+        fprintf(stderr, "(write-schema-log) table columns written over \n");
         file->Schema.TableDefs[ti].TableColumnCount = meta->Schema->TableDefs[ti]->ColumnCount;
         file->Schema.TableDefs[ti].TableCreatedAt = meta->Schema->TableDefs[ti]->CreatedAt;
         file->Schema.TableDefs[ti].TableId = meta->Schema->TableDefs[ti]->Id;
         file->Schema.TableDefs[ti].TablePrimaryKey = meta->Schema->TableDefs[ti]->PrimaryKeyId;
         file->Schema.TableDefs[ti].TableLastModified = meta->Schema->TableDefs[ti]->LastModified;
-        strcpy(&file->Schema.TableDefs[ti].TableName, meta->Schema->TableDefs[ti]->LastModified);
+        strcpy(&file->Schema.TableDefs[ti].TableName, meta->Schema->TableDefs[ti]->Name);
+        fprintf(stderr, "(write-schema-log) table written over \n");
     }
     strcpy(&file->Schema.SchemaTag, meta->Schema->TagName);
     file->Schema.TableCount = meta->Schema->TableCount;
@@ -494,14 +506,13 @@ void IntrospectMetadata(const FileMetadata *metadata)
     fprintf(stdout, "############# Start of schema log  #############\n");
     fprintf(stdout, "%s\n", NullGuardStr(FormatSchemaDefinition(metadata->Schema)));
     fprintf(stdout, "############# End of schema log    #############\n");
-    fprintf(stdout, "\n");
     fprintf(stdout, "############# End of metadata log  #############\n");
 }
 
-int WriteMetadataToFile(FILE *file, FileMetadata *in, WritableFileMetadata *map(const FileMetadata *metadata))
+int WriteMetadataToFile(FILE *file, FileMetadata *in, int map(const FileMetadata *metadata, const WritableFileMetadata *writable))
 {
     int status = -1;
-    WritableFileMetadata *target;
+    WritableFileMetadata target;
 
     if (!map || !file || !in)
     {
@@ -511,14 +522,14 @@ int WriteMetadataToFile(FILE *file, FileMetadata *in, WritableFileMetadata *map(
 
     do
     {
-        target = map(in);
-        if (!target)
+        status = map(in, &target);
+        if (status != 0)
         {
             fprintf(stderr, "(write-metadata-to-file-err) mapping to persisted format failed \n");
             break;
         }
 
-        if (fwrite(target, sizeof(WritableFileMetadata), 1, file) != 0)
+        if (fwrite(&target, sizeof(WritableFileMetadata), 1, file) != 0)
         {
             fprintf(stderr, "(write-metadata-to-file-err) fwrite failed \n");
             break;
@@ -526,8 +537,6 @@ int WriteMetadataToFile(FILE *file, FileMetadata *in, WritableFileMetadata *map(
 
         status = 0;
     } while (0);
-
-    free(target);
     return status;
 }
 

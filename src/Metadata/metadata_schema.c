@@ -320,6 +320,14 @@ SchemaDefinition *NewSchemaDefinition(char *name, ...)
         return NULL;
     }
 
+    def->TagName = malloc(strlen(name) + 1);
+    if (!def->TagName)
+    {
+        fprintf(stderr, "(new-schema-definition-err) malloc failed\n");
+        return NULL;
+    }
+    strcpy(def->TagName, name);
+
     def->TableDefs = malloc(sizeof(TableDefinition) * count);
     if (!def->TableDefs)
     {

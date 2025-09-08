@@ -10,8 +10,8 @@
 (create-new-file-metadata-info) table offsets linked
 (main) Metadata created successfully
 ############# Start of metadata log  #############
-(log) created-at                      = 1757343477.
-(log) last-modified                   = 1757343477.
+(log) created-at                      = 1757350720.
+(log) last-modified                   = 1757350720.
 
 ############# Start of offsets log #############
 (log) immediate-write-buffer-offset = 0.
@@ -40,7 +40,7 @@
 ############# End of offsets log   #############
 
 ############# Start of schema log  #############
-(log) schema-tag-name      = (null)
+(log) schema-tag-name      = bookstore-schema
 (log) schema-date-created  = 0
 (log) schema-last-modified = 0
 (log) schema-table-count   = 2
@@ -50,8 +50,8 @@
 (log) table-name          = books
 (log) table-primary-key   = book_id
 (log) table-column-count  = 8
-(log) table-created       = 1757343477
-(log) table-last-modified = 1757343477
+(log) table-created       = 1757350720
+(log) table-last-modified = 1757350720
 
 @@ table-column['book_id'] @@
 (log) column-id             = 0
@@ -60,8 +60,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
+(log) column-created        = 1757350720
+(log) column-last-modified  = 1757350720
 
 
 @@ table-column['title'] @@
@@ -71,8 +71,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
+(log) column-created        = 1757350720
+(log) column-last-modified  = 1757350720
 
 
 @@ table-column['book_author'] @@
@@ -82,8 +82,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
+(log) column-created        = 1757350720
+(log) column-last-modified  = 1757350720
 
 
 @@ table-column['stock_quality'] @@
@@ -92,9 +92,9 @@
 (log) column-is-primary-key = 0
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
-(log) column-default-value  = 1757343477
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
+(log) column-default-value  = 1757350720
+(log) column-created        = 1757350720
+(log) column-last-modified  = 1757350720
 
 
 @@ table-column['price'] @@
@@ -104,8 +104,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
+(log) column-created        = 1757350720
+(log) column-last-modified  = 1757350720
 
 
 @@ table-column['rental_price_per_day'] @@
@@ -115,8 +115,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
+(log) column-created        = 1757350720
+(log) column-last-modified  = 1757350720
 
 
 @@ table-column['stock_quality'] @@
@@ -126,8 +126,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = 0
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
+(log) column-created        = 1757350720
+(log) column-last-modified  = 1757350720
 
 
 @@ table-column['isdn'] @@
@@ -136,101 +136,4 @@
 (log) column-is-primary-key = 0
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
-(log) column-default-value  = (null)
-(log(map-to-persited-metadata-err) failed to write offset 
-(write-metadata-to-file-err) mapping to persisted format failed 
-<main> ERR! Couldn't write metadata to file :( 
-) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
-
-
-
-@@ schema-table-definition['customers'] @@
-(log) table-id            = 1
-(log) table-name          = customers
-(log) table-primary-key   = customer_id
-(log) table-column-count  = 7
-(log) table-created       = 1757343477
-(log) table-last-modified = 1757343477
-
-@@ table-column['customer_id'] @@
-(log) column-id             = 0
-(log) column-name           = customer_id
-(log) column-is-primary-key = 1
-(log) column-is-nullable    = 0
-(log) column-is-unique      = 0
-(log) column-default-value  = (null)
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
-
-
-@@ table-column['full_name'] @@
-(log) column-id             = 1
-(log) column-name           = full_name
-(log) column-is-primary-key = 0
-(log) column-is-nullable    = 0
-(log) column-is-unique      = 0
-(log) column-default-value  = (null)
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
-
-
-@@ table-column['email'] @@
-(log) column-id             = 2
-(log) column-name           = email
-(log) column-is-primary-key = 0
-(log) column-is-nullable    = 1
-(log) column-is-unique      = 1
-(log) column-default-value  = (null)
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
-
-
-@@ table-column['phone'] @@
-(log) column-id             = 3
-(log) column-name           = phone
-(log) column-is-primary-key = 0
-(log) column-is-nullable    = 0
-(log) column-is-unique      = 0
-(log) column-default-value  = (null)
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
-
-
-@@ table-column['address'] @@
-(log) column-id             = 4
-(log) column-name           = address
-(log) column-is-primary-key = 0
-(log) column-is-nullable    = 1
-(log) column-is-unique      = 1
-(log) column-default-value  = (null)
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
-
-
-@@ table-column['city'] @@
-(log) column-id             = 5
-(log) column-name           = city
-(log) column-is-primary-key = 0
-(log) column-is-nullable    = 1
-(log) column-is-unique      = 1
-(log) column-default-value  = (null)
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
-
-
-@@ table-column['registration_date'] @@
-(log) column-id             = 6
-(log) column-name           = registration_date
-(log) column-is-primary-key = 0
-(log) column-is-nullable    = 0
-(log) column-is-unique      = 0
-(log) column-default-value  = 1757343477
-(log) column-created        = 1757343477
-(log) column-last-modified  = 1757343477
-
-
-
-############# End of schema log    #############
-
-############# End of metadata log  #############
+(log) column-default-value  = ((write-schema-log) starting table copy 
