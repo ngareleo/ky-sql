@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -30,36 +31,49 @@ int main()
     }
 
     fprintf(stdout, "(main) Metadata created successfully\n");
-
     IntrospectMetadata(meta);
-    writableNoop = fopen(NOOP_FILE, "w");
 
     do
     {
-        if (!WriteMetadataToFile(writableNoop, meta, CreateWritableFromMetadata) == 0)
+        writableNoop = fopen(NOOP_FILE, "w");
+        if (!writableNoop)
         {
-            fprintf(stderr, "<main> ERR! Couldn't write metadata to file :( \n");
-            fclose(writableNoop);
+            fprintf(stderr, "(00-file-metadata-main-err) Couldn't open stream to file --> %s :( \n", NOOP_FILE);
             break;
         }
 
-        fclose(writableNoop);
-        fprintf(stderr, "<main>  metadata written to file :) \n");
+        if (WriteMetadataToFile(writableNoop, meta, CreateWritableFromMetadata) != 0)
+        {
+            fprintf(stderr, "(00-file-metadata-main-err) Couldn't write metadata to file \n");
+            fclose(writableNoop);
+            break;
+        }
+        else
+        {
+            fclose(writableNoop);
+            fprintf(stdout, "(00-file-metadata-main-info) Metadata written to file \n");
+        }
 
         readableNoop = fopen(NOOP_FILE, "r");
         if (!readableNoop)
         {
-            perror("fopen");
-            fprintf(stderr, "<main> ERR! Couldn't open file :( \n");
+            // !! Shouldn't fail twice
+            assert(readableNoop != NULL);
             break;
         }
 
-        if (ReadMetadataFromFile(readableNoop, &metaFromFile, CreateMetadataFromWritable) == 0)
+        if (ReadMetadataFromFile(readableNoop, &metaFromFile, CreateMetadataFromWritable) != 0)
         {
-            fprintf(stdout, "<main> FileMetadata read from file success \n");
-            IntrospectMetadata(metaFromFile);
+            fprintf(stderr, "(00-file-metadata-main-err) Couldn't load metadata from file \n");
+            fclose(writableNoop);
+            break;
+        }
+        else
+        {
+            fprintf(stdout, "(00-file-metadata-main-info) FileMetadata read from file success \n");
         }
 
+        IntrospectMetadata(metaFromFile);
         fclose(readableNoop);
     } while (0);
 

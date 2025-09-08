@@ -333,28 +333,25 @@ FileMetadata *CreateMetadataFromWritable(const WritableFileMetadata *metadata)
     return target;
 }
 
-WritableFileMetadata *CreateWritableFromMetadata(const FileMetadata *metadata)
+int CreateWritableFromMetadata(const FileMetadata *metadata, WritableFileMetadata *target)
 {
-    WritableFileMetadata *target;
-
     if (!metadata)
     {
         fprintf(stderr, "(create-writable-from-metadata) metadata is null \n");
-        return NULL;
+        return -1;
     }
 
-    target = malloc(sizeof(WritableFileMetadata));
     if (!target)
     {
-        fprintf(stderr, "(create-writable-from-metadata) malloc for target failed \n");
-        return NULL;
+        fprintf(stderr, "(create-writable-from-metadata) target is not pre-allocated \n");
+        return -1;
     }
 
     if (WriteOffset(target, metadata) != 0)
     {
         free(target);
         fprintf(stderr, "(create-writable-from-metadata) failed to write offset \n");
-        return NULL;
+        return -1;
     }
     fprintf(stdout, "(create-writable-from-metadata) written offset to writable \n");
 
@@ -362,18 +359,17 @@ WritableFileMetadata *CreateWritableFromMetadata(const FileMetadata *metadata)
     {
         free(target);
         fprintf(stderr, "(create-writable-from-metadata) failed to write schema \n");
-        return NULL;
+        return -1;
     }
-    fprintf(stdout, "(create-writable-from-metadata) written schema to writable \n");
 
+    fprintf(stdout, "(create-writable-from-metadata) schema written to writable metadata \n");
     target->FileCreatedAt = metadata->CreatedAt;
     target->FileLastModified = metadata->LastModified;
     target->OffsetImweb = metadata->Offset->ImwebOffset;
-    return target;
+    return 0;
 }
 
-// Does not allocate memory
-// Assumes memory is pre-allocated
+// !! Assumes memory is pre-allocated
 int WriteOffset(WritableFileMetadata *file, const FileMetadata *meta)
 {
     if (!meta)
@@ -413,7 +409,7 @@ int WriteSchema(WritableFileMetadata *file, const FileMetadata *meta)
     for (int ti = 0; ti < meta->Schema->TableCount; ti++)
     {
         fprintf(stderr, "(write-schema-log) starting table copy \n");
-        for (int ci = 0; ci < meta->Schema->TableDefs[ci]->ColumnCount; ci++)
+        for (int ci = 0; ci < meta->Schema->TableDefs[ti]->ColumnCount; ci++)
         {
             file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnId = meta->Schema->TableDefs[ti]->Columns[ci]->Id;
             file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnCreatedAt = meta->Schema->TableDefs[ti]->Columns[ci]->CreatedAt;
@@ -425,9 +421,7 @@ int WriteSchema(WritableFileMetadata *file, const FileMetadata *meta)
             file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnType = meta->Schema->TableDefs[ti]->Columns[ci]->Type;
             if (meta->Schema->TableDefs[ti]->Columns[ci]->DefaultValue)
             {
-                fprintf(stderr, "(write-schema-log) starting table col copy 1\n");
                 strcpy(&file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnDefaultValue, meta->Schema->TableDefs[ti]->Columns[ci]->DefaultValue);
-                fprintf(stderr, "(write-schema-log) starting table col copy 2\n");
             }
         }
         fprintf(stderr, "(write-schema-log) table columns written over \n");
@@ -509,7 +503,7 @@ void IntrospectMetadata(const FileMetadata *metadata)
     fprintf(stdout, "############# End of metadata log  #############\n");
 }
 
-int WriteMetadataToFile(FILE *file, FileMetadata *in, int map(const FileMetadata *metadata, const WritableFileMetadata *writable))
+int WriteMetadataToFile(FILE *file, FileMetadata *in, int map(const FileMetadata *metadata, WritableFileMetadata *writable))
 {
     int status = -1;
     WritableFileMetadata target;
@@ -529,9 +523,15 @@ int WriteMetadataToFile(FILE *file, FileMetadata *in, int map(const FileMetadata
             break;
         }
 
-        if (fwrite(&target, sizeof(WritableFileMetadata), 1, file) != 0)
+        if (fwrite(&target, sizeof(WritableFileMetadata), 1, file) < 1)
         {
+            perror("fwrite");
             fprintf(stderr, "(write-metadata-to-file-err) fwrite failed \n");
+            break;
+        }
+        else if (feof(file) != 0)
+        {
+            fprintf(stderr, "(write-metadata-to-file-err) EOF reached \n");
             break;
         }
 
