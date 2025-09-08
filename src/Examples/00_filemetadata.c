@@ -38,6 +38,7 @@ int main()
     {
         if (!WriteMetadataToFile(writableNoop, meta, CreateWritableFromMetadata) == 0)
         {
+            fprintf(stderr, "<main> ERR! Couldn't write metadata to file :( \n");
             fclose(writableNoop);
             break;
         }

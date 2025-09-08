@@ -339,28 +339,28 @@ WritableFileMetadata *CreateWritableFromMetadata(const FileMetadata *metadata)
 
     if (!metadata)
     {
-        fprintf(stderr, "(map-to-persited-metadata-err) malloc failed \n");
+        fprintf(stderr, "(map-to-persited-metadata-err) metadata is null \n");
         return NULL;
     }
 
     target = malloc(sizeof(WritableFileMetadata));
     if (!target)
     {
-        fprintf(stderr, "(map-to-persited-metadata-err) malloc failed \n");
+        fprintf(stderr, "(map-to-persited-metadata-err) malloc for target failed \n");
         return NULL;
     }
 
     if (WriteOffset(target, metadata) != 0)
     {
         free(target);
-        fprintf(stderr, "(map-to-persited-metadata-err) malloc failed \n");
+        fprintf(stderr, "(map-to-persited-metadata-err) failed to write offset \n");
         return NULL;
     }
 
     if (WriteSchema(target, metadata) != 0)
     {
         free(target);
-        fprintf(stderr, "(map-to-persited-metadata-err) malloc failed \n");
+        fprintf(stderr, "(map-to-persited-metadata-err) failed to write schema \n");
         return NULL;
     }
 
@@ -376,15 +376,20 @@ int WriteOffset(WritableFileMetadata *file, const FileMetadata *meta)
 {
     if (!meta)
     {
-        fprintf(stderr, "(write-offset-err) `meta` is null\n");
+        fprintf(stderr, "(write-offset-err) meta is null\n");
         return -1;
     }
 
     file->OffsetImweb = meta->Offset->ImwebOffset;
 
     /**
+     * !! Here lies Dragons !!
+     *
      * Here I'm setting a hard rule that number of table offsets are always equal to the number of tables.
-     * They're represented by different structs
+     * Although they're represented by different structs
+     * There's no gurantee this holds in instructions upstream
+     *
+     * Validating seems like a waste for now so I'll keep it this way
      */
     for (int ti = 0; ti < meta->Schema->TableCount; ti++)
     {

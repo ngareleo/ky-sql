@@ -9,14 +9,14 @@ char *NowDefaultValue()
     time(&now);
     if (now == (time_t)-1)
     {
-        fprintf(stderr, "(create-books-table-defintion-info) time failed");
+        fprintf(stderr, "(now-default-value-err) now default value failed");
         return NULL;
     }
 
     buff = malloc(sizeof(time_t));
     if (!buff)
     {
-        fprintf(stderr, "(create-books-table-defintion-info) malloc failed");
+        fprintf(stderr, "(now-default-value-err) malloc failed");
         return NULL;
     }
 

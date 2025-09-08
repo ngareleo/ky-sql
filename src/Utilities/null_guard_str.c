@@ -3,5 +3,10 @@
 
 char *NullGuardStr(char *str)
 {
-    return str ? str : "NULL";
+    if (!str)
+    {
+        return "null-guard-null";
+    }
+
+    return str;
 }
