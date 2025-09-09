@@ -3,7 +3,7 @@
 
 int Count(void **ptr)
 {
-    if (ptr == NULL)
+    if (!ptr)
     {
         return 0;
     }

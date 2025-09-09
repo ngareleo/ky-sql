@@ -18,7 +18,7 @@ TableColDefinition *NewTableColumn(
     time_t now;
     TableColDefinition *colDef;
 
-    if (!name || !defaultValue)
+    if (!name)
     {
         fprintf(stderr, "(new-table-column-err) Passed null values. \n");
         return NULL;
@@ -46,17 +46,20 @@ TableColDefinition *NewTableColumn(
         return NULL;
     }
 
-    colDef->DefaultValue = malloc(strlen(defaultValue) + 1);
-    if (!colDef->DefaultValue)
+    if (defaultValue)
     {
-        free(colDef->Name);
-        free(colDef);
-        fprintf(stderr, "(new-table-column-err) malloc failed. \n");
-        return NULL;
+        colDef->DefaultValue = malloc(strlen(defaultValue) + 1);
+        if (!colDef->DefaultValue)
+        {
+            free(colDef->Name);
+            free(colDef);
+            fprintf(stderr, "(new-table-column-err) malloc failed. \n");
+            return NULL;
+        }
+        strcpy(colDef->DefaultValue, defaultValue);
     }
 
     strcpy(colDef->Name, name);
-    strcpy(colDef->DefaultValue, defaultValue);
     colDef->Id = id;
     colDef->CreatedAt = now;
     colDef->LastModified = now;
@@ -98,10 +101,10 @@ TableDefinition *NewTableDefinition(char *name, int id, int primaryKeyId, ...)
         return NULL;
     }
 
-    /**
-     * Remember to update this whenever the function def changes
-     */
-    va_start(args, primaryKeyId);
+    va_start(
+        args,
+        primaryKeyId // Note: Remember to update this whenever the function def changes
+    );
     while ((currCol = va_arg(args, TableColDefinition *)) != NULL)
     {
         allCols[count++] = currCol;
@@ -149,7 +152,7 @@ TableDefinition *NewTableDefinition(char *name, int id, int primaryKeyId, ...)
 char *FormatSchemaDefinition(const SchemaDefinition *def)
 {
     char *buffer;
-    FILE *memstream;
+    FILE *stream;
     size_t size;
 
     if (!def)
@@ -158,27 +161,27 @@ char *FormatSchemaDefinition(const SchemaDefinition *def)
         return NULL;
     }
 
-    memstream = open_memstream(&buffer, &size);
-    if (!memstream)
+    stream = open_memstream(&buffer, &size);
+    if (!stream)
     {
         fprintf(stderr, "(format-table-schema-err) open_memstream failed");
         return NULL;
     }
 
-    fprintf(memstream, "(log) schema-tag-name      = %s\n", def->TagName);
-    fprintf(memstream, "(log) schema-date-created  = %ld\n", def->CreatedAt);
-    fprintf(memstream, "(log) schema-last-modified = %ld\n", def->LastModified);
-    fprintf(memstream, "(log) schema-table-count   = %d\n", def->TableCount);
+    fprintf(stream, "(log) schema-tag-name      = %s\n", def->TagName);
+    fprintf(stream, "(log) schema-date-created  = %ld\n", def->CreatedAt);
+    fprintf(stream, "(log) schema-last-modified = %ld\n", def->LastModified);
+    fprintf(stream, "(log) schema-table-count   = %d\n", def->TableCount);
 
     for (int c = 0; c < def->TableCount; c++)
     {
-        fprintf(memstream,
-                "(log) schema-table-definition['%s'] = %s\n",
+        fprintf(stream,
+                "\n@@ schema-table-definition['%s'] @@\n%s\n",
                 def->TableDefs[c]->Name,
                 FormatTableDefinition(def->TableDefs[c]));
     }
 
-    fclose(memstream);
+    fclose(stream);
     return buffer;
 }
 
@@ -204,7 +207,7 @@ char *GetColumnNameById(TableDefinition *def, int id)
 char *FormatTableDefinition(const TableDefinition *def)
 {
     char *buffer;
-    FILE *memstream;
+    FILE *stream;
     size_t size;
 
     if (!def)
@@ -213,29 +216,29 @@ char *FormatTableDefinition(const TableDefinition *def)
         return NULL;
     }
 
-    memstream = open_memstream(&buffer, &size);
-    if (!memstream)
+    stream = open_memstream(&buffer, &size);
+    if (!stream)
     {
         fprintf(stderr, "(format-table-definition-err) open_memstream failed");
         return NULL;
     }
 
-    fprintf(memstream, "(log) table-id            = %d\n", def->Id);
-    fprintf(memstream, "(log) table-name          = %s\n", def->Name);
-    fprintf(memstream, "(log) table-primary-key   = %s\n", GetColumnNameById((TableDefinition *)def, def->PrimaryKeyId));
-    fprintf(memstream, "(log) table-column-count  = %d\n", def->ColumnCount);
-    fprintf(memstream, "(log) table-created       = %ld\n", def->CreatedAt);
-    fprintf(memstream, "(log) table-last-modified = %ld\n", def->LastModified);
+    fprintf(stream, "(log) table-id            = %d\n", def->Id);
+    fprintf(stream, "(log) table-name          = %s\n", def->Name);
+    fprintf(stream, "(log) table-primary-key   = %s\n", GetColumnNameById((TableDefinition *)def, def->PrimaryKeyId));
+    fprintf(stream, "(log) table-column-count  = %d\n", def->ColumnCount);
+    fprintf(stream, "(log) table-created       = %ld\n", def->CreatedAt);
+    fprintf(stream, "(log) table-last-modified = %ld\n", def->LastModified);
 
     for (int c = 0; c < def->ColumnCount; c++)
     {
-        fprintf(memstream,
-                "(log) table-column['%s'] = %s\n",
+        fprintf(stream,
+                "\n@@ table-column['%s'] @@\n%s\n",
                 def->Columns[c]->Name,
                 FormatTableColDefinition(def->Columns[c]));
     }
 
-    fclose(memstream);
+    fclose(stream);
     return buffer;
 }
 
@@ -289,7 +292,10 @@ SchemaDefinition *NewSchemaDefinition(char *name, ...)
 {
     va_list args;
     int count = 0;
-    TableDefinition *allTables[MAX_TABLE_COUNT], *currentDef;
+    TableDefinition *allTables[
+        // Todo: Optimize
+        MAX_TABLE_COUNT // Todo: Look into re-execution instead of reserving all this memory
+    ];
     SchemaDefinition *def;
 
     if (!name)
@@ -299,8 +305,10 @@ SchemaDefinition *NewSchemaDefinition(char *name, ...)
     }
 
     va_start(args, name);
-    while ((currentDef = va_arg(args, TableDefinition *)) != NULL)
+    TableDefinition *currentDef;
+    while ((currentDef = va_arg(args, TableDefinition *)))
     {
+        fprintf(stderr, "(new-schema-definition-log) count --> %d, table --> %s\n", count, currentDef->Name);
         allTables[count++] = currentDef;
     }
     va_end(args);
@@ -311,6 +319,14 @@ SchemaDefinition *NewSchemaDefinition(char *name, ...)
         fprintf(stderr, "(new-schema-definition-err) malloc failed\n");
         return NULL;
     }
+
+    def->TagName = malloc(strlen(name) + 1);
+    if (!def->TagName)
+    {
+        fprintf(stderr, "(new-schema-definition-err) malloc failed\n");
+        return NULL;
+    }
+    strcpy(def->TagName, name);
 
     def->TableDefs = malloc(sizeof(TableDefinition) * count);
     if (!def->TableDefs)
@@ -326,6 +342,7 @@ SchemaDefinition *NewSchemaDefinition(char *name, ...)
     }
 
     def->TableCount = count;
+    fprintf(stdout, "(new-schema-definition-log) table-count --> %d \n", def->TableCount);
     return def;
 }
 

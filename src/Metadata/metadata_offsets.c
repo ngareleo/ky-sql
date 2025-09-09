@@ -42,8 +42,8 @@ char *FormatTableOffset(const TableOffset *tableOffset)
         return NULL;
     }
 
-    sprintf(stream, "(log) id         = %s.\n", tableOffset->Id);
-    sprintf(stream, "(log) offset     = %d.\n", tableOffset->Offset);
+    fprintf(stream, "(log) id         = %d.\n", tableOffset->Id);
+    fprintf(stream, "(log) offset     = %d.\n", tableOffset->Offset);
 
     fclose(stream);
     return buffer;
@@ -68,17 +68,18 @@ char *FormatOffset(const Offset *offset)
         return NULL;
     }
 
-    sprintf(stream, "(log) immediate-write-buffer-offset = %d.\n", offset->ImwebOffset);
+    fprintf(stream, "(log) immediate-write-buffer-offset = %d.\n", offset->ImwebOffset);
 
     for (int c = 0; c < offset->TableCount; c++)
     {
         fprintf(stream, "############# Start of table offset log  #############\n");
-        fprintf(stdout, "\n");
-        fprintf(stdout, "%s\n", FormatTableOffset(offset->Offsets[c]));
-        fprintf(stdout, "\n");
+        fprintf(stream, "\n");
+        fprintf(stream, "%s\n", NullGuardStr(FormatTableOffset(offset->Offsets[c])));
+        fprintf(stream, "\n");
         fprintf(stream, "############# End of table offset log    #############\n");
     }
 
+    fflush(stream);
     fclose(stream);
     return buffer;
 }
@@ -175,6 +176,10 @@ Offset *NewOffsetN(int imwebOffset, const TableOffset **offsets)
     return offset;
 }
 
+/**
+ * Suitable for on the fly linking of table offsets
+ * Very ineffecient for batch updates
+ */
 int AddTableOffset(Offset *offset, const TableOffset *table)
 {
     TableOffset **replace;

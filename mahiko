@@ -46,21 +46,48 @@ build_example() {
 
 run_example() {
     local name
+    local idx
+    local no_log=0
+    # Check for --no-log as last argument
+    if [ "$2" = "--no-log" ]; then
+        no_log=1
+    fi
     name=$(get_example_name "$1")
-    if [ -z "$name" ]; then
+    if [[ "$1" =~ ^[0-9]+$ ]]; then
+        idx=$(printf "%02d" "$1")
+    else
+        # Find index by name
+        for i in "${!EXAMPLES[@]}"; do
+            if [[ "${EXAMPLES[$i]}" == "$1" ]]; then
+                idx=$(printf "%02d" "$i")
+                break
+            fi
+        done
+    fi
+    if [ -z "$name" ] || [ -z "$idx" ]; then
         echo "Invalid example index or name: $1"
         usage
         exit 1
     fi
+    LOG_DIR="logs"
+    [ -d "$LOG_DIR" ] || mkdir -p "$LOG_DIR"
     BUILD_DIR="build"
     cd "$BUILD_DIR" || exit 1
-    "./src/Examples/run_example_${name}"
+    if [ "$no_log" -eq 1 ]; then
+        "./src/Examples/run_example_${name}"
+    else
+        "./src/Examples/run_example_${name}" > "../$LOG_DIR/example-logs-${idx}.txt" 2>&1
+    fi
 }
 
 if [ "$1" = "build" ] && [ "$2" = "examples" ] && [ -n "$3" ]; then
     build_example "$3"
 elif [ "$1" = "run" ] && [ "$2" = "examples" ] && [ -n "$3" ]; then
-    run_example "$3"
+    if [ "$4" = "--no-log" ]; then
+        run_example "$3" --no-log
+    else
+        run_example "$3"
+    fi
 else
     usage
 fi

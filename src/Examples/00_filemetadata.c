@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -12,55 +13,68 @@ int main()
     time_t duration = 1000;
     FILE *writableNoop, *readableNoop;
     SchemaDefinition *bookstoreSchema;
-    FileMetadata *meta, *metaFromFile;
+    FileMetadata *constructedMeta, *metaFromFile;
 
     bookstoreSchema = CreateBookStoreSchemaDefinition();
     if (!bookstoreSchema)
     {
-        fprintf(stderr, "(main-err) Could not create book store schema");
+        fprintf(stderr, "(main-err) Could not create book store schema\n");
         return -1;
     }
 
-    meta = CreateNewFileMetadataFromSchema(bookstoreSchema);
-    if (!meta)
+    constructedMeta = CreateNewFileMetadataFromSchema(bookstoreSchema);
+    if (!constructedMeta)
     {
         FreeSchemaDefinition(bookstoreSchema);
-        fprintf(stderr, "(main-err) Could not create file metadata");
+        fprintf(stderr, "(main-err) Could not create file metadata\n");
         return -1;
     }
 
-    IntrospectMetadata(meta);
-
-    writableNoop = fopen(NOOP_FILE, "w");
+    fprintf(stdout, "(main) Metadata created successfully\n");
+    IntrospectMetadata(constructedMeta);
 
     do
     {
-        if (!WriteMetadataToFile(writableNoop, meta, CreateWritableFromMetadata) == 0)
+        // !!
+        // !! Only break out of this loop, avoid returning to allow cleanups
+
+        writableNoop = fopen(NOOP_FILE, "w");
+        if (!writableNoop)
         {
-            fclose(writableNoop);
+            fprintf(stderr, "(00-file-metadata-main-err) Couldn't open stream to file --> %s :( \n", NOOP_FILE);
             break;
         }
 
-        fclose(writableNoop);
+        if (WriteMetadataToFile(writableNoop, constructedMeta, CreateWritableFromMetadata) != 0)
+        {
+            fprintf(stderr, "(00-file-metadata-main-err) Couldn't write metadata to file \n");
+            break;
+        }
 
+        fprintf(stdout, "(00-file-metadata-main-info) Metadata written to file \n");
+
+        fflush(writableNoop);
         readableNoop = fopen(NOOP_FILE, "r");
         if (!readableNoop)
         {
-            perror("fopen");
-            fprintf(stderr, "<main> ERR! Couldn't open file :( \n");
+            // !! Shouldn't fail twice
+            assert(readableNoop != NULL);
             break;
         }
 
-        if (ReadMetadataFromFile(readableNoop, &metaFromFile, CreateMetadataFromWritable) == 0)
+        if (ReadMetadataFromFile(readableNoop, &metaFromFile, CreateMetadataFromWritable) != 0)
         {
-            fprintf(stdout, "<main> FileMetadata read from file success \n");
-            IntrospectMetadata(metaFromFile);
+            fprintf(stderr, "(00-file-metadata-main-err) Couldn't load metadata from file \n");
+            break;
         }
 
-        fclose(readableNoop);
+        fprintf(stdout, "(00-file-metadata-main-info) file metadata read from file successfully :) \n");
+        IntrospectMetadata(metaFromFile);
     } while (0);
 
-    FreeFileMetadata(meta);
+    fclose(writableNoop);
+    fclose(readableNoop);
+    FreeFileMetadata(constructedMeta);
     FreeFileMetadata(metaFromFile);
     FreeSchemaDefinition(bookstoreSchema);
 }

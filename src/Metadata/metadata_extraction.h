@@ -61,13 +61,13 @@ typedef struct
 void FreeFileMetadata(FileMetadata *);
 void IntrospectMetadata(const FileMetadata *);
 
-int WriteMetadataToFile(FILE *, FileMetadata *, WritableFileMetadata *(const FileMetadata *));
+int WriteMetadataToFile(FILE *, FileMetadata *, int(const FileMetadata *, WritableFileMetadata *));
 int ReadMetadataFromFile(FILE *, FileMetadata **, FileMetadata *(const WritableFileMetadata *));
 
 FileMetadata *NewFileMetadata(Offset *, SchemaDefinition *);
 FileMetadata *CreateMetadataFromWritable(const WritableFileMetadata *);
 FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *);
 
-WritableFileMetadata *CreateWritableFromMetadata(const FileMetadata *);
+int CreateWritableFromMetadata(const FileMetadata *, WritableFileMetadata *);
 
 #endif

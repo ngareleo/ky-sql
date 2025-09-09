@@ -1,9 +1,10 @@
-set(METADATA_SOURCES
+set(SOURCES
+	metadata_default.c
 	metadata_extraction.c
 	metadata_offsets.c
 	metadata_schema.c
 )
 
-add_library(metadata STATIC ${METADATA_SOURCES})
+add_library(metadata STATIC ${SOURCES})
 
 target_include_directories(metadata PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

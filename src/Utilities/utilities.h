@@ -5,5 +5,6 @@
 
 int Count(void **);
 char *NowDefaultValue();
+char *NullGuardStr(char *);
 
 #endif
