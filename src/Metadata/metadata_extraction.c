@@ -60,14 +60,14 @@ int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
 {
     if (!file || !meta)
     {
-        fprintf(stderr, "(build-schema-from-persisted-format) passed a null value. \n");
+        fprintf(stderr, "(read-schema-from-writable) passed a null value. \n");
         return -1;
     }
 
     meta->Schema = malloc(sizeof(SchemaDefinition));
     if (!meta->Schema)
     {
-        fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
+        fprintf(stderr, "(read-schema-from-writable-err) malloc failed. \n");
         return -1;
     }
 
@@ -75,7 +75,7 @@ int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
     if (!meta->Schema->TagName)
     {
         free(meta->Schema);
-        fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
+        fprintf(stderr, "(read-schema-from-writable-err) malloc failed. \n");
         return -1;
     }
 
@@ -84,17 +84,18 @@ int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
     {
         free(meta->Schema);
         free(meta->Schema->TagName);
-        fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
+        fprintf(stderr, "(read-schema-from-writable-err) malloc failed. \n");
         return -1;
     }
 
     for (int ti = 0; ti < file->Schema.TableCount; ti++)
     {
+        fprintf(stdout, "(read-schema-from-writable-info) 1 starting table copy \n");
         TableDefinition *tableDef;
-
         tableDef = malloc(sizeof(TableDefinition));
         if (!tableDef)
         {
+            fprintf(stderr, "(read-schema-from-writable) malloc failed. \n");
             for (int ti2 = 0; ti2 < ti; ti2++)
             {
                 FreeTableDefinition(meta->Schema->TableDefs[ti2]);
@@ -102,13 +103,13 @@ int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
             free(meta->Schema->TableDefs);
             free(meta->Schema->TagName);
             free(meta->Schema);
-            fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
             return -1;
         }
 
         tableDef->Name = malloc(strlen(file->Schema.TableDefs[ti].TableName) + 1);
         if (!tableDef->Name)
         {
+            fprintf(stderr, "(read-schema-from-writable) malloc failed. \n");
             free(tableDef);
             for (int ti2 = 0; ti2 < ti; ti2++)
             {
@@ -117,18 +118,34 @@ int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
             free(meta->Schema->TableDefs);
             free(meta->Schema->TagName);
             free(meta->Schema);
-            fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
+            return -1;
+        }
+
+        tableDef->Columns = malloc(sizeof(TableColDefinition) * file->Schema.TableDefs[ti].TableColumnCount);
+        if (!tableDef->Columns)
+        {
+            fprintf(stderr, "(read-schema-from-writable) malloc failed. \n");
+            free(tableDef->Name);
+            free(tableDef);
+            for (int ti2 = 0; ti2 < ti; ti2++)
+            {
+                FreeTableDefinition(meta->Schema->TableDefs[ti2]);
+            }
+            free(meta->Schema->TableDefs);
+            free(meta->Schema->TagName);
+            free(meta->Schema);
             return -1;
         }
 
         for (int ci = 0; ci < file->Schema.TableDefs[ti].TableColumnCount; ci++)
         {
-            int converted;
+            fprintf(stdout, "(read-schema-from-writable-info) 2 starting table column copy \n");
             TableColDefinition *colDef;
-
             colDef = malloc(sizeof(TableColDefinition));
             if (!colDef)
             {
+                fprintf(stderr, "(read-schema-from-writable) malloc failed. \n");
+                free(tableDef->Name);
                 free(tableDef);
                 for (int ti2 = 0; ti2 < ti; ti2++)
                 {
@@ -137,13 +154,13 @@ int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
                 free(meta->Schema->TableDefs);
                 free(meta->Schema->TagName);
                 free(meta->Schema);
-                fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
                 return -1;
             }
 
             colDef->Name = malloc(strlen(file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnName) + 1);
             if (!colDef->Name)
             {
+                fprintf(stderr, "(read-schema-from-writable) malloc failed. \n");
                 free(colDef);
                 free(tableDef);
                 for (int ti2 = 0; ti2 < ti; ti2++)
@@ -153,12 +170,39 @@ int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
                 free(meta->Schema->TableDefs);
                 free(meta->Schema->TagName);
                 free(meta->Schema);
-                fprintf(stderr, "(build-schema-from-persisted-format) malloc failed. \n");
                 return -1;
             }
 
+            // !! For now we treat default values as character array
+            // !! The way we handle default values will be different for each data type
+
+            if (strlen(file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnDefaultValue) > 0)
+            {
+
+                colDef->DefaultValue = malloc(strlen(file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnDefaultValue) + 1);
+                if (!colDef->DefaultValue)
+                {
+                    fprintf(stderr, "(read-schema-from-writable) malloc failed. \n");
+                    free(colDef);
+                    free(tableDef->Name);
+                    free(tableDef);
+                    for (int ti2 = 0; ti2 < ti; ti2++)
+                    {
+                        FreeTableDefinition(meta->Schema->TableDefs[ti2]);
+                    }
+                    free(meta->Schema->TableDefs);
+                    free(meta->Schema->TagName);
+                    free(meta->Schema);
+                    return -1;
+                }
+                else
+                {
+
+                    strcpy(colDef->DefaultValue, &file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnDefaultValue);
+                }
+            }
+
             strcpy(colDef->Name, &file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnName);
-            colDef->DefaultValue = &file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnDefaultValue;
             colDef->CreatedAt = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnCreatedAt;
             colDef->Id = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnId;
             colDef->IsUnique = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsUnique;
@@ -167,6 +211,7 @@ int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
             colDef->LastModified = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnLastModified;
             colDef->Type = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnType;
             tableDef->Columns[ci] = colDef;
+            fprintf(stderr, "(read-schema-from-writable-info) 2 table column copied over \n");
         }
         tableDef->PrimaryKeyId = file->Schema.TableDefs[ti].TablePrimaryKey;
         tableDef->Id = file->Schema.TableDefs[ti].TableId;
@@ -175,6 +220,7 @@ int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
         tableDef->LastModified = file->Schema.TableDefs[ti].TableLastModified;
         strcpy(tableDef->Name, &file->Schema.TableDefs[ti].TableName);
         meta->Schema->TableDefs[ti] = tableDef;
+        fprintf(stderr, "(read-schema-from-writable-info) 1 table  copied over \n");
     }
     meta->Schema->TableCount = file->Schema.TableCount;
     meta->Schema->CreatedAt = file->FileCreatedAt;
@@ -299,25 +345,26 @@ int ReadOffsetFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
 FileMetadata *CreateMetadataFromWritable(const WritableFileMetadata *metadata)
 {
     FileMetadata *target;
-
     if (!metadata)
     {
+        fprintf(stderr, "(create-metadata-from-info) metadata is null. \n");
         return NULL;
     }
 
     target = malloc(sizeof(FileMetadata));
     if (!target)
     {
-        fprintf(stderr, "(boot-file-metadata-from-file-err) malloc failed. \n");
+        fprintf(stderr, "(create-metadata-from-writable) malloc failed. \n");
         return NULL;
     }
 
     if (ReadOffsetFromWritable(target, metadata) != 0)
     {
         free(target);
-        fprintf(stderr, "(boot-file-metadata-from-file-err) failed while copying over offsets. \n");
+        fprintf(stderr, "(create-metadata-from-writable) failed while copying over offsets. \n");
         return NULL;
     }
+    fprintf(stdout, "(create-metadata-from-writable) offsets copied to metadata . \n");
 
     if (ReadSchemaFromWritable(target, metadata) != 0)
     {
@@ -325,6 +372,7 @@ FileMetadata *CreateMetadataFromWritable(const WritableFileMetadata *metadata)
         fprintf(stderr, "(boot-file-from-persisted-format-err) failed while copying over schema. \n");
         return NULL;
     }
+    fprintf(stdout, "(create-metadata-from-writable) schema copied to metadata . \n");
 
     target->CreatedAt = metadata->FileCreatedAt;
     target->LastModified = metadata->FileLastModified;
@@ -349,20 +397,18 @@ int CreateWritableFromMetadata(const FileMetadata *metadata, WritableFileMetadat
 
     if (WriteOffset(target, metadata) != 0)
     {
-        free(target);
         fprintf(stderr, "(create-writable-from-metadata) failed to write offset \n");
         return -1;
     }
-    fprintf(stdout, "(create-writable-from-metadata) written offset to writable \n");
+    fprintf(stdout, "(create-writable-from-metadata) offsets copied to writable \n");
 
     if (WriteSchema(target, metadata) != 0)
     {
-        free(target);
         fprintf(stderr, "(create-writable-from-metadata) failed to write schema \n");
         return -1;
     }
-
     fprintf(stdout, "(create-writable-from-metadata) schema written to writable metadata \n");
+
     target->FileCreatedAt = metadata->CreatedAt;
     target->FileLastModified = metadata->LastModified;
     target->OffsetImweb = metadata->Offset->ImwebOffset;
@@ -406,6 +452,7 @@ int WriteSchema(WritableFileMetadata *file, const FileMetadata *meta)
         return -1;
     }
 
+    fprintf(stderr, "(write-schema-log) starting schema copy \n");
     for (int ti = 0; ti < meta->Schema->TableCount; ti++)
     {
         fprintf(stderr, "(write-schema-log) starting table copy \n");
@@ -433,6 +480,7 @@ int WriteSchema(WritableFileMetadata *file, const FileMetadata *meta)
         strcpy(&file->Schema.TableDefs[ti].TableName, meta->Schema->TableDefs[ti]->Name);
         fprintf(stderr, "(write-schema-log) table written over \n");
     }
+
     strcpy(&file->Schema.SchemaTag, meta->Schema->TagName);
     file->Schema.TableCount = meta->Schema->TableCount;
 
@@ -490,6 +538,9 @@ void IntrospectMetadata(const FileMetadata *metadata)
     }
 
     fprintf(stdout, "############# Start of metadata log  #############\n");
+    fprintf(stdout, "############# Start of schema log  #############\n");
+    fprintf(stdout, "%s\n", NullGuardStr(FormatSchemaDefinition(metadata->Schema)));
+    fprintf(stdout, "############# End of schema log    #############\n");
     fprintf(stdout, "(log) created-at                      = %ld.\n", metadata->CreatedAt);
     fprintf(stdout, "(log) last-modified                   = %ld.\n", metadata->LastModified);
     fprintf(stdout, "\n");
@@ -497,9 +548,6 @@ void IntrospectMetadata(const FileMetadata *metadata)
     fprintf(stdout, "%s\n", NullGuardStr(FormatOffset(metadata->Offset)));
     fprintf(stdout, "############# End of offsets log   #############\n");
     fprintf(stdout, "\n");
-    fprintf(stdout, "############# Start of schema log  #############\n");
-    fprintf(stdout, "%s\n", NullGuardStr(FormatSchemaDefinition(metadata->Schema)));
-    fprintf(stdout, "############# End of schema log    #############\n");
     fprintf(stdout, "############# End of metadata log  #############\n");
 }
 
@@ -542,7 +590,7 @@ int WriteMetadataToFile(FILE *file, FileMetadata *in, int map(const FileMetadata
 
 int ReadMetadataFromFile(FILE *file, FileMetadata **out, FileMetadata *map(const WritableFileMetadata *metadata))
 {
-    WritableFileMetadata *buffer;
+    WritableFileMetadata *writable;
     int status = -1;
 
     if (!map || !out || !file)
@@ -553,29 +601,35 @@ int ReadMetadataFromFile(FILE *file, FileMetadata **out, FileMetadata *map(const
 
     do
     {
-        buffer = malloc(sizeof(WritableFileMetadata));
-        if (!buffer)
+        writable = malloc(sizeof(WritableFileMetadata));
+        if (!writable)
         {
             fprintf(stderr, "(read-metadata-from-file-err) malloc failed \n");
             break;
         }
 
-        fread(buffer, sizeof(WritableFileMetadata), 1, file);
-        if (!buffer)
+        int read = fread(writable, sizeof(WritableFileMetadata), 1, file);
+        if (read < 1)
         {
             fprintf(stderr, "(read-metadata-from-file-err) fread failed \n");
+        }
+        else if (!writable)
+        {
+            fprintf(stderr, "(read-metadata-from-file-err) fread failed. writable is null \n");
             break;
         }
+        fprintf(stdout, "(read-metadata-from-file-info) data read from file \n");
 
-        *out = map(buffer);
+        *out = map(writable);
         if (!out)
         {
             fprintf(stderr, "(read-metadata-from-file-err) mapping from persisted format failed \n");
         }
+        fprintf(stdout, "(read-metadata-from-file-info) metadata read successfully  \n");
 
         status = 0;
     } while (0);
 
-    free(buffer);
+    free(writable);
     return status;
 }

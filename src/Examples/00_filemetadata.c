@@ -13,7 +13,7 @@ int main()
     time_t duration = 1000;
     FILE *writableNoop, *readableNoop;
     SchemaDefinition *bookstoreSchema;
-    FileMetadata *meta, *metaFromFile;
+    FileMetadata *constructedMeta, *metaFromFile;
 
     bookstoreSchema = CreateBookStoreSchemaDefinition();
     if (!bookstoreSchema)
@@ -22,8 +22,8 @@ int main()
         return -1;
     }
 
-    meta = CreateNewFileMetadataFromSchema(bookstoreSchema);
-    if (!meta)
+    constructedMeta = CreateNewFileMetadataFromSchema(bookstoreSchema);
+    if (!constructedMeta)
     {
         FreeSchemaDefinition(bookstoreSchema);
         fprintf(stderr, "(main-err) Could not create file metadata\n");
@@ -31,10 +31,13 @@ int main()
     }
 
     fprintf(stdout, "(main) Metadata created successfully\n");
-    IntrospectMetadata(meta);
+    IntrospectMetadata(constructedMeta);
 
     do
     {
+        // !!
+        // !! Only break out of this loop, avoid returning to allow cleanups
+
         writableNoop = fopen(NOOP_FILE, "w");
         if (!writableNoop)
         {
@@ -42,18 +45,15 @@ int main()
             break;
         }
 
-        if (WriteMetadataToFile(writableNoop, meta, CreateWritableFromMetadata) != 0)
+        if (WriteMetadataToFile(writableNoop, constructedMeta, CreateWritableFromMetadata) != 0)
         {
             fprintf(stderr, "(00-file-metadata-main-err) Couldn't write metadata to file \n");
-            fclose(writableNoop);
             break;
         }
-        else
-        {
-            fclose(writableNoop);
-            fprintf(stdout, "(00-file-metadata-main-info) Metadata written to file \n");
-        }
 
+        fprintf(stdout, "(00-file-metadata-main-info) Metadata written to file \n");
+
+        fflush(writableNoop);
         readableNoop = fopen(NOOP_FILE, "r");
         if (!readableNoop)
         {
@@ -65,19 +65,16 @@ int main()
         if (ReadMetadataFromFile(readableNoop, &metaFromFile, CreateMetadataFromWritable) != 0)
         {
             fprintf(stderr, "(00-file-metadata-main-err) Couldn't load metadata from file \n");
-            fclose(writableNoop);
             break;
         }
-        else
-        {
-            fprintf(stdout, "(00-file-metadata-main-info) FileMetadata read from file success \n");
-        }
 
+        fprintf(stdout, "(00-file-metadata-main-info) file metadata read from file successfully :) \n");
         IntrospectMetadata(metaFromFile);
-        fclose(readableNoop);
     } while (0);
 
-    FreeFileMetadata(meta);
+    fclose(writableNoop);
+    fclose(readableNoop);
+    FreeFileMetadata(constructedMeta);
     FreeFileMetadata(metaFromFile);
     FreeSchemaDefinition(bookstoreSchema);
 }
