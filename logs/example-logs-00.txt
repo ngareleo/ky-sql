@@ -21,8 +21,8 @@
 (log) table-name          = books
 (log) table-primary-key   = book_id
 (log) table-column-count  = 8
-(log) table-created       = 1757442449
-(log) table-last-modified = 1757442449
+(log) table-created       = 1757532680
+(log) table-last-modified = 1757532680
 
 @@ table-column['book_id'] @@
 (log) column-id             = 0
@@ -31,8 +31,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['title'] @@
@@ -42,8 +42,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['book_author'] @@
@@ -53,8 +53,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['stock_quality'] @@
@@ -63,9 +63,9 @@
 (log) column-is-primary-key = 0
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
-(log) column-default-value  = 1757442449
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-default-value  = 1757532680
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['price'] @@
@@ -75,8 +75,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['rental_price_per_day'] @@
@@ -86,8 +86,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['stock_quality'] @@
@@ -97,8 +97,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = 0
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['isdn'] @@
@@ -108,8 +108,8 @@
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 
@@ -118,8 +118,8 @@
 (log) table-name          = customers
 (log) table-primary-key   = customer_id
 (log) table-column-count  = 7
-(log) table-created       = 1757442449
-(log) table-last-modified = 1757442449
+(log) table-created       = 1757532680
+(log) table-last-modified = 1757532680
 
 @@ table-column['customer_id'] @@
 (log) column-id             = 0
@@ -128,8 +128,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['full_name'] @@
@@ -163,8 +163,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['email'] @@
@@ -174,8 +174,8 @@
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['phone'] @@
@@ -185,8 +185,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['address'] @@
@@ -196,8 +196,8 @@
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['city'] @@
@@ -207,8 +207,8 @@
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['registration_date'] @@
@@ -217,15 +217,15 @@
 (log) column-is-primary-key = 0
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
-(log) column-default-value  = 1757442449
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-default-value  = 1757532680
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 
 ############# End of schema log    #############
-(log) created-at                      = 1757442449.
-(log) last-modified                   = 1757442449.
+(log) created-at                      = 1757532680.
+(log) last-modified                   = 1757532680.
 
 ############# Start of offsets log #############
 (log) immediate-write-buffer-offset = 0.
@@ -280,8 +280,8 @@
 ############# Start of metadata log  #############
 ############# Start of schema log  #############
 (log) schema-tag-name      = bookstore-schema
-(log) schema-date-created  = 1757442449
-(log) schema-last-modified = 1757442449
+(log) schema-date-created  = 1757532680
+(log) schema-last-modified = 1757532680
 (log) schema-table-count   = 2
 
 @@ schema-table-definition['books'] @@
@@ -289,8 +289,8 @@
 (log) table-name          = books
 (log) table-primary-key   = book_id
 (log) table-column-count  = 8
-(log) table-created       = 1757442449
-(log) table-last-modified = 1757442449
+(log) table-created       = 1757532680
+(log) table-last-modified = 1757532680
 
 @@ table-column['book_id'] @@
 (log) column-id             = 0
@@ -299,8 +299,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['title'] @@
@@ -310,8 +310,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['book_author'] @@
@@ -321,8 +321,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['stock_quality'] @@
@@ -331,9 +331,9 @@
 (log) column-is-primary-key = 0
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
-(log) column-default-value  = 1757442449
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-default-value  = 1757532680
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['price'] @@
@@ -343,8 +343,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['rental_price_per_day'] @@
@@ -354,8 +354,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['stock_quality'] @@
@@ -365,8 +365,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = 0
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['isdn'] @@
@@ -376,8 +376,8 @@
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 
@@ -386,8 +386,8 @@
 (log) table-name          = customers
 (log) table-primary-key   = customer_id
 (log) table-column-count  = 7
-(log) table-created       = 1757442449
-(log) table-last-modified = 1757442449
+(log) table-created       = 1757532680
+(log) table-last-modified = 1757532680
 
 @@ table-column['customer_id'] @@
 (log) column-id             = 0
@@ -396,8 +396,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['full_name'] @@
@@ -407,8 +407,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['email'] @@
@@ -418,8 +418,8 @@
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['phone'] @@
@@ -429,8 +429,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['address'] @@
@@ -439,9 +439,9 @@
 (log) column-is-primary-key = 0
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
-(log) column-default-value  = ("†‡Bw
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-default-value  = ("¿„}
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['city'] @@
@@ -451,8 +451,8 @@
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['registration_date'] @@
@@ -461,15 +461,15 @@
 (log) column-is-primary-key = 0
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
-(log) column-default-value  = 1757442449
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-default-value  = 1757532680
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 
 ############# End of schema log    #############
-(log) created-at                      = 1757442449.
-(log) last-modified                   = 1757442449.
+(log) created-at                      = 1757532680.
+(log) last-modified                   = 1757532680.
 
 ############# Start of offsets log #############
 (log) immediate-write-buffer-offset = 0.
@@ -496,8 +496,8 @@
 ############# Start of metadata log  #############
 ############# Start of schema log  #############
 (log) schema-tag-name      = bookstore-schema
-(log) schema-date-created  = 1757442449
-(log) schema-last-modified = 1757442449
+(log) schema-date-created  = 1757532680
+(log) schema-last-modified = 1757532680
 (log) schema-table-count   = 2
 
 @@ schema-table-definition['books'] @@
@@ -505,8 +505,8 @@
 (log) table-name          = books
 (log) table-primary-key   = book_id
 (log) table-column-count  = 8
-(log) table-created       = 1757442449
-(log) table-last-modified = 1757442449
+(log) table-created       = 1757532680
+(log) table-last-modified = 1757532680
 
 @@ table-column['book_id'] @@
 (log) column-id             = 0
@@ -515,8 +515,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['title'] @@
@@ -526,8 +526,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['book_author'] @@
@@ -537,8 +537,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['stock_quality'] @@
@@ -547,9 +547,9 @@
 (log) column-is-primary-key = 0
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
-(log) column-default-value  = 1757442449
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-default-value  = 1757532680
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['price'] @@
@@ -559,8 +559,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['rental_price_per_day'] @@
@@ -570,8 +570,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['stock_quality'] @@
@@ -581,8 +581,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = 0
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['isdn'] @@
@@ -592,8 +592,8 @@
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 
@@ -602,8 +602,8 @@
 (log) table-name          = customers
 (log) table-primary-key   = customer_id
 (log) table-column-count  = 7
-(log) table-created       = 1757442449
-(log) table-last-modified = 1757442449
+(log) table-created       = 1757532680
+(log) table-last-modified = 1757532680
 
 @@ table-column['customer_id'] @@
 (log) column-id             = 0
@@ -612,8 +612,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['full_name'] @@
@@ -623,8 +623,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['email'] @@
@@ -634,8 +634,8 @@
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['phone'] @@
@@ -645,8 +645,8 @@
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['address'] @@
@@ -655,9 +655,9 @@
 (log) column-is-primary-key = 0
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
-(log) column-default-value  = ("†‡Bw
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-default-value  = ("¿„}
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['city'] @@
@@ -667,8 +667,8 @@
 (log) column-is-nullable    = 1
 (log) column-is-unique      = 1
 (log) column-default-value  = (null)
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 @@ table-column['registration_date'] @@
@@ -677,15 +677,15 @@
 (log) column-is-primary-key = 0
 (log) column-is-nullable    = 0
 (log) column-is-unique      = 0
-(log) column-default-value  = 1757442449
-(log) column-created        = 1757442449
-(log) column-last-modified  = 1757442449
+(log) column-default-value  = 1757532680
+(log) column-created        = 1757532680
+(log) column-last-modified  = 1757532680
 
 
 
 ############# End of schema log    #############
-(log) created-at                      = 1757442449.
-(log) last-modified                   = 1757442449.
+(log) created-at                      = 1757532680.
+(log) last-modified                   = 1757532680.
 
 ############# Start of offsets log #############
 (log) immediate-write-buffer-offset = 0.

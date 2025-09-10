@@ -1,19 +1,38 @@
-add_executable(run_example_00_filemetadata 00_filemetadata.c)
+function(add_example name src)
+    set(target "run_example_${name}")
 
-target_compile_definitions(run_example_00_filemetadata PRIVATE DEBUG_MODE=1)
+    add_executable(${target} ${src})
 
-target_compile_options(run_example_00_filemetadata PRIVATE -Wall -Wextra)
+    target_compile_definitions(${target} PRIVATE DEBUG_MODE=1)
+    target_compile_options(${target} PRIVATE -Wall -Wextra)
 
-target_include_directories(run_example_00_filemetadata PRIVATE 
-	${CMAKE_SOURCE_DIR}/src/Metadata
-	${CMAKE_SOURCE_DIR}/src/Mocks
-)
+    target_include_directories(${target} PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/Metadata
+        ${CMAKE_SOURCE_DIR}/src/Mocks
+    )
 
-target_link_libraries(run_example_00_filemetadata PRIVATE metadata m mocks utilities)
+    target_link_libraries(${target} PRIVATE metadata m mocks utilities)
+
+    set(run_target "run_${target}")
+    add_custom_target(${run_target}
+        DEPENDS ${target}
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${target}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Running ${target}"
+    )
+
+    if(NOT DEFINED EXAMPLE_RUN_TARGETS)
+        set(EXAMPLE_RUN_TARGETS ${run_target} PARENT_SCOPE)
+    else()
+        set(EXAMPLE_RUN_TARGETS "${EXAMPLE_RUN_TARGETS};${run_target}" PARENT_SCOPE)
+    endif()
+endfunction()
+
+add_example(00_filemetadata 00_filemetadata.c )
+add_example(01_datasection 	01_datasection.c  )
 
 add_custom_target(run_all_examples
-	COMMAND run_example_00_filemetadata
-	DEPENDS run_example_00_filemetadata
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-	COMMENT "Running all example executables"
+    DEPENDS ${EXAMPLE_RUN_TARGETS}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Running all examples"
 )
