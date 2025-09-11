@@ -28,6 +28,6 @@ int HandleWrite(WriteRequest *request, WriterMetadata *meta)
         return -1;
     }
 
-    fflush(meta);
+    fflush(meta->writable);
     return 0;
 }
