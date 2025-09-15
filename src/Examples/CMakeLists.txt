@@ -1,20 +1,31 @@
+set (INNER_MODULES
+    mocks
+    metadata
+    utilities
+    lang
+    translation
+    writer
+    reader
+)
+
 function(add_example name src)
+
     set(target "run_example_${name}")
-
     add_executable(${target} ${src})
-
     target_compile_definitions(${target} PRIVATE DEBUG_MODE=1)
     target_compile_options(${target} PRIVATE -Wall -Wextra)
-
-    target_include_directories(${target} PRIVATE
+    
+    target_include_directories(
+        ${target} 
+        PRIVATE
         ${CMAKE_SOURCE_DIR}/src/Metadata
         ${CMAKE_SOURCE_DIR}/src/Mocks
     )
-
-    target_link_libraries(${target} PRIVATE metadata m mocks utilities translation writer reader)
-
+    
+    target_link_libraries(${target} PRIVATE m ${INNER_MODULES})
+    
     set(run_target "run_${target}")
-    add_custom_target(${run_target}
+        add_custom_target(${run_target}
         DEPENDS ${target}
         COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${target}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
