@@ -11,7 +11,7 @@ function(add_example name src)
         ${CMAKE_SOURCE_DIR}/src/Mocks
     )
 
-    target_link_libraries(${target} PRIVATE metadata m mocks utilities)
+    target_link_libraries(${target} PRIVATE metadata m mocks utilities translation writer reader)
 
     set(run_target "run_${target}")
     add_custom_target(${run_target}

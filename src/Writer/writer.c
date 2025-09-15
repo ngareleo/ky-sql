@@ -4,30 +4,31 @@
 
 int HandleWrite(WriteRequest *request, WriterMetadata *meta)
 {
-    if (!meta || !request || !meta->writable)
+    if (!meta || !request || !meta->Writable)
     {
-        fprintf(stderr, "(writer-handle-write) arguments are NULL \n");
+        fprintf(stderr, "(writer-handle-write-err) arguments are NULL \n");
         return -1;
     }
 
     // Incase we didn't clear errors
-    clearerr(meta->writable);
-    if (fwrite(request->payload, sizeof(request->payload), 1, meta->writable) < 1)
+    clearerr(meta->Writable);
+    if (fwrite(request->Payload, sizeof(request->Payload), 1, meta->Writable) < 1)
     {
-        fprintf(stderr, "(writer-handle-write) write failed \n");
+        fprintf(stderr, "(writer-handle-write-err) write failed \n");
         return -1;
     }
-    else if (ferror(meta->writable) != 0)
+    else if (ferror(meta->Writable) != 0)
     {
-        fprintf(stderr, "(writer-handle-write) write failed \n");
+        fprintf(stderr, "(writer-handle-write-err) write failed \n");
         return -1;
     }
-    else if (feof(meta->writable) != 0)
+    else if (feof(meta->Writable) != 0)
     {
-        fprintf(stderr, "(writer-handle-write) write failed \n");
+        fprintf(stderr, "(writer-handle-write-err) write failed \n");
         return -1;
     }
 
-    fflush(meta->writable);
+    fprintf(stdout, "(writer-handle-write-info) write complete \n");
+    fflush(meta->Writable);
     return 0;
 }

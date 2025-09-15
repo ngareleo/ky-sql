@@ -4,7 +4,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
-#include "metadata_schema.h"
+#include "./include/metadata_schema.h"
 
 TableColDefinition *NewTableColumn(
     int id,

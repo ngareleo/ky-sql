@@ -5,13 +5,13 @@
 
 typedef struct
 {
-    int startPosition;
-    char *payload;
+    int StartPosition;
+    char *Payload;
 } WriteRequest;
 
 typedef struct
 {
-    FILE *writable;
+    FILE *Writable;
 } WriterMetadata;
 
 /** This function will be called each time a request is ready to be queued */

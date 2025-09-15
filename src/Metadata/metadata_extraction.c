@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include "metadata_extraction.h"
-#include "metadata_offsets.h"
+#include "./include/metadata_extraction.h"
+#include "./include/metadata_offsets.h"
 #include "../Utilities/utilities.h"
 
 FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *schema)
