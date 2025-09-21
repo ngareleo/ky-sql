@@ -1,10 +1,11 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
-#include "./include/metadata_schema.h"
+#include "include/metadata_schema.h"
 
 TableColDefinition *NewTableColumn(
     int id,
@@ -152,8 +153,8 @@ TableDefinition *NewTableDefinition(char *name, int id, int primaryKeyId, ...)
 char *FormatSchemaDefinition(const SchemaDefinition *def)
 {
     char *buffer;
-    FILE *stream;
-    size_t size;
+    FILE *stream = NULL;
+    size_t size = 0;
 
     if (!def)
     {
@@ -166,6 +167,12 @@ char *FormatSchemaDefinition(const SchemaDefinition *def)
     {
         fprintf(stderr, "(format-table-schema-err) open_memstream failed");
         return NULL;
+    }
+
+    fprintf(stdout, "middle log --> \n");
+    if (def->TableDefs[0])
+    {
+        fprintf(stdout, "middle log --> %s\n", FormatTableDefinition(def->TableDefs[0]));
     }
 
     fprintf(stream, "(log) schema-tag-name      = %s\n", def->TagName);

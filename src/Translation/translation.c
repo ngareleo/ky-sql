@@ -1,5 +1,9 @@
-int LangInsertToWriteRequest() {}
+#include <stdio.h>
+#include <stdlib.h>
+#include "../Lang/language.h"
+#include "../Reader/reader.h"
+#include "../Writer/writer.h"
 
-int LangQueryToReadRequest() {}
+int LangInsertToWriteRequest(LanguageInsertStatement *statement, WriteRequest **request) {}
 
-int LandCreateTableToWriteRequest() {}
+int LangQueryToReadRequest(LanguageQueryStatement *query, ReadRequest **request) {};

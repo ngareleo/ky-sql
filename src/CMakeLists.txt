@@ -1,7 +1,7 @@
 add_subdirectory(Utilities)
 add_subdirectory(Metadata)
 add_subdirectory(Mocks)
-add_subdirectory(Language)
+add_subdirectory(Lang)
 add_subdirectory(Translation)
 add_subdirectory(Reader)
 add_subdirectory(Writer)

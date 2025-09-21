@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "metadata_schema.h"
+#include "include/metadata_schema.h"
 
 void *CreateDefaultValue(enum SchemaType schemaType, const char *defaultValue)
 {

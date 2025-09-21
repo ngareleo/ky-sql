@@ -13,7 +13,12 @@ function(add_example name src)
     set(target "run_example_${name}")
     add_executable(${target} ${src})
     target_compile_definitions(${target} PRIVATE DEBUG_MODE=1)
-    target_compile_options(${target} PRIVATE -Wall -Wextra)
+    target_compile_options(${target} PRIVATE 
+        -Wall 
+        -Wextra   
+        -Werror=implicit-function-declaration
+        -Werror=incompatible-pointer-types
+    )
     
     target_include_directories(
         ${target} 

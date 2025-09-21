@@ -24,7 +24,7 @@ int HandleWrite(WriteRequest *request, WriterMetadata *meta)
     }
     else if (feof(meta->Writable) != 0)
     {
-        fprintf(stderr, "(writer-handle-write-err) write failed \n");
+        fprintf(stderr, "(writer-handle-write-err) write failed with EOF error \n");
         return -1;
     }
 
