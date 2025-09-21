@@ -1,5 +1,6 @@
 set(SOURCES
     mocks_metadata_defintions.c
+    mocks_insert_statements.c
 )
 
 add_library(mocks STATIC ${SOURCES})

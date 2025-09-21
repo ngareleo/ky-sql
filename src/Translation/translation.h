@@ -6,6 +6,7 @@
 #include "../Writer/writer.h"
 
 int LangInsertToWriteRequest(LanguageInsertStatement *, WriteRequest **);
+
 int LangQueryToReadRequest(LanguageQueryStatement *, ReadRequest **);
 
 #endif
