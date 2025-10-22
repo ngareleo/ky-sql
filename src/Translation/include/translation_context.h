@@ -16,7 +16,6 @@ typedef struct
 } TranslationInitObj;
 
 TranslationContext *GetTranslationContext();
-
 int *InitTranslationContext(TranslationInitObj *initObj);
 
 #endif

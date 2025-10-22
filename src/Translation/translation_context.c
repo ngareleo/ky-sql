@@ -15,22 +15,21 @@ typedef struct
 // !! This could potentially chow memory esp in long sessions
 // !!
 // !! As well as a huge source of memory leaks
-// !! A good place to statement when we start optimizing
-// !!
-TranslationContext *globalContext = NULL;
+// !! Will build a better abstraction in future
+TranslationContext *globalCxt = NULL;
 
 TranslationContext *GetTranslationContext()
 {
-    if (!globalContext)
+    if (!globalCxt)
     {
-        // ?? In future we might introduce clean up
+        // ?? In future we might introduce more frequent clean up
         // ?? This is a long-lived struct
         // ?? It could grow and chowy memory during long sessions
         fprintf(stderr, "(get-translation-context) global context not initialized \n");
         return -1;
     }
 
-    return globalContext;
+    return globalCxt;
 }
 
 typedef struct
@@ -40,37 +39,46 @@ typedef struct
 
 int *InitTranslationContext(TranslationInitObj *initObj)
 {
-    if (globalContext)
+    if (globalCxt)
     {
         fprintf(stderr, "(init-translation-context) global context already initialized \n");
         return -1;
     }
 
-    globalContext = malloc(sizeof(TranslationContext));
-    if (!globalContext)
+    do
     {
-        fprintf(stderr, "(init-translation-context) malloc failed \n");
-        return -1;
+        globalCxt = malloc(sizeof(TranslationContext));
+        if (!globalCxt)
+        {
+            fprintf(stderr, "(init-translation-context) malloc failed \n");
+            break;
+        }
+
+        // Initialize metadata from file
+        globalCxt->FileMetadataObj = malloc(sizeof(FileMetadata));
+        if (!globalCxt->FileMetadataObj)
+        {
+            fprintf(stderr, "(init-translation-context) malloc failed \n");
+            break;
+        }
+
+        if (ReadMetadataFromFile(initObj->File, globalCxt->FileMetadataObj, CreateMetadataFromWritable) != 0)
+        {
+            fprintf(stderr, "(init-translation-context) couldn't read metadata from file \n");
+            break;
+        }
+
+        // Success
+        fprintf(stderr, "(init-translation-context) translation context inialized \n");
+        return;
+    } while (0);
+
+    {
+        // Catch block
+        free(globalCxt->FileMetadataObj);
+        free(globalCxt);
+        globalCxt = NULL;
     }
 
-    globalContext->FileMetadataObj = malloc(sizeof(FileMetadata));
-    if (!globalContext->FileMetadataObj)
-    {
-        free(globalContext);
-        fprintf(stderr, "(init-translation-context) malloc failed \n");
-        return -1;
-    }
-
-    FileMetadata *fmPtr = globalContext->FileMetadataObj;
-    // Here we read the metadata section of the file
-    if (ReadMetadataFromFile(initObj->File, &fmPtr, CreateMetadataFromWritable) != 0)
-    {
-        free(globalContext->FileMetadataObj);
-        free(globalContext);
-        fprintf(stderr, "(init-translation-context) couldn't read metadata from file \n");
-        return -1;
-    }
-
-    fprintf(stderr, "(init-translation-context) translation context inialized \n");
     return 0;
 }

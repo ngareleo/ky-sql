@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "utilities.h"
 
 int Count(void **ptr)
@@ -9,8 +10,9 @@ int Count(void **ptr)
     }
 
     int c = 0;
-    void *curr = ptr[0];
-    for (; curr != NULL; c++, curr++)
+    void *curr;
+    while ((curr = ptr[c++]))
         ;
-    return c;
+
+    return c - 1;
 }

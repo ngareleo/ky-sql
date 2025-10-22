@@ -134,7 +134,7 @@ Offset *NewOffsetN(int imwebOffset, const TableOffset **offsets)
         return NULL;
     }
 
-    count = Count(offsets);
+    count = Count((void **)offsets);
 
     offset = malloc(sizeof(Offset));
     if (!offset)

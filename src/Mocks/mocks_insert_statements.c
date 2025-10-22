@@ -31,34 +31,33 @@ LanguageInsertStatement *MockBookTableInsertStatement()
      * This is format is a placeholder to the one will actually implement
      */
     char **rows = {
-        "To Kill a Mockingbird\0Harper Lee\09780061120084\0Fiction\01960\012.99\015\02.50",
-        "1984\0George Orwell\09780451524935\0Dystopian Fiction\01949\013.99\020\02.00",
-        "Pride and Prejudice\0Jane Austen\09780141439518\0Romance\01813\011.50\012\01.75",
-        "The Great Gatsby\0F. Scott Fitzgerald\09780743273565\0Fiction\01925\014.99\018\02.25",
-        "Harry Potter and the Sorcerer's Stone\0J.K. Rowling\09780439708180\0Fantasy\01997\016.99\025\03.00",
-        "The Catcher in the Rye\0J.D.Salinger\09780316769174\0Fiction\01951\013.50\010\02.00",
-        "Lord of the Flies\0William Golding\09780571056866\0Fiction\01954\012.25\014\01.50",
-        "The Hobbit\0J.R.R.Tolkien\09780547928227\0Fantasy\01937\015.99\022\02.75",
-        "Fahrenheit 451\0Ray Bradbury\09781451673319\0Science Fiction\01953\014.50\016\02.25",
-        "Jane Eyre\0Charlotte Brontë\09780141441146\0Romance\01847\013.25\011\01.75",
-        "The Art of War\0Sun Tzu\09781599869773\0Philosophy\0-500\09.99\08\01.25",
-        "Sapiens\0Yuval Noah Harari\09780062316097\0Non-fiction\02011\018.99\020\02.50",
-        "The Alchemist\0Paulo Coelho\09780062315007\0Fiction\01988\014.95\019\02.00",
-        "Dune\0Frank Herbert\09780441172719\0Science Fiction\01965\017.99\013\03.00",
-        "Gone Girl\0Gillian Flynn\09780307588364\0Thriller\02012\015.50\017\02.50",
+        "To Kill a Mockingbird\rHarper Lee\r9780061120084\rFiction\r1960\r12.99\r15\r2.50",
+        "1984\rGeorge Orwell\r9780451524935\rDystopian Fiction\r1949\r13.99\r20\r2.00",
+        "Pride and Prejudice\rJane Austen\r9780141439518\rRomance\r1813\r11.50\r12\r1.75",
+        "The Great Gatsby\rF. Scott Fitzgerald\r9780743273565\rFiction\r1925\r14.99\r18\r2.25",
+        "Harry Potter and the Sorcerer's Stone\rJ.K. Rowling\r9780439708180\rFantasy\r1997\r16.99\r25\r3.00",
+        "The Catcher in the Rye\rJ.D.Salinger\r9780316769174\rFiction\r1951\r13.50\r10\r2.00",
+        "Lord of the Flies\rWilliam Golding\r9780571056866\rFiction\r1954\r12.25\r14\r1.50",
+        "The Hobbit\rJ.R.R.Tolkien\r9780547928227\rFantasy\r1937\r15.99\r22\r2.75",
+        "Fahrenheit 451\rRay Bradbury\r9781451673319\rScience Fiction\r1953\r14.50\r16\r2.25",
+        "Jane Eyre\rCharlotte Brontë\r9780141441146\rRomance\r1847\r13.25\r11\r1.75",
+        "The Art of War\rSun Tzu\r9781599869773\rPhilosophy\r-500\r9.99\r8\r1.25",
+        "Sapiens\rYuval Noah Harari\r9780062316097\rNon-fiction\r2011\r18.99\r20\r2.50",
+        "The Alchemist\rPaulo Coelho\r9780062315007\rFiction\r1988\r14.95\r19\r2.00",
+        "Dune\rFrank Herbert\r9780441172719\rScience Fiction\r1965\r17.99\r13\r3.00",
+        "Gone Girl\rGillian Flynn\r9780307588364\rThriller\r2012\r15.50\r17\r2.50",
 
         // ?? Add more here
         NULL,
     };
-    char *columns = "title\0author\0isbn\0genre\0publication_year\0price\0stock_quantity\0rental_price_per_day";
+    char *columns = "title\rauthor\risbn\rgenre\rpublication_year\rprice\rstock_quantity\rrental_price_per_day";
     char *table = "books";
-
-    // !! Count isn't well tested
-    int rowCount = Count(&rows);
+    int rowCount = Count((void **)&rows);
     LanguageInsertStatement *statement;
 
     if (!(statement = CreateLanguageInsertStatement(table, rowCount, columns, rows)))
     {
+        fprintf(stderr, "(mock-insert-statements-err) failed to create insert statement \n");
         return NULL;
     }
 

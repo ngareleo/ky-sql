@@ -11,4 +11,5 @@ SchemaDefinition *CreateBookStoreSchemaDefinition();
 
 // Mock data statements
 LanguageInsertStatement *MockBookTableInsertStatement();
+
 #endif

@@ -5,6 +5,23 @@
 #include "../Writer/writer.h"
 #include "../Reader/reader.h"
 
+int ValidateLanguageInsertStatement(LanguageInsertStatement *);
+
+int LangInsertToWriteRequest(LanguageInsertStatement *statement, WriteRequest **request)
+{
+    if (ValidateLanguageInsertStatement(statement) != 0)
+    {
+        fprintf(stderr, "(language-insert-to-write-request) args validation failed \n");
+        return -1;
+    }
+
+    TranslationContext *context = GetTranslationContext();
+
+    // First validate the statement matches the schema
+
+    // Split the statement into tokens
+}
+
 int ValidateLanguageInsertStatement(LanguageInsertStatement *statement)
 {
     if (!statement)
@@ -31,15 +48,4 @@ int ValidateLanguageInsertStatement(LanguageInsertStatement *statement)
     }
 
     return 0;
-}
-
-int LangInsertToWriteRequest(LanguageInsertStatement *statement, WriteRequest **request)
-{
-    if (ValidateLanguageInsertStatement(statement) != 0)
-    {
-        fprintf(stderr, "(language-insert-to-write-request) args validation failed \n");
-        return -1;
-    }
-
-    TranslationContext *context = GetTranslationContext();
 }
