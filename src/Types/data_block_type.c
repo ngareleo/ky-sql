@@ -28,7 +28,7 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
 
     if (headerCount > 0)
     {
-        block->Header = malloc(sizeof(char *) * headerCount + 1);
+        block->Header = malloc(sizeof(char *) * (headerCount + 1));
         if (!block->Header)
         {
             fprintf(stderr, "(create-data-block) malloc failed \n");
@@ -37,8 +37,8 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
 
         for (int h_c = 0; h_c < headerCount; h_c++)
         {
-            block->Header[h_c] = malloc(strlen(headers[h_c] + 1) + 1);
-            if (block->Header[h_c])
+            block->Header[h_c] = malloc(strlen(headers[h_c]) + 1);
+            if (!block->Header[h_c])
             {
                 for (int h_c_1 = 0; h_c_1 < h_c; h_c_1++)
                 {
@@ -57,7 +57,7 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
     if (rowCount > 0)
     {
 
-        block->Values = malloc(sizeof(char **) * rowCount + 1);
+        block->Values = malloc(sizeof(char **) * (rowCount + 1));
         if (!block->Values)
         {
             for (int h = 0; h < headerCount; h++)
@@ -72,25 +72,59 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
         for (int v_c = 0; v_c < rowCount; v_c++)
         {
             int rSize = Count((void **)values[v_c]);
-            block->Values[v_c] = malloc(sizeof(char **) * rSize + 1);
-            if (!block->Values[v_c])
+            if (rSize > 0)
             {
-                for (int h = 0; h < headerCount; h++)
+                block->Values[v_c] = malloc(sizeof(char **) * rSize + 1);
+                if (!block->Values[v_c])
                 {
-                    free(block->Header[h]);
+                    for (int h = 0; h < headerCount; h++)
+                    {
+                        free(block->Header[h]);
+                    }
+                    free(block->Header);
+                    free(block->Values);
+                    fprintf(stderr, "(create-data-block) malloc failed \n");
+                    return NULL;
                 }
-                free(block->Header);
-                free(block->Values);
-                fprintf(stderr, "(create-data-block) malloc failed \n");
-                return NULL;
-            }
 
-            for (int r_c = 0; r_c < rSize; r_c++)
-            {
-                strcpy(block->Values[v_c][r_c], values[v_c][r_c]);
-            }
+                for (int r_c = 0; r_c < rSize; r_c++)
+                {
+                    block->Values[v_c][r_c] = malloc(strlen(values[v_c][r_c]) + 1);
+                    if (!block->Values[v_c][r_c])
+                    {
+                        // We recover mem held by headers
+                        for (int h = 0; h < headerCount; h++)
+                        {
+                            free(block->Header[h]);
+                        }
+                        free(block->Header);
 
-            block->Values[v_c][rSize] = NULL;
+                        // We recover mem for all the rows we've allocated in this turn
+                        for (int r_c_1 = 0; r_c_1 < r_c; r_c_1++)
+                        {
+                            free(block->Values[v_c][r_c_1]);
+                        }
+
+                        // We recover mem for all the rows we've allocated so far
+                        for (int v_c_1 = 0; v_c_1 < v_c; v_c_1++)
+                        {
+                            for (int r_c_1 = 0; r_c_1 < Count((void **)values[v_c_1]); r_c_1++)
+                            {
+                                free(block->Values[v_c][r_c_1]);
+                            }
+                            free(block->Values[v_c_1]);
+                        }
+
+                        free(block->Values[v_c]);
+                        free(block->Values);
+                        fprintf(stderr, "(create-data-block) malloc failed \n");
+                        return NULL;
+                    }
+                    strcpy(block->Values[v_c][r_c], values[v_c][r_c]);
+                }
+
+                block->Values[v_c][rSize] = NULL;
+            }
         }
 
         block->Values[rowCount] = NULL;
@@ -98,49 +132,6 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
 
     ValidateDataBlock(block);
     return block;
-}
-
-DataBlockSize *MeasureBlockStructure(char ***rowText)
-{
-    if (!rowText)
-    {
-        fprintf(stderr, "(validate-block-structure) Invalid text\n");
-        return NULL;
-    }
-
-    int count, dimC;
-    if ((count = Count((void **)rowText)) < 1)
-    {
-        return NULL;
-    }
-
-    if ((dimC = Count((void **)rowText[0]) < 1))
-    {
-        fprintf(stderr, "(validate-block-structure) values are not aligned\n");
-        return NULL;
-    }
-
-    for (int c = 1; c < count; c++)
-    {
-        if (Count((void **)rowText[c]) != dimC)
-        {
-            fprintf(stderr, "(validate-block-structure) values are not aligned\n");
-            return NULL;
-        }
-    }
-
-    DataBlockSize *s;
-    s = malloc(sizeof(DataBlockSize));
-    if (!s)
-    {
-        fprintf(stderr, "(validate-block-structure) malloc failed\n");
-        return NULL;
-    }
-
-    s->Count = count;
-    s->Width = dimC;
-
-    return s;
 }
 
 DataBlockSize *EmptyBlockSize()
@@ -155,6 +146,50 @@ DataBlockSize *EmptyBlockSize()
 
     s->Count = 0;
     s->Width = 0;
+    return s;
+}
+
+DataBlockSize *MeasureBlockStructure(char ***rowText)
+{
+    if (!rowText)
+    {
+        fprintf(stderr, "(validate-block-structure) Invalid text\n");
+        return NULL;
+    }
+
+    int count, dimC;
+    if ((count = Count((void **)rowText)) < 1)
+    {
+        return EmptyBlockSize();
+    }
+
+    if ((dimC = Count((void **)rowText[0]) < 1))
+    {
+        return EmptyBlockSize();
+    }
+
+    for (int c = 1; c < count; c++)
+    {
+        int rowC;
+        // Whenever the data is unaligned, we use the widest width
+        // Should not cause problems as long as we depend on `IsAligned` property before checking width
+        if ((rowC = Count((void **)rowText[c])) > dimC)
+        {
+            dimC = rowC;
+        }
+    }
+
+    DataBlockSize *s;
+    s = malloc(sizeof(DataBlockSize));
+    if (!s)
+    {
+        fprintf(stderr, "(validate-block-structure) malloc failed\n");
+        return NULL;
+    }
+
+    s->Count = count;
+    s->Width = dimC;
+
     return s;
 }
 
@@ -180,7 +215,7 @@ void ValidateDataBlock(DataBlockType *block)
     if (count < 1)
     {
         block->IsEmpty = 1;
-        block->IsAligned = 0;
+        block->IsAligned = 1;
         block->Size = EmptyBlockSize();
         return;
     }
@@ -196,6 +231,7 @@ void ValidateDataBlock(DataBlockType *block)
     if (size->Count == 0 || dimC < 1)
     {
         block->IsEmpty = 1;
+        block->IsAligned = 1;
 
         // !! Here lies dragons
         // !! We purposerfully return an empty block size
@@ -214,6 +250,7 @@ void ValidateDataBlock(DataBlockType *block)
             if (Count((void **)block->Values[c]) != dimC)
             {
                 block->IsAligned = 0;
+                block->IsValid = 0;
                 break;
             }
         }
