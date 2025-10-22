@@ -4,7 +4,7 @@
 #include "language.h"
 #include "Utilities/utilities.h"
 
-LanguageInsertStatement *CreateLanguageInsertStatement(char *tableName, int rowCount, char *columns, char **rows)
+LanguageInsertStatement *CreateLanguageInsertStatement(char *tableName, int rowCount, char *columns, char **values)
 {
     LanguageInsertStatement *statement;
 

@@ -11,7 +11,7 @@ int LangInsertToWriteRequest(LanguageInsertStatement *statement, WriteRequest **
 {
     if (ValidateLanguageInsertStatement(statement) != 0)
     {
-        fprintf(stderr, "(language-insert-to-write-request) args validation failed \n");
+        fprintf(stderr, "(language-insert-to-write-request) Args validation failed \n");
         return -1;
     }
 
