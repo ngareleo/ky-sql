@@ -13,12 +13,6 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
         return NULL;
     }
 
-    if (ValdidateBlockStructure(values) != 0)
-    {
-        fprintf(stderr, "(create-data-block) values are invalid \n");
-        return NULL;
-    }
-
     DataBlockType *block;
     int headerCount, rowCount;
 
