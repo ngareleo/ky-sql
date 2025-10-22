@@ -17,9 +17,13 @@ int LangInsertToWriteRequest(LanguageInsertStatement *statement, WriteRequest **
 
     TranslationContext *context = GetTranslationContext();
 
+    // Check that data is valid
+
     // First validate the statement matches the schema
 
-    // Split the statement into tokens
+    // Based on the schema create a single writable buffer
+
+    // Create write request
 }
 
 int ValidateLanguageInsertStatement(LanguageInsertStatement *statement)

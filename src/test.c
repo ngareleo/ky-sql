@@ -5,17 +5,16 @@
 
 void TestStrTok()
 {
-
-    char *delim = "\r";
-    const char *target = "ready\rpla/\\ryer\rone";
+    char *delim = ",";
+    const char *target = "'The Great, Gatsby','F. \\'Scott\\' ,Fitzgerald','9780743273565','Fiction',1925,14.99,18,2.25";
     char *fn;
 
-    if (malloc(strlen(target) + 1))
+    if ((fn = malloc(strlen(target) + 1)))
     {
         strcpy(fn, target);
         char *token = strtok(fn, delim);
 
-        while (token != NULL)
+        while (token)
         {
             fprintf(stdout, "Token:  %s\n", token);
             token = strtok(NULL, delim);
@@ -37,6 +36,7 @@ void TestCount()
 
 int main()
 {
+    TestStrTok();
     TestCount();
     return 0;
 }

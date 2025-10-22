@@ -1,11 +1,13 @@
 #ifndef LANGUAGE_H
 #define LANGUAGE_H
 
+#include "../Types/types.h"
+
 typedef struct
 {
     char *TableName;       // The table being targeted
     char *Columns;         // The columns in order
-    char **Rows;           // The row data in order
+    DataBlockType **data;  // The row data in order
 } LanguageInsertStatement; //
 
 typedef struct

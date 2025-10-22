@@ -1,7 +1,8 @@
 set (INNER_MODULES
+    utilities
+    types
     mocks
     metadata
-    utilities
     lang
     translation
     writer

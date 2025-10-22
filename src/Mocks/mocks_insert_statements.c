@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <regex.h>
 #include "mocks.h"
 #include "Lang/language.h"
 #include "Utilities/utilities.h"

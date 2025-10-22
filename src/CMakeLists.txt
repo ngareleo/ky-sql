@@ -1,3 +1,4 @@
+add_subdirectory(Types)
 add_subdirectory(Utilities)
 add_subdirectory(Metadata)
 add_subdirectory(Mocks)
