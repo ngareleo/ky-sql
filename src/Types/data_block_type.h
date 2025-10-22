@@ -24,7 +24,7 @@ typedef struct
 
 } DataBlockType;
 
-DataBlockType *CreateDataBlock(char ***);
+DataBlockType *CreateDataBlock(char **, char ***);
 void ValidateDataBlock(DataBlockType *);
 int SizeDataBlock(DataBlockType *);
 

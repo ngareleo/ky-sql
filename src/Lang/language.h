@@ -7,7 +7,7 @@ typedef struct
 {
     char *TableName;       // The table being targeted
     char *Columns;         // The columns in order
-    DataBlockType **data;  // The row data in order
+    DataBlockType **Data;  // The row data in order
 } LanguageInsertStatement; //
 
 typedef struct
@@ -29,5 +29,5 @@ typedef struct
     } *Sizing;                //
 } LanguageQueryStatement;
 
-LanguageInsertStatement *CreateLanguageInsertStatement(char *tableName, int rowCount, char *columns, char **rows);
+LanguageInsertStatement *CreateLanguageInsertStatement(char *, char **, char ***);
 #endif

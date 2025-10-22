@@ -4,7 +4,6 @@
 #include <regex.h>
 #include "mocks.h"
 #include "Lang/language.h"
-#include "Utilities/utilities.h"
 
 /**
  *
@@ -69,10 +68,9 @@ LanguageInsertStatement *MockBookTableInsertStatement()
     };
     char **columns = {"title", "author", "isbn", "genre", "publication_year", "price", "stock_quantity", "rental_price_per_day"};
     char *table = "books";
-    int rowCount = Count((void **)&values);
-    LanguageInsertStatement *statement;
 
-    if (!(statement = CreateLanguageInsertStatement(table, rowCount, columns, values)))
+    LanguageInsertStatement *statement;
+    if (!(statement = CreateLanguageInsertStatement(table, columns, values)))
     {
         fprintf(stderr, "(mock-insert-statements-err) failed to create insert statement \n");
         return NULL;

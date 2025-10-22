@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "include/translation_context.h"
-#include "../Lang/language.h"
-#include "../Writer/writer.h"
-#include "../Reader/reader.h"
+#include "Lang/language.h"
+#include "Writer/writer.h"
+#include "Reader/reader.h"
+#include "Types/types.h"
 
 int ValidateLanguageInsertStatement(LanguageInsertStatement *);
 
@@ -16,8 +17,6 @@ int LangInsertToWriteRequest(LanguageInsertStatement *statement, WriteRequest **
     }
 
     TranslationContext *context = GetTranslationContext();
-
-    // Check that data is valid
 
     // First validate the statement matches the schema
 
@@ -39,9 +38,9 @@ int ValidateLanguageInsertStatement(LanguageInsertStatement *statement)
         return -1;
     }
 
-    if (!statement->Rows)
+    if (!statement->Data)
     {
-        fprintf(stderr, "(validate-language-insert-statement) LanguageInsertStatement.Rows provided is null \n");
+        fprintf(stderr, "(validate-language-insert-statement) LanguageInsertStatement.Data provided is null \n");
         return -1;
     }
 
