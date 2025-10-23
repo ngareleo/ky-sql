@@ -3,7 +3,7 @@
 #define TRANSLATION_CONTEXT_H
 
 #include <stdio.h>
-#include "../../Metadata/metadata.h"
+#include "Metadata/metadata.h"
 
 typedef struct
 {

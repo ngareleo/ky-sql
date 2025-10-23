@@ -3,6 +3,7 @@ set(SOURCES
 	metadata_extraction.c
 	metadata_offsets.c
 	metadata_schema.c
+	metadata_storage.c
 )
 
 add_library(metadata STATIC ${SOURCES})
