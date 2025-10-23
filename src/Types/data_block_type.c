@@ -13,6 +13,7 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
         return DefaultBlock();
     }
 
+    Allocator *alloc = MallocInit();
     DataBlockType *block;
     int headerCount, rowCount;
     bool allocFailed = false;
@@ -21,23 +22,16 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
     rowCount = Count((void **)values);
 
     // ?? Allocation
-    block = malloc(sizeof(DataBlockType));
-    block->Header = malloc(sizeof(char *) * (headerCount + 1));
-    block->Values = malloc(sizeof(char **) * (rowCount + 1));
-    if (!block->Header || !block->Values)
-    {
-        allocFailed = true;
-    }
+
+    block = Malloc(sizeof(DataBlockType), alloc);
+    block->Header = Malloc(sizeof(char *) * (headerCount + 1), alloc);
+    block->Values = Malloc(sizeof(char **) * (rowCount + 1), alloc);
 
     if (headerCount > 0)
     {
         for (int h_c = 0; h_c < headerCount; h_c++)
         {
-            block->Header[h_c] = malloc(strlen(headers[h_c]) + 1);
-            if (!block->Header[h_c])
-            {
-                allocFailed = true;
-            }
+            block->Header[h_c] = Malloc(strlen(headers[h_c]) + 1, alloc);
         }
         block->Header[headerCount] = NULL;
     }
@@ -49,28 +43,18 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
             int rSize = Count((void **)values[row_n]);
             if (rSize > 0)
             {
-                block->Values[row_n] = malloc(sizeof(char **) * (rSize + 1));
-                if (!block->Values[row_n])
-                {
-                    allocFailed = true;
-                }
-
+                block->Values[row_n] = Malloc(sizeof(char **) * (rSize + 1), alloc);
                 for (int r_val = 0; r_val < rSize; r_val++)
                 {
-                    block->Values[row_n][r_val] = malloc(strlen(values[row_n][r_val]) + 1);
-                    if (!block->Values[row_n][r_val])
-                    {
-                        allocFailed = true;
-                    }
+                    block->Values[row_n][r_val] = Malloc(strlen(values[row_n][r_val]) + 1, alloc);
                 }
                 block->Values[row_n][rSize] = NULL;
             }
         }
         block->Values[rowCount] = NULL;
     }
-    // ?? Allocation
 
-    if (allocFailed)
+    if (VerifyAllocation(alloc))
     {
         for (int h_c_1 = 0; h_c_1 < headerCount; h_c_1++)
         {
@@ -93,6 +77,8 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
         fprintf(stderr, "(create-data-block) mem allocation failed \n");
         return NULL;
     }
+
+    // ?? Allocation
 
     if (headerCount > 0)
     {
