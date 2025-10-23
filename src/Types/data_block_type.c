@@ -264,7 +264,7 @@ void FreeDataBlock(DataBlockType *block)
         int headerCount, rowCount;
         headerCount = Count((void **)block->Header);
         rowCount = Count((void **)block->Values);
-        if (block->Header && headerCount > 0)
+        if (headerCount > 0)
         {
             for (int h_c_1 = 0; h_c_1 < headerCount; h_c_1++)
             {
@@ -272,7 +272,7 @@ void FreeDataBlock(DataBlockType *block)
             }
         }
 
-        if (block->Values && rowCount > 0)
+        if (rowCount > 0)
         {
             for (int row_n = 0; row_n < rowCount; row_n++)
             {

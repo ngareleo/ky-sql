@@ -73,10 +73,12 @@ int *InitTranslationContext(TranslationInitObj *initObj)
         return;
     } while (0);
 
+    // Catch block
+    free(globalCxt->FileMetadataObj);
+    free(globalCxt);
+
+    if (!globalCxt)
     {
-        // Catch block
-        free(globalCxt->FileMetadataObj);
-        free(globalCxt);
         globalCxt = NULL;
     }
 

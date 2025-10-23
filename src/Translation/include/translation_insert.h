@@ -4,6 +4,7 @@
 #include "../Lang/language.h"
 #include "../Writer/writer.h"
 
-int LangInsertToWriteRequest(LanguageInsertStatement *, WriteRequest **);
+int LangInsertStmtToWriteRequest(LangInsertStmt *, WriteRequest **);
+int ValidateLanguageInsertStatement(LangInsertStmt *);
 
 #endif

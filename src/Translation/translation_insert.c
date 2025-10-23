@@ -2,51 +2,74 @@
 #include <stdlib.h>
 #include "include/translation_context.h"
 #include "Lang/language.h"
-#include "Writer/writer.h"
 #include "Reader/reader.h"
 #include "Types/types.h"
+#include "Writer/writer.h"
 
-int ValidateLanguageInsertStatement(LanguageInsertStatement *);
-
-int LangInsertToWriteRequest(LanguageInsertStatement *statement, WriteRequest **request)
+int LangInsertStmtToWriteRequest(LangInsertStmt *stmt, WriteRequest **req)
 {
-    if (ValidateLanguageInsertStatement(statement) != 0)
+    if (ValidateLangInsertStmt(stmt) != 0)
     {
-        fprintf(stderr, "(language-insert-to-write-request) Args validation failed \n");
+        fprintf(stderr, "(lang-insert-stmt-to-write-request) statement failed validation \n");
         return -1;
     }
 
-    TranslationContext *context = GetTranslationContext();
+    char *writable;
+    WriteRequest *req;
+    TranslationContext *ctx = GetTranslationContext();
 
-    // First validate the statement matches the schema
+    if (!ctx)
+    {
+        fprintf(stderr, "(lang-insert-stmt-to-write-request) context unavailable \n");
+        return -1;
+    }
 
-    // Based on the schema create a single writable buffer
+    if (SchemaValidateInsertStmt(stmt, ctx) != 0)
+    {
+        fprintf(stderr, "(lang-insert-stmt-to-write-request) statement failed schema validation \n");
+        return -1;
+    }
 
-    // Create write request
+    writable = TranslateInsertStmtToWritable(stmt, ctx);
+    if (!writable)
+    {
+        fprintf(stderr, "(lang-insert-stmt-to-write-request) couldn't generate a writable \n");
+        return -1;
+    }
+
+    req = CreateWriteRequest(stmt, ctx, writable);
+    return req;
 }
 
-int ValidateLanguageInsertStatement(LanguageInsertStatement *statement)
+WriteRequest *CreateWriteRequest(LangInsertStmt *stmt, TranslationContext *ctx, char *writable) {}
+
+int SchemaValidateInsertStmt(LangInsertStmt *stmt, TranslationContext *ctx) {}
+
+int TranslateInsertStmtToWritable(LangInsertStmt *stmt, TranslationContext *ctx) {}
+
+int ValidateLangInsertStmt(LangInsertStmt *stmt)
 {
-    if (!statement)
+    if (!stmt)
     {
-        fprintf(stderr, "(validate-language-insert-statement) LanguageInsertStatement provided is null \n");
-        return -1;
-    }
-    if (!statement->Columns)
-    {
-        fprintf(stderr, "(validate-language-insert-statement) LanguageInsertStatement.Columns provided is null \n");
+        fprintf(stderr, "(validate-lang-insert-stmt) statment provided is null \n");
         return -1;
     }
 
-    if (!statement->Data)
+    if (!stmt->Data || !stmt->Data->IsValid)
     {
-        fprintf(stderr, "(validate-language-insert-statement) LanguageInsertStatement.Data provided is null \n");
+        fprintf(stderr, "(validate-lang-insert-stmt) statement is invalid \n");
         return -1;
     }
 
-    if (!statement->TableName)
+    if (!stmt->Data->IsEmpty)
     {
-        fprintf(stderr, "(validate-language-insert-statement) LanguageInsertStatement.TableName provided is null \n");
+        fprintf(stderr, "(validate-lang-insert-stmt) statement is empty  \n");
+        return -1;
+    }
+
+    if (!stmt->TableName)
+    {
+        fprintf(stderr, "(validate-lang-insert-stmt) tablename is invalid \n");
         return -1;
     }
 

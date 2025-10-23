@@ -5,32 +5,29 @@
 #include "Utilities/utilities.h"
 #include "Types/types.h"
 
-LanguageInsertStatement *CreateLanguageInsertStatement(char *tableName, char **columns, char ***values)
+LangInsertStmt *CreateLangInsertStmt(char *tableName, char **columns, char ***values)
 {
-    LanguageInsertStatement *statement;
+    LangInsertStmt *stmt;
+    Allocator *alloc = MallocInit();
 
-    statement = malloc(sizeof(LanguageInsertStatement));
-    if (!statement)
+    stmt = Malloc(sizeof(LangInsertStmt), alloc);
+    if (stmt)
     {
-        fprintf(stderr, "(mock-book-table-insert-statement-err) malloc failed\n");
+        stmt->TableName = Malloc(sizeof(strlen(tableName) + 1), alloc);
+    }
+
+    stmt->Data = CreateDataBlock(columns, values);
+
+    if (!VerifyAlloc(alloc) ||
+        !stmt->Data)
+    {
+        free(stmt->TableName);
+        free(stmt);
+        fprintf(stderr, "(create-lang-insert-stmt) failed to mem alloc \n");
         return NULL;
     }
 
-    statement->TableName = malloc(sizeof(strlen(tableName) + 1));
-    if (!statement->TableName)
-    {
-        free(statement);
-        fprintf(stderr, "(mock-book-table-insert-statement-err) malloc failed\n");
-        return NULL;
-    }
-    strcpy(statement->TableName, &tableName);
-    statement->Data = CreateDataBlock(columns, values);
-    if (!statement->Data)
-    {
-        free(statement->TableName);
-        free(statement);
-        fprintf(stderr, "(create-language-insert-statement) failed to create data block \n");
-        return NULL;
-    }
-    return statement;
+    strcpy(stmt->TableName, &tableName);
+    FreeAlloc(alloc);
+    return stmt;
 }
