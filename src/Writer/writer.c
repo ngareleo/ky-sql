@@ -32,3 +32,21 @@ int HandleWrite(WriteRequest *request, WriterMetadata *meta)
     fflush(meta->Writable);
     return 0;
 }
+
+void FreeWriteRequest(WriteRequest *req)
+{
+    if (req)
+    {
+        free(req);
+    }
+}
+
+void FreeWriteMetadata(WriterMetadata *meta)
+{
+    if (meta)
+    {
+        fflush(meta->Writable);
+        fclose(meta->Writable);
+        free(meta);
+    }
+}

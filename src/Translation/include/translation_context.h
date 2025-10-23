@@ -16,6 +16,8 @@ typedef struct
 } TranslationInitObj;
 
 TranslationContext *GetTranslationContext();
-int *InitTranslationContext(TranslationInitObj *initObj);
+void FreeTranslationContext(TranslationContext *);
+int InitTranslationContext(TranslationInitObj *);
+void DisposeTranslationContext();
 
 #endif

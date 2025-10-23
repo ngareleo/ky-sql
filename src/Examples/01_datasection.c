@@ -41,4 +41,10 @@ int main()
         fprintf(stderr, "(01_datasection) write to file failed \n");
         return -1;
     }
+
+    FreeTranslationInitObj(obj);
+    FreeLinsmt(bookTableIns);
+    FreeWriteRequest(writeReq);
+    DisposeTranslationContext();
+    FreeWriteMetadata(writer);
 }

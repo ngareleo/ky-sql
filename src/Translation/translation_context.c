@@ -1,15 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../Metadata/metadata.h"
-#include "include/translation_context.h"
+#include "Metadata/metadata.h"
+#include "./include/translation_context.h"
 
-typedef struct
-{
-    FileMetadata *FileMetadata;
-} TranslationContext;
-
-// !!
-// !! Here lies dragons
+// !! Here lies dragons !!
 // !! This is a simple way to hoist global state. We must be careful.
 // !! This could potentially chow memory esp during long sessions
 // !! Will build something better in future
@@ -29,12 +23,35 @@ TranslationContext *GetTranslationContext()
     return gCxt;
 }
 
-typedef struct
+void DisposeTranslationContext()
 {
-    FILE *File;
-} TranslationInitObj;
+    if (gCxt)
+    {
+        FreeTranslationContext(gCxt);
+        gCxt = NULL;
+    }
+}
 
-int *InitTranslationContext(TranslationInitObj *initObj)
+void FreeTranslationContext(TranslationContext *ctx)
+{
+    if (!ctx)
+    {
+        FreeFileMetadata(ctx->FileMetadata);
+        free(ctx);
+    }
+}
+
+void FreeTranslationInitObj(TranslationInitObj *obj)
+{
+    if (obj)
+    {
+        fflush(obj->File);
+        fclose(obj->File);
+        free(obj);
+    }
+}
+
+int InitTranslationContext(TranslationInitObj *initObj)
 {
     if (gCxt)
     {

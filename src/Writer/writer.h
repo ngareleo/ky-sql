@@ -17,4 +17,6 @@ typedef struct
 /** This function will be called each time a request is ready to be queued */
 int HandleWrite(WriteRequest *, WriterMetadata *);
 
+void FreeWriteRequest(WriteRequest *);
+
 #endif
