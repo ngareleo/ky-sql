@@ -24,7 +24,7 @@
  * ('Dune', 'Frank Herbert', '9780441172719', 'Science Fiction', 1965, 17.99, 13, 3.00),
  * ('Gone Girl', 'Gillian Flynn', '9780307588364', 'Thriller', 2012, 15.50, 17, 2.50);
  */
-LanguageInsertStatement *MockBookTableInsertStatement()
+Linsmt *MockBookTableInsertStatement()
 {
     /**
      * The language layer will receive an insert statement, parse it and extract the payload

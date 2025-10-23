@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "include/translation_context.h"
+#include "include/translation_insert.h"
 #include "Metadata/metadata.h"
 #include "Lang/language.h"
 #include "Reader/reader.h"
@@ -12,8 +13,7 @@
 
 int LinsmtToWriteRequest(Linsmt *stmt, WriteRequest **req)
 {
-    char *writable;
-    WriteRequest *req;
+    WriteRequest *writeRQ;
     TranslationContext *ctx = GetTranslationContext();
 
     if (!ctx)
@@ -34,21 +34,15 @@ int LinsmtToWriteRequest(Linsmt *stmt, WriteRequest **req)
         return -1;
     }
 
-    writable = TranslateLinsmt(stmt, ctx);
-    if (!writable)
-    {
-        fprintf(stderr, "(linsmt-to-write-request) couldn't generate a writable \n");
-        return -1;
-    }
-
-    req = CreateWriteRequest(stmt, ctx, writable);
-    if (!req)
+    writeRQ = CreateWriteRequest(stmt, ctx);
+    if (!writeRQ)
     {
         fprintf(stderr, "(linsmt-to-write-request) failed to create write request \n");
         return -1;
     }
 
-    return req;
+    *req = writeRQ;
+    return 0;
 }
 
 TableColDefinition *MatchTableColFromLinsmt(char *name, TableDefinition *def)
@@ -62,7 +56,7 @@ TableColDefinition *MatchTableColFromLinsmt(char *name, TableDefinition *def)
     TableColDefinition *colDef;
     for (int col = 0; col < def->ColumnCount; col++)
     {
-        if (strcmp(name, def->Columns[col]->Name))
+        if (strcmp(name, def->Columns[col]->Name) == 0)
         {
             colDef = def->Columns[col];
         }
@@ -80,26 +74,35 @@ TableDefinition *MatchTableDefFromLinsmt(Linsmt *stmt, SchemaDefinition *def)
     }
 
     TableDefinition *tableDef;
-    for (int c = 0; c < def->TableCount; c++)
+    for (int tIdx = 0; tIdx < def->TableCount; tIdx++)
     {
-        if (strcmp(def->TableDefs[c]->Name, stmt->TableName))
+        if (strcmp(def->TableDefs[tIdx]->Name, stmt->TableName) == 0)
         {
-            tableDef = def->TableDefs[c];
+            tableDef = def->TableDefs[tIdx];
         }
     }
 
     return tableDef;
 }
 
-WriteRequest *CreateWriteRequest(Linsmt *stmt, TranslationContext *ctx, char *writable)
+WriteRequest *CreateWriteRequest(Linsmt *stmt, TranslationContext *ctx)
 {
-    if (!stmt || !writable || !ctx)
+    if (!stmt || !ctx)
     {
         fprintf(stderr, "(create-write-request) args are invalid \n");
         return -1;
     }
 
+    TableDefinition *tableDef;
     WriteRequest *req;
+
+    char *writable = TranslateLinsmt(stmt, ctx);
+    if (!writable)
+    {
+        fprintf(stderr, "(linsmt-to-write-request) couldn't generate a writable \n");
+        return -1;
+    }
+
     req = malloc(sizeof(WriteRequest));
     if (!req)
     {
@@ -116,13 +119,12 @@ WriteRequest *CreateWriteRequest(Linsmt *stmt, TranslationContext *ctx, char *wr
 
     strcpy(req->Payload, writable);
 
-    TableDefinition *tableDef = MatchTableDefFromLinsmt(stmt, ctx->FileMetadataObj->Schema);
-    // Here we read the table offset and write there
-    for (int c = 0; c < ctx->FileMetadataObj->Offset->TableCount; c++)
+    tableDef = MatchTableDefFromLinsmt(stmt, ctx->FileMetadata->Schema);
+    for (int c = 0; c < ctx->FileMetadata->Offset->TableCount; c++)
     {
-        if (tableDef->Id == ctx->FileMetadataObj->Offset->Offsets[c]->Id)
+        if (tableDef->Id == ctx->FileMetadata->Offset->Offsets[c]->Id)
         {
-            TableOffset *off = ctx->FileMetadataObj->Offset->Offsets[c]->Offset;
+            TableOffset *off = ctx->FileMetadata->Offset->Offsets[c]->Offset;
             req->StartPosition = off->Offset;
         }
     }
@@ -132,23 +134,19 @@ WriteRequest *CreateWriteRequest(Linsmt *stmt, TranslationContext *ctx, char *wr
 
 char *TranslateLinsmt(Linsmt *stmt, TranslationContext *ctx)
 {
-    FILE *stream;
-    char *buffer, **columns;
-    size_t size;
-
-    SchemaDefinition *schemaDef = ctx->FileMetadataObj->Schema;
-    TableDefinition *tableDef = MatchTableDefFromLinsmt(stmt, schemaDef);
-
-    if (!tableDef)
-    {
-        return -1;
-    }
-
-    columns = stmt->Data->Header;
-
     if (!stmt || !ctx)
     {
         fprintf(stderr, "(translate-linsmt) args are invalid \n");
+        return -1;
+    }
+
+    FILE *stream;
+    char *buffer;
+    size_t size;
+
+    TableDefinition *tableDef = MatchTableDefFromLinsmt(stmt, ctx->FileMetadata->Schema);
+    if (!tableDef)
+    {
         return -1;
     }
 
@@ -159,29 +157,41 @@ char *TranslateLinsmt(Linsmt *stmt, TranslationContext *ctx)
         return NULL;
     }
 
-    for (int c = 0; c < stmt->Data->Size->HeaderCount; c++)
+    for (int rowIdx = 0; rowIdx < stmt->Data->Size->Count; rowIdx++)
     {
-        for (int c_1 = 0; c_1 < tableDef->ColumnCount; c_1++)
+        for (int colIdx = 0; colIdx < stmt->Data->Size->Width; colIdx)
         {
-            TableColDefinition *colDef = MatchTableColFromLinsmt(columns[c_1], tableDef);
-            if (colDef)
+            for (int scIdx = 0; scIdx < tableDef->Columns; scIdx++)
             {
-                switch (colDef->Type)
+                char *val = stmt->Data->Values[rowIdx][colIdx];
+                char *tableName = stmt->Data->Header[colIdx];
+
+                TableColDefinition *colDef = MatchTableColFromLinsmt(tableName, tableDef);
+                if (colDef)
                 {
-                case ID:
-                    break;
-                case BOOL:
-                    break;
-                case INTEGER:
-                    break;
-                case FLOAT:
-                    break;
-                case STRING:
-                    break;
-                case DATE:
-                    break;
-                default:
-                    break;
+                    switch (colDef->Type)
+                    {
+                    case ID:
+                        fwrite(val, strlen(val + 1), 1, stream);
+                        break;
+                    case BOOL:
+                        fwrite(val, strlen(val + 1), 1, stream);
+                        break;
+                    case INTEGER:
+                        fwrite(val, strlen(val + 1), 1, stream);
+                        break;
+                    case FLOAT:
+                        fwrite(val, strlen(val + 1), 1, stream);
+                        break;
+                    case STRING:
+                        fwrite(val, strlen(val + 1), 1, stream);
+                        break;
+                    case DATE:
+                        fwrite(val, strlen(val + 1), 1, stream);
+                        break;
+                    default:
+                        break;
+                    }
                 }
             }
         }
@@ -194,35 +204,31 @@ char *TranslateLinsmt(Linsmt *stmt, TranslationContext *ctx)
 
 int SchemaValidateLinsmt(Linsmt *stmt, TranslationContext *ctx)
 {
-    if (!ctx)
+    if (!ctx || !stmt)
     {
         fprintf(stderr, "(schema-validate-linsmt) context is invalid \n");
         return -1;
     }
 
     bool colsFound = false;
-    char **rowNames = stmt->Data->Header, **schemaColNames;
-    SchemaDefinition *schema = ctx->FileMetadataObj->Schema;
-    TableDefinition *tableDef = MatchTableDefFromLinsmt(stmt, schema);
+    SchemaDefinition *schema = ctx->FileMetadata->Schema;
 
+    TableDefinition *tableDef = MatchTableDefFromLinsmt(stmt, schema);
     if (!tableDef)
     {
         return -1;
     }
-
-    schemaColNames = malloc(sizeof(char *) * ((tableDef->ColumnCount) + 1));
-    schemaColNames[tableDef->ColumnCount] = NULL;
 
     for (int stmtC = 0; stmtC < stmt->Data->Size->HeaderCount; stmtC++)
     {
         TableColDefinition *colDef = MatchTableColFromLinsmt(stmt->Data->Header[stmtC], tableDef);
         if (!colDef)
         {
-            colsFound = true;
+            return -1;
         }
     }
 
-    return colsFound ? 0 : -1;
+    return 0;
 }
 
 int ValidateLinsmt(Linsmt *smt)

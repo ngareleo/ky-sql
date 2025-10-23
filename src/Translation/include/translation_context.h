@@ -7,7 +7,7 @@
 
 typedef struct
 {
-    FileMetadata *FileMetadataObj;
+    FileMetadata *FileMetadata;
 } TranslationContext;
 
 typedef struct

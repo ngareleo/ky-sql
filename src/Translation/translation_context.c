@@ -5,22 +5,19 @@
 
 typedef struct
 {
-    FileMetadata *FileMetadataObj;
+    FileMetadata *FileMetadata;
 } TranslationContext;
 
 // !!
 // !! Here lies dragons
-// !! A simple way to hoist global state
-// !! We must be careful.
-// !! This could potentially chow memory esp in long sessions
-// !!
-// !! As well as a huge source of memory leaks
-// !! Will build a better abstraction in future
-TranslationContext *globalCxt = NULL;
+// !! This is a simple way to hoist global state. We must be careful.
+// !! This could potentially chow memory esp during long sessions
+// !! Will build something better in future
+TranslationContext *gCxt = NULL;
 
 TranslationContext *GetTranslationContext()
 {
-    if (!globalCxt)
+    if (!gCxt)
     {
         // ?? In future we might introduce more frequent clean up
         // ?? This is a long-lived struct
@@ -29,7 +26,7 @@ TranslationContext *GetTranslationContext()
         return -1;
     }
 
-    return globalCxt;
+    return gCxt;
 }
 
 typedef struct
@@ -39,7 +36,7 @@ typedef struct
 
 int *InitTranslationContext(TranslationInitObj *initObj)
 {
-    if (globalCxt)
+    if (gCxt)
     {
         fprintf(stderr, "(init-translation-context) global context already initialized \n");
         return -1;
@@ -47,40 +44,32 @@ int *InitTranslationContext(TranslationInitObj *initObj)
 
     do
     {
-        globalCxt = malloc(sizeof(TranslationContext));
-        if (!globalCxt)
+        gCxt = malloc(sizeof(TranslationContext));
+        if (!gCxt)
         {
             fprintf(stderr, "(init-translation-context) malloc failed \n");
             break;
         }
 
-        // Initialize metadata from file
-        globalCxt->FileMetadataObj = malloc(sizeof(FileMetadata));
-        if (!globalCxt->FileMetadataObj)
+        gCxt->FileMetadata = malloc(sizeof(FileMetadata));
+        if (!gCxt->FileMetadata)
         {
             fprintf(stderr, "(init-translation-context) malloc failed \n");
             break;
         }
 
-        if (ReadMetadataFromFile(initObj->File, globalCxt->FileMetadataObj, CreateMetadataFromWritable) != 0)
+        if (ReadMetadataFromFile(initObj->File, gCxt->FileMetadata, CreateMetadataFromWritable) != 0)
         {
             fprintf(stderr, "(init-translation-context) couldn't read metadata from file \n");
             break;
         }
 
-        // Success
         fprintf(stderr, "(init-translation-context) translation context inialized \n");
         return;
     } while (0);
 
-    // Catch block
-    free(globalCxt->FileMetadataObj);
-    free(globalCxt);
-
-    if (!globalCxt)
-    {
-        globalCxt = NULL;
-    }
-
+    free(gCxt->FileMetadata);
+    free(gCxt);
+    gCxt = NULL;
     return 0;
 }
