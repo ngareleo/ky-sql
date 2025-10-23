@@ -5,12 +5,12 @@
 #include "Utilities/utilities.h"
 #include "Types/types.h"
 
-LangInsertStmt *CreateLangInsertStmt(char *tableName, char **columns, char ***values)
+Linsmt *CreateLangInsertStmt(char *tableName, char **columns, char ***values)
 {
-    LangInsertStmt *stmt;
+    Linsmt *stmt;
     Allocator *alloc = MallocInit();
 
-    stmt = Malloc(sizeof(LangInsertStmt), alloc);
+    stmt = Malloc(sizeof(Linsmt), alloc);
     if (stmt)
     {
         stmt->TableName = Malloc(sizeof(strlen(tableName) + 1), alloc);

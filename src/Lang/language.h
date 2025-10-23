@@ -5,9 +5,9 @@
 
 typedef struct
 {
-    char *TableName;     // The table being targeted
-    DataBlockType *Data; // The row data in order
-} LangInsertStmt;
+    char *TableName; // The table being targeted
+    DataBlock *Data; // The row data in order
+} Linsmt;            // Language-Insert-Statement
 
 typedef struct
 {
@@ -26,7 +26,8 @@ typedef struct
     {                         //
         int ColumnCount;      // Number of columns we're targeting
     } *Sizing;                //
-} LangQueryStmt;
+} Liqsmt;                     // Language-Query-Statement
 
-LangInsertStmt *CreateLangInsertStmt(char *, char **, char ***);
+Linsmt *CreateLangInsertStmt(char *, char **, char ***);
+
 #endif

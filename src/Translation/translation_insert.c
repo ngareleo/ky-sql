@@ -6,13 +6,8 @@
 #include "Types/types.h"
 #include "Writer/writer.h"
 
-int LangInsertStmtToWriteRequest(LangInsertStmt *stmt, WriteRequest **req)
+int LinsmtToWriteRequest(Linsmt *stmt, WriteRequest **req)
 {
-    if (ValidateLangInsertStmt(stmt) != 0)
-    {
-        fprintf(stderr, "(lang-insert-stmt-to-write-request) statement failed validation \n");
-        return -1;
-    }
 
     char *writable;
     WriteRequest *req;
@@ -20,20 +15,26 @@ int LangInsertStmtToWriteRequest(LangInsertStmt *stmt, WriteRequest **req)
 
     if (!ctx)
     {
-        fprintf(stderr, "(lang-insert-stmt-to-write-request) context unavailable \n");
+        fprintf(stderr, "(linsmt-to-write-request) translation context unavailable \n");
         return -1;
     }
 
-    if (SchemaValidateInsertStmt(stmt, ctx) != 0)
+    if (ValidateLinsmt(stmt) != 0)
     {
-        fprintf(stderr, "(lang-insert-stmt-to-write-request) statement failed schema validation \n");
+        fprintf(stderr, "(linsmt-to-write-request) statement failed validation \n");
         return -1;
     }
 
-    writable = TranslateInsertStmtToWritable(stmt, ctx);
+    if (SchemaValidateLinsmt(stmt, ctx) != 0)
+    {
+        fprintf(stderr, "(linsmt-to-write-request) statement failed schema validation \n");
+        return -1;
+    }
+
+    writable = TranslateLinsmt(stmt, ctx);
     if (!writable)
     {
-        fprintf(stderr, "(lang-insert-stmt-to-write-request) couldn't generate a writable \n");
+        fprintf(stderr, "(linsmt-to-write-request) couldn't generate a writable \n");
         return -1;
     }
 
@@ -41,35 +42,35 @@ int LangInsertStmtToWriteRequest(LangInsertStmt *stmt, WriteRequest **req)
     return req;
 }
 
-WriteRequest *CreateWriteRequest(LangInsertStmt *stmt, TranslationContext *ctx, char *writable) {}
+int SchemaValidateLinsmt(Linsmt *stmt, TranslationContext *ctx) {}
 
-int SchemaValidateInsertStmt(LangInsertStmt *stmt, TranslationContext *ctx) {}
+WriteRequest *CreateWriteRequest(Linsmt *stmt, TranslationContext *ctx, char *writable) {}
 
-int TranslateInsertStmtToWritable(LangInsertStmt *stmt, TranslationContext *ctx) {}
+int TranslateLinsmt(Linsmt *stmt, TranslationContext *ctx) {}
 
-int ValidateLangInsertStmt(LangInsertStmt *stmt)
+int ValidateLinsmt(Linsmt *smt)
 {
-    if (!stmt)
+    if (!smt)
     {
-        fprintf(stderr, "(validate-lang-insert-stmt) statment provided is null \n");
+        fprintf(stderr, "(validate-linsmt) statment provided is null \n");
         return -1;
     }
 
-    if (!stmt->Data || !stmt->Data->IsValid)
+    if (!smt->Data || !smt->Data->IsValid)
     {
-        fprintf(stderr, "(validate-lang-insert-stmt) statement is invalid \n");
+        fprintf(stderr, "(validate-linsmt) statement is invalid \n");
         return -1;
     }
 
-    if (!stmt->Data->IsEmpty)
+    if (smt->Data->IsEmpty)
     {
-        fprintf(stderr, "(validate-lang-insert-stmt) statement is empty  \n");
+        fprintf(stderr, "(validate-linsmt) statement is empty  \n");
         return -1;
     }
 
-    if (!stmt->TableName)
+    if (!smt->TableName)
     {
-        fprintf(stderr, "(validate-lang-insert-stmt) tablename is invalid \n");
+        fprintf(stderr, "(validate-linsmt) tablename is invalid \n");
         return -1;
     }
 

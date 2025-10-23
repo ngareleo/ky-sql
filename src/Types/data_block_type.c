@@ -6,20 +6,20 @@
 #include "Types/types.h"
 #include "Utilities/utilities.h"
 
-DataBlockType *CreateDataBlock(char **headers, char ***values)
+DataBlock *CreateDataBlock(char **headers, char ***values)
 {
     if (!values && !headers)
     {
         return DefaultBlock();
     }
     Allocator *alloc = MallocInit();
-    DataBlockType *block;
+    DataBlock *block;
     int headerCount, rowCount;
 
     headerCount = Count((void **)headers);
     rowCount = Count((void **)values);
 
-    block = Malloc(sizeof(DataBlockType), alloc);
+    block = Malloc(sizeof(DataBlock), alloc);
     block->Header = Malloc(sizeof(char *) * (headerCount + 1), alloc);
     block->Values = Malloc(sizeof(char **) * (rowCount + 1), alloc);
     block->Size = Malloc(sizeof(DataBlockSize), alloc);
@@ -104,10 +104,10 @@ DataBlockSize *EmptyBlockSize()
     return s;
 }
 
-DataBlockType *DefaultBlock()
+DataBlock *DefaultBlock()
 {
-    DataBlockType *block;
-    block = malloc(sizeof(DataBlockType));
+    DataBlock *block;
+    block = malloc(sizeof(DataBlock));
     if (!block)
     {
         fprintf(stderr, "(default-block) malloc failed \n");
@@ -180,7 +180,7 @@ DataBlockSize *MeasureBlockStructure(char ***rowText)
     return size;
 }
 
-void ValidateDataBlock(DataBlockType *block)
+void ValidateDataBlock(DataBlock *block)
 {
     if (!block)
     {
@@ -257,7 +257,7 @@ void ValidateDataBlock(DataBlockType *block)
     }
 }
 
-void FreeDataBlock(DataBlockType *block)
+void FreeDataBlock(DataBlock *block)
 {
     if (block)
     {

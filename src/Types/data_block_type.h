@@ -22,13 +22,13 @@ typedef struct
     bool IsHeaderLess;   // Indicates whether the structure has not headers
     bool IsValid;        // A valid data block is okay to deal with and won't cause issues. An example is if the number of headers is more than rows
     DataBlockSize *Size; // Dimensions of the data block
-} DataBlockType;
+} DataBlock;
 
-DataBlockType *CreateDataBlock(char **, char ***);
-void ValidateDataBlock(DataBlockType *);
+DataBlock *CreateDataBlock(char **, char ***);
+void ValidateDataBlock(DataBlock *);
 DataBlockSize *MeasureBlockStructure(char ***);
 DataBlockSize *EmptyBlockSize();
-DataBlockType *DefaultBlock();
-void FreeDataBlock(DataBlockType *);
+DataBlock *DefaultBlock();
+void FreeDataBlock(DataBlock *);
 
 #endif
