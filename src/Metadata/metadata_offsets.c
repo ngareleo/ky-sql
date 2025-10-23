@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include "include/metadata_offsets.h"
-#include "../Utilities/utilities.h"
+#include "Utilities/utilities.h"
 
 TableOffset *NewTableOffset(int id, int offset)
 {

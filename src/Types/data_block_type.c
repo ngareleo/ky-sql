@@ -136,7 +136,7 @@ DataBlock *DefaultBlock()
     return block;
 }
 
-DataBlockSize *MeasureBlockStructure(char ***rowText)
+DataBlockSize *MeasureBlockStructure(char **headers, char ***rowText)
 {
     if (!rowText)
     {
@@ -144,7 +144,9 @@ DataBlockSize *MeasureBlockStructure(char ***rowText)
         return NULL;
     }
 
-    int rCount, rWidth;
+    int rCount, rWidth, hCount;
+
+    hCount = Count((void **)headers);
     if ((rCount = Count((void **)rowText)) < 1)
     {
         return EmptyBlockSize();
@@ -177,6 +179,7 @@ DataBlockSize *MeasureBlockStructure(char ***rowText)
 
     size->Count = rCount;
     size->Width = rWidth;
+    size->HeaderCount = hCount;
     return size;
 }
 
@@ -206,7 +209,7 @@ void ValidateDataBlock(DataBlock *block)
         return;
     }
 
-    size = MeasureBlockStructure(block->Values);
+    size = MeasureBlockStructure(block->Header, block->Values);
     if (!size)
     {
         fprintf(stderr, "(validate-data-block-err) error measuring data-block \n");

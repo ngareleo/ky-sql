@@ -5,4 +5,6 @@
 #include "../Reader/reader.h"
 #include "../Writer/writer.h"
 
-int LangQueryToReadRequest(LanguageQueryStatement *query, ReadRequest **request) {};
+int LangQueryToReadRequest(Liqsmt *smt, ReadRequest *req) {
+
+};

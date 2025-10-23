@@ -5,8 +5,9 @@
 
 typedef struct
 {
-    int Width; // The number of columns
-    int Count; // The number of rows
+    int Width;       // The number of columns
+    int Count;       // The number of rows
+    int HeaderCount; // The number of columns in headers
 } DataBlockSize;
 
 /**
