@@ -16,7 +16,6 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
     Allocator *alloc = MallocInit();
     DataBlockType *block;
     int headerCount, rowCount;
-    bool allocFailed = false;
 
     headerCount = Count((void **)headers);
     rowCount = Count((void **)values);
