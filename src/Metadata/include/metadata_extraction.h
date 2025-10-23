@@ -4,6 +4,7 @@
 #include <time.h>
 #include "metadata_offsets.h"
 #include "metadata_schema.h"
+#include "metadata_storage.h"
 
 #define OFFSET_TXT_WITH_PADDING 60
 #define MAX_TABLENAME_LENGTH 100
@@ -13,6 +14,7 @@
 typedef struct
 {
     SchemaDefinition *Schema; /** A repr of the SQL schema */
+    StorageMeta *Storage;     /** Storage information like the sizes of tables */
     Offset *Offset;           /** Offset values*/
     time_t CreatedAt;         /** When was this database created */
     time_t LastModified;      /** When was this last modified */
@@ -21,11 +23,17 @@ typedef struct
 #pragma pack(1)
 typedef struct
 {
-    struct WritableTableOffset
-    {
+    struct WritableTableOffset                                   /** */
+    {                                                            /** */
         int TableOffsetId;                                       /** The name of the table */
         int TableOffset;                                         /** The offset of the file position from 0 */
     } TableOffsets[MAX_TABLE_COUNT];                             /** Offsets to tables */
+    struct WritableStorageMeta                                   /** */
+    {                                                            /** */
+        int RowSize;                                             /** Size of a single row */
+        int Count;                                               /** The number of rows in a table */
+        int TableId;                                             /** The table Id */
+    } Storage[MAX_TABLE_COUNT];                                  /** Storage information */
     struct WritableSchema                                        /** */
     {                                                            /** */
         struct WritableTableDefinition                           /** */

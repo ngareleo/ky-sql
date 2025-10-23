@@ -5,7 +5,7 @@
 #include "Utilities/utilities.h"
 #include "Types/types.h"
 
-Linsmt *CreateLangInsertStmt(char *tableName, char **columns, char ***values)
+Linsmt *CreateLinsmt(char *tableName, char **columns, char ***values)
 {
     Linsmt *stmt;
     Allocator *alloc = MallocInit();

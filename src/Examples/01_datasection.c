@@ -10,27 +10,26 @@
 int main()
 {
     char *file = "noop.kysql";
-    FILE *readable = fopen(file, "r");
     FILE *writable = fopen(file, "w");
 
     WriteRequest *writeReq;
     TranslationInitObj *obj;
-    Linsmt *bookTableIns;
+    Linsmt *booksLinmt;
     WriterMetadata *writer;
 
-    obj->File = readable;
+    obj->File = "noop.kysql";
     writer->Writable = writable;
 
     InitTranslationContext(obj);
-    bookTableIns = MockBookTableInsertStatement();
+    booksLinmt = MockBookTableInsertStatement();
 
-    if (!bookTableIns)
+    if (!booksLinmt)
     {
         fprintf(stderr, "(01_datasection) failed to create insert statement \n");
         return -1;
     }
 
-    if (LinsmtToWriteRequest(bookTableIns, &writeReq) != 0)
+    if (LinsmtToWriteRequest(booksLinmt, &writeReq) != 0)
     {
         fprintf(stderr, "(01_datasection) failed to translate insert statement to write request \n");
         return -1;
@@ -43,8 +42,9 @@ int main()
     }
 
     FreeTranslationInitObj(obj);
-    FreeLinsmt(bookTableIns);
+    FreeLinsmt(booksLinmt);
     FreeWriteRequest(writeReq);
     DisposeTranslationContext();
     FreeWriteMetadata(writer);
+    fclose(writable);
 }

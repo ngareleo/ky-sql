@@ -7,9 +7,10 @@
 // !! This is a simple way to hoist global state. We must be careful.
 // !! This could potentially chow memory esp during long sessions
 // !! Will build something better in future
-TranslationContext *gCxt = NULL;
+TranslationCtx *gCxt = NULL;
+FILE *readable = NULL;
 
-TranslationContext *GetTranslationContext()
+TranslationCtx *GetTranslationContext()
 {
     if (!gCxt)
     {
@@ -32,11 +33,11 @@ void DisposeTranslationContext()
     }
 }
 
-void FreeTranslationContext(TranslationContext *ctx)
+void FreeTranslationContext(TranslationCtx *ctx)
 {
     if (!ctx)
     {
-        FreeFileMetadata(ctx->FileMetadata);
+        FreeFileMetadata(ctx->FileMd);
         free(ctx);
     }
 }
@@ -45,13 +46,13 @@ void FreeTranslationInitObj(TranslationInitObj *obj)
 {
     if (obj)
     {
-        fflush(obj->File);
-        fclose(obj->File);
+        fflush(readable);
+        fclose(readable);
         free(obj);
     }
 }
 
-int InitTranslationContext(TranslationInitObj *initObj)
+int InitTranslationContext(TranslationInitObj *obj)
 {
     if (gCxt)
     {
@@ -59,34 +60,45 @@ int InitTranslationContext(TranslationInitObj *initObj)
         return -1;
     }
 
+    if (readable)
+    {
+        fflush(readable);
+        clearerr(readable);
+    }
+    else
+    {
+        readable = fopen(obj->File, "r");
+    }
+
     do
     {
-        gCxt = malloc(sizeof(TranslationContext));
+        gCxt = malloc(sizeof(TranslationCtx));
         if (!gCxt)
         {
             fprintf(stderr, "(init-translation-context) malloc failed \n");
             break;
         }
 
-        gCxt->FileMetadata = malloc(sizeof(FileMetadata));
-        if (!gCxt->FileMetadata)
+        gCxt->FileMd = malloc(sizeof(FileMetadata));
+        if (!gCxt->FileMd)
         {
             fprintf(stderr, "(init-translation-context) malloc failed \n");
             break;
         }
 
-        if (ReadMetadataFromFile(initObj->File, gCxt->FileMetadata, CreateMetadataFromWritable) != 0)
+        if (ReadMetadataFromFile(readable, gCxt->FileMd, CreateMetadataFromWritable) != 0)
         {
             fprintf(stderr, "(init-translation-context) couldn't read metadata from file \n");
             break;
         }
 
         fprintf(stderr, "(init-translation-context) translation context inialized \n");
-        return;
+        return 0;
     } while (0);
 
-    free(gCxt->FileMetadata);
+    // If the initalization block fails, we reset and cleanup everything
+    free(gCxt->FileMd);
     free(gCxt);
     gCxt = NULL;
-    return 0;
+    return -1;
 }

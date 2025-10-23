@@ -7,16 +7,16 @@
 
 typedef struct
 {
-    FileMetadata *FileMetadata;
-} TranslationContext;
+    FileMetadata *FileMd;
+} TranslationCtx;
 
 typedef struct
 {
-    FILE *File;
+    char *File;
 } TranslationInitObj;
 
-TranslationContext *GetTranslationContext();
-void FreeTranslationContext(TranslationContext *);
+TranslationCtx *GetTranslationContext();
+void FreeTranslationContext(TranslationCtx *);
 int InitTranslationContext(TranslationInitObj *);
 void DisposeTranslationContext();
 

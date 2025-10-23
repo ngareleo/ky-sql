@@ -1,10 +1,161 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "translation_context.h"
-#include "../Lang/language.h"
-#include "../Reader/reader.h"
-#include "../Writer/writer.h"
+#include "Lang/language.h"
+#include "Metadata/metadata.h"
+#include "Reader/reader.h"
+#include "Writer/writer.h"
 
-int LangQueryToReadRequest(Liqsmt *smt, ReadRequest *req) {
+int LiqsmtToReadRequest(Liqsmt *smt, ReadRequest *req)
+{
+    ReadRequest *readReq;
+    TranslationCtx *ctx = GetTranslationContext();
 
-};
+    if (!ctx)
+    {
+        fprintf(stderr, "(liqsmt-to-read-request) Translation context unavailable \n");
+        return -1;
+    }
+
+    if (ValidateLiqsmt(smt) != 0)
+    {
+        fprintf(stderr, "(liqsmt-to-read-request) Statement validation failed \n");
+        return -1;
+    }
+
+    if (SchemaValidateLiqsmt(smt, ctx) != 0)
+    {
+        fprintf(stderr, "(liqsmt-to-read-request) Schema validation failed \n");
+        return -1;
+    }
+
+    readReq = CreateReadRequest(smt, ctx);
+}
+
+ReadRequest *CreateReadRequest(Liqsmt *smt, TranslationCtx *ctx)
+{
+    if (!smt || !ctx)
+    {
+        fprintf(stderr, "(create-read-request) args invalid \n");
+        return NULL;
+    }
+
+    ReadRequest *readReq;
+    TableDefinition *tableDef = MatchTableDefFromLiqsmt(smt, ctx->FileMd->Schema);
+    if (!tableDef)
+    {
+        fprintf(stderr, "(liqsmt-to-read-request) Table not found \n");
+        return NULL;
+    }
+
+    for (int tIdx = 0; tIdx < ctx->FileMd->Offset->TableCount; tIdx++)
+    {
+        if (ctx->FileMd->Offset->Offsets[tIdx]->Id == tableDef->Id)
+        {
+            readReq = malloc(sizeof(ReadRequest));
+            if (!readReq)
+            {
+                fprintf(stderr, "(liqsmt-to-read-request) Malloc failed \n");
+                return NULL;
+            }
+
+            readReq->StartPosition = ctx->FileMd->Offset->Offsets[tIdx]->Offset;
+        }
+    }
+
+    return readReq;
+}
+
+int SchemaValidateLiqsmt(Liqsmt *smt, TranslationCtx *ctx)
+{
+    if (!smt || !ctx)
+    {
+        fprintf(stderr, "(schema-validate-liqsmt) args invalid \n");
+        return -1;
+    }
+
+    TableDefinition *tableDef = MatchTableDefFromLiqsmt(smt, ctx->FileMd->Schema);
+    if (!tableDef)
+    {
+        fprintf(stderr, "(schema-validate-liqsmt) table not found in schema \n");
+        return -1;
+    }
+
+    if (!smt->IsWildcardSelection)
+    {
+        for (int cIdx = 0; cIdx < smt->ColCount; cIdx++)
+        {
+            TableColDefinition *colDef = MatchColDefFromLiqsmt(smt->Columns[cIdx], tableDef);
+            if (!colDef)
+            {
+                return -1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+TableColDefinition *MatchColDefFromLiqsmt(char *colName, TableDefinition *schema)
+{
+    if (!colName || !schema)
+    {
+        fprintf(stderr, "(match-col-def-from-liqsmt) args invalid \n");
+        return -1;
+    }
+
+    TableColDefinition *def;
+    for (int cIdx = 0; cIdx < schema->ColumnCount; cIdx++)
+    {
+        if (strcmp(schema->Columns[cIdx], colName) == 0)
+        {
+            def = schema->Columns;
+        }
+    }
+
+    return def;
+}
+
+TableDefinition *MatchTableDefFromLiqsmt(Liqsmt *smt, SchemaDefinition *schema)
+{
+    if (!smt || !schema)
+    {
+        fprintf(stderr, "(match-table-def-from-liqsmt) args invalid \n");
+        return -1;
+    }
+
+    TableDefinition *def = NULL;
+    for (int tIdx = 0; tIdx < schema->TableCount; tIdx++)
+    {
+        if (strcmp(schema->TableDefs[tIdx]->Name, smt->TableName) == 0)
+        {
+            def = schema->TableDefs[tIdx];
+        }
+    }
+
+    return def;
+}
+
+int ValidateLiqsmt(Liqsmt *smt)
+{
+    if (!smt)
+    {
+        fprintf(stderr, "(validate-liqsmt) smt is invalid \n");
+        return -1;
+    }
+
+    if (!smt->TableName || strlen(smt->TableName) < 1)
+    {
+        fprintf(stderr, "(validate-liqsmt) table name is invalid \n");
+        return -1;
+    }
+
+    if (!smt->Columns || smt->ColCount < 1 && !smt->IsWildcardSelection)
+    {
+        fprintf(stderr, "(validate-liqsmt) query is missing  \n");
+        return -1;
+    }
+
+    return 0;
+}

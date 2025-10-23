@@ -6,7 +6,7 @@
 #include "Lang/language.h"
 
 /**
- *
+ *```sql
  * INSERT INTO books (title, author, isbn, genre, publication_year, price, stock_quantity, rental_price_per_day) VALUES
  * ('To Kill a Mockingbird', 'Harper Lee', '9780061120084', 'Fiction', 1960, 12.99, 15, 2.50),
  * ('1984', 'George Orwell', '9780451524935', 'Dystopian Fiction', 1949, 13.99, 20, 2.00),
@@ -23,6 +23,7 @@
  * ('The Alchemist', 'Paulo Coelho', '9780062315007', 'Fiction', 1988, 14.95, 19, 2.00),
  * ('Dune', 'Frank Herbert', '9780441172719', 'Science Fiction', 1965, 17.99, 13, 3.00),
  * ('Gone Girl', 'Gillian Flynn', '9780307588364', 'Thriller', 2012, 15.50, 17, 2.50);
+ * ```
  */
 Linsmt *MockBookTableInsertStatement()
 {
@@ -62,19 +63,18 @@ Linsmt *MockBookTableInsertStatement()
         r_13,
         r_14,
         r_15,
-
         // ?? Add more here
         NULL,
     };
     char **columns = {"title", "author", "isbn", "genre", "publication_year", "price", "stock_quantity", "rental_price_per_day"};
     char *table = "books";
 
-    LanguageInsertStatement *statement;
-    if (!(statement = CreateLanguageInsertStatement(table, columns, values)))
+    Linsmt *stm;
+    if (!(stm = CreateLinsmt(table, columns, values)))
     {
         fprintf(stderr, "(mock-insert-statements-err) failed to create insert statement \n");
         return NULL;
     }
 
-    return statement;
+    return stm;
 }

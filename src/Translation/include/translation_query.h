@@ -1,9 +1,9 @@
 #ifndef TRANSLATION_QUERY_H
 #define TRANSLATION_QUERY_H
 
-#include "../Lang/language.h"
-#include "../Reader/reader.h"
+#include "Lang/language.h"
+#include "Reader/reader.h"
 
-int LangQueryToReadRequest(LanguageQueryStatement *, ReadRequest **);
+int LiqsmtToReadRequest(Liqsmt *, ReadRequest *);
 
 #endif

@@ -10,6 +10,6 @@ TableDefinition *CreateBooksTableDefintion();
 SchemaDefinition *CreateBookStoreSchemaDefinition();
 
 // Mock data statements
-LanguageInsertStatement *MockBookTableInsertStatement();
+Linsmt *MockBookTableInsertStatement();
 
 #endif

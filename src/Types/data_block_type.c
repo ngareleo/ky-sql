@@ -35,20 +35,20 @@ DataBlock *CreateDataBlock(char **headers, char ***values)
 
     if (block && block->Values && rowCount > 0)
     {
-        for (int row_n = 0; row_n < rowCount; row_n++)
+        for (int rowIdx = 0; rowIdx < rowCount; rowIdx++)
         {
-            int rSize = Count((void **)values[row_n]);
-            if (rSize > 0)
+            int rowC = Count((void **)values[rowIdx]);
+            if (rowC > 0)
             {
-                block->Values[row_n] = Malloc(sizeof(char **) * (rSize + 1), alloc);
-                for (int r_val = 0; r_val < rSize; r_val++)
+                block->Values[rowIdx] = Malloc(sizeof(char **) * (rowC + 1), alloc);
+                for (int rValIdx = 0; rValIdx < rowC; rValIdx++)
                 {
-                    if (block->Values[row_n])
+                    if (block->Values[rowIdx])
                     {
-                        block->Values[row_n][r_val] = Malloc(strlen(values[row_n][r_val]) + 1, alloc);
+                        block->Values[rowIdx][rValIdx] = Malloc(strlen(values[rowIdx][rValIdx]) + 1, alloc);
                     }
                 }
-                block->Values[row_n][rSize] = NULL;
+                block->Values[rowIdx][rowC] = NULL;
             }
         }
         block->Values[rowCount] = NULL;

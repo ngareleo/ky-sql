@@ -9,7 +9,7 @@ typedef struct
     DataBlock *Data; // The row data in order
 } Linsmt;            // Language-Insert-Statement
 
-Linsmt *CreateLangInsertStmt(char *, char **, char ***);
+Linsmt *CreateLinsmt(char *, char **, char ***);
 void *FreeLinsmt(Linsmt *);
 
 #endif

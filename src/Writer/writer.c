@@ -10,8 +10,8 @@ int HandleWrite(WriteRequest *request, WriterMetadata *meta)
         return -1;
     }
 
-    // Incase we didn't clear errors
     clearerr(meta->Writable);
+
     if (fwrite(request->Payload, sizeof(request->Payload), 1, meta->Writable) < 1)
     {
         fprintf(stderr, "(writer-handle-write-err) write failed \n");
@@ -28,6 +28,7 @@ int HandleWrite(WriteRequest *request, WriterMetadata *meta)
         return -1;
     }
 
+    clearerr(meta->Writable);
     fprintf(stdout, "(writer-handle-write-info) write complete \n");
     fflush(meta->Writable);
     return 0;
