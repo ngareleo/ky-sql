@@ -10,13 +10,13 @@ Allocator *MallocInit()
     if (!alloc)
     {
         fprintf(stderr, "(malloc-init) malloc failed \n");
-        // a null allocator will blow up during allocation and propagate down safely so that we can recover all the memory
+        // !! A null allocator will blow up during allocation and propagate down safely so that we can recover all the memory
         return NULL;
     }
     return alloc;
 };
 
-bool *VerifyAllocation(Allocator *alloc)
+bool *VerifyAlloc(Allocator *alloc)
 {
     return alloc->Status == FAILED ? false : true;
 };
@@ -32,3 +32,11 @@ void *Malloc(size_t size, Allocator *alloc)
     }
     return mem;
 };
+
+void FreeAlloc(Allocator *alloc)
+{
+    if (alloc)
+    {
+        free(alloc);
+    }
+}

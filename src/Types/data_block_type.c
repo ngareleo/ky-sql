@@ -53,7 +53,7 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
         block->Values[rowCount] = NULL;
     }
 
-    if (VerifyAllocation(alloc))
+    if (!VerifyAlloc(alloc))
     {
         for (int h_c_1 = 0; h_c_1 < headerCount; h_c_1++)
         {
@@ -73,10 +73,10 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
 
         free(block->Header);
         free(block->Values);
+        free(block);
         fprintf(stderr, "(create-data-block) mem allocation failed \n");
         return NULL;
     }
-
     // ?? Allocation
 
     if (headerCount > 0)
@@ -102,6 +102,7 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
     }
 
     ValidateDataBlock(block);
+    FreeAlloc(alloc);
     return block;
 }
 
