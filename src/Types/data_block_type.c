@@ -152,6 +152,38 @@ DataBlockSize *EmptyBlockSize()
     return s;
 }
 
+DataBlockType *DefaultBlock()
+{
+    DataBlockType *block;
+    block = malloc(sizeof(DataBlockType));
+    if (!block)
+    {
+        fprintf(stderr, "(empty-block-size) malloc failed \n");
+        return NULL;
+    }
+
+    DataBlockSize *s;
+    s = malloc(sizeof(DataBlockSize));
+    if (!s)
+    {
+        fprintf(stderr, "(empty-block-size) malloc failed \n");
+        return NULL;
+    }
+
+    s->Count = 0;
+    s->Width = 0;
+
+    block->Size = s;
+    block->Header = NULL;
+    block->Values = NULL;
+    block->IsAligned = true;
+    block->IsEmpty = true;
+    block->IsHeaderLess = true;
+    block->IsValid = true;
+
+    return block;
+}
+
 DataBlockSize *MeasureBlockStructure(char ***rowText)
 {
     if (!rowText)
@@ -175,8 +207,8 @@ DataBlockSize *MeasureBlockStructure(char ***rowText)
     for (int c = 1; c < count; c++)
     {
         int rowC;
-        // Whenever the data is unaligned, use the widest width as row width
-        // Should not cause problems as long as we read `IsAligned` and `IsValid` property before accessing width
+        // !! Whenever the data is unaligned, use the widest width as row width
+        // !! Should not cause problems as long as we read `IsAligned` and `IsValid` property before accessing width
         if ((rowC = Count((void **)rowText[c])) > dimC)
         {
             dimC = rowC;
@@ -253,7 +285,7 @@ void ValidateDataBlock(DataBlockType *block)
         {
             block->IsAligned = false;
 
-            // info: A valid data block should be well aligned
+            // ?? A valid data block should be well aligned
             block->IsValid = false;
             break;
         }
@@ -261,8 +293,8 @@ void ValidateDataBlock(DataBlockType *block)
 
     if (dimC != count)
     {
-        // We don't set alignment to false because alignment is a values construct
-        // but we mark the data block as invalid because headers should be equal to data block width
+        // ?? We don't set alignment to false because alignment is a values construct
+        // ?? but we mark the data block as invalid because headers should be equal to data block width
         block->IsValid = false;
     }
 }

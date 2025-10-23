@@ -28,6 +28,7 @@ DataBlockType *CreateDataBlock(char **, char ***);
 void ValidateDataBlock(DataBlockType *);
 DataBlockSize *MeasureBlockStructure(char ***);
 DataBlockSize *EmptyBlockSize();
+DataBlockType *DefaultBlock();
 void FreeDataBlock(DataBlockType *);
 
 #endif
