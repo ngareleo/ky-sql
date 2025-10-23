@@ -4,6 +4,6 @@
 #include "Lang/language.h"
 #include "Reader/reader.h"
 
-int LiqsmtToReadRequest(Liqsmt *, ReadRequest *);
+int LiqsmtToReadRequest(Liqsmt *, ReadRequest **);
 
 #endif

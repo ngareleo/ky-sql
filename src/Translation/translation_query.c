@@ -7,7 +7,7 @@
 #include "Reader/reader.h"
 #include "Writer/writer.h"
 
-int LiqsmtToReadRequest(Liqsmt *smt, ReadRequest *req)
+int LiqsmtToReadRequest(Liqsmt *smt, ReadRequest **req)
 {
     ReadRequest *readReq;
     TranslationCtx *ctx = GetTranslationContext();
@@ -31,6 +31,14 @@ int LiqsmtToReadRequest(Liqsmt *smt, ReadRequest *req)
     }
 
     readReq = CreateReadRequest(smt, ctx);
+    if (!readReq)
+    {
+        fprintf(stderr, "(liqsmt-to-read-request) Failed to create read request \n");
+        return -1;
+    }
+
+    *req = readReq;
+    return 0;
 }
 
 ReadRequest *CreateReadRequest(Liqsmt *smt, TranslationCtx *ctx)
@@ -51,7 +59,8 @@ ReadRequest *CreateReadRequest(Liqsmt *smt, TranslationCtx *ctx)
 
     for (int tIdx = 0; tIdx < ctx->FileMd->Offset->TableCount; tIdx++)
     {
-        if (ctx->FileMd->Offset->Offsets[tIdx]->Id == tableDef->Id)
+        if (ctx->FileMd->Offset->Offsets[tIdx]->Id == tableDef->Id &&
+            ctx->FileMd->Storage->Items[tIdx]->TableId == tableDef->Id)
         {
             readReq = malloc(sizeof(ReadRequest));
             if (!readReq)
@@ -61,6 +70,7 @@ ReadRequest *CreateReadRequest(Liqsmt *smt, TranslationCtx *ctx)
             }
 
             readReq->StartPosition = ctx->FileMd->Offset->Offsets[tIdx]->Offset;
+            readReq->ReadSize = ctx->FileMd->Storage->Items[tIdx]->Count * ctx->FileMd->Storage->Items[tIdx]->RowSize;
         }
     }
 

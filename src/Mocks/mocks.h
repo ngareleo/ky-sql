@@ -11,5 +11,6 @@ SchemaDefinition *CreateBookStoreSchemaDefinition();
 
 // Mock data statements
 Linsmt *MockBookTableInsertStatement();
+Liqsmt *CreateMockBooksLiqsmt();
 
 #endif

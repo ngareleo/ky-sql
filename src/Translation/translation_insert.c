@@ -166,33 +166,11 @@ char *TranslateLinsmt(Linsmt *stmt, TranslationCtx *ctx)
                 TableColDefinition *colDef = MatchTableColFromLinsmt(stmt->Data->Header[colIdx], tableDef);
                 char *val = colDef ? stmt->Data->Values[rowIdx][colIdx] : "";
                 size_t size = GetDataTypeSize(val);
-                switch (colDef->Type)
+                if (WriteColumnEntry(val, stream, colDef->Type) < 1)
                 {
-                case ID:
-                    long rVal = atol(val);
-                    fwrite(&rVal, size, 1, stream);
-                    break;
-                case BOOL:
-                    int rVal = atoi(val);
-                    fwrite(&rVal, size, 1, stream);
-                    break;
-                case INTEGER:
-                    int rVal = atoi(val);
-                    fwrite(&rVal, size, 1, stream);
-                    break;
-                case FLOAT:
-                    float rVal = atof(val);
-                    fwrite(&rVal, size, 1, stream);
-                    break;
-                case STRING:
-                    fwrite(val, size, 1, stream);
-                    break;
-                case DATE:
-                    int rVal = atoi(val);
-                    fwrite(&rVal, size, 1, stream);
-                    break;
-                default:
-                    break;
+                    fprintf(stderr, "(translate-linsmt) write failed.\n");
+                    fclose(stream);
+                    return NULL;
                 }
             }
         }

@@ -7,11 +7,13 @@
 #include "include/metadata_default.h"
 #include "include/metadata_storage.h"
 #include "Utilities/utilities.h"
+#include "Writer/writer.h"
 
 FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *schema)
 {
     FileMetadata *meta;
     Offset *offset;
+    StorageMeta *storage;
 
     if (!schema)
     {
@@ -45,9 +47,10 @@ FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *schema)
             return NULL;
         }
     }
-
     fprintf(stdout, "(create-new-file-metadata-info) table offsets linked\n");
-    meta = NewFileMetadata(offset, schema);
+
+    storage = NewStorageMeta(schema);
+    meta = NewFileMetadata(offset, schema, storage);
     if (!meta)
     {
         FreeOffset(offset);
@@ -228,22 +231,13 @@ int ReadStorageFromWritable(FileMetadata *meta, const WritableFileMetadata *file
 
     for (int tIdx = 0; tIdx < file->Schema.TableCount; tIdx++)
     {
-        meta->Storage->Items[tIdx]->TableId = file->Schema.TableDefs[tIdx].TableId;
+        meta->Storage->Items[tIdx]->RowSize = file->Storage[tIdx].RowSize;
+        meta->Storage->Items[tIdx]->TableId = file->Storage[tIdx].TableId;
+        meta->Storage->Items[tIdx]->Count = file->Storage[tIdx].Count;
     }
-    meta->Storage = Malloc(sizeof(StorageMeta), alloc);
-    meta->Storage->Items = Malloc(sizeof(StorageMetaItem) * (file->Schema.TableCount + 1), alloc);
 
     FreeAlloc(alloc);
     return 0;
-}
-
-int CalculateRowSize(TableDefinition *def)
-{
-    if (!def)
-    {
-        fprintf(stderr, "(calculate-row-size) Args are invalid \n");
-        return -1;
-    }
 }
 
 FileMetadata *CreateMetadataFromWritable(const WritableFileMetadata *metadata)
@@ -321,13 +315,19 @@ int CreateWritableFromMetadata(const FileMetadata *metadata, WritableFileMetadat
     }
     fprintf(stdout, "(create-writable-from-metadata) schema written to writable metadata \n");
 
+    if (WriteStorage(target, metadata) != 0)
+    {
+        fprintf(stderr, "(create-writable-from-metadata) failed to write storage \n");
+        return -1;
+    }
+    fprintf(stdout, "(create-writable-from-metadata) storage written to writable metadata \n");
+
     target->FileCreatedAt = metadata->CreatedAt;
     target->FileLastModified = metadata->LastModified;
     target->OffsetImweb = metadata->Offset->ImwebOffset;
     return 0;
 }
 
-// !! Assumes memory is pre-allocated
 int WriteOffset(WritableFileMetadata *file, const FileMetadata *meta)
 {
     if (!meta)
@@ -351,6 +351,24 @@ int WriteOffset(WritableFileMetadata *file, const FileMetadata *meta)
     {
         file->TableOffsets[ti].TableOffset = meta->Offset->Offsets[ti]->Offset;
         file->TableOffsets[ti].TableOffsetId = meta->Offset->Offsets[ti]->Id;
+    }
+
+    return 0;
+}
+
+int WriteStorage(WritableFileMetadata *file, const FileMetadata *meta)
+{
+    if (!meta)
+    {
+        fprintf(stderr, "(write-offset-err) meta is null\n");
+        return -1;
+    }
+
+    for (int tIdx = 0; tIdx < meta->Schema->TableCount; tIdx++)
+    {
+        file->Storage[tIdx].Count = meta->Storage->Items[tIdx]->Count;
+        file->Storage[tIdx].RowSize = meta->Storage->Items[tIdx]->RowSize;
+        file->Storage[tIdx].TableId = meta->Storage->Items[tIdx]->TableId;
     }
 
     return 0;
@@ -399,12 +417,12 @@ int WriteSchema(WritableFileMetadata *file, const FileMetadata *meta)
     return 0;
 }
 
-FileMetadata *NewFileMetadata(Offset *offset, SchemaDefinition *schema)
+FileMetadata *NewFileMetadata(Offset *offset, SchemaDefinition *schema, StorageMeta *storage)
 {
     FileMetadata *metadata;
     time_t now;
 
-    if (!offset || !schema)
+    if (!offset || !schema || !storage)
     {
         fprintf(stderr, "(new-file-metadata-err) offset or schema is null \n");
         return NULL;
@@ -428,6 +446,7 @@ FileMetadata *NewFileMetadata(Offset *offset, SchemaDefinition *schema)
     metadata->CreatedAt = now;
     metadata->LastModified = now;
     metadata->Schema = schema;
+    metadata->Storage = storage;
     fprintf(stderr, "(new-file-metadata-info) file metadata creation success \n");
     return metadata;
 }

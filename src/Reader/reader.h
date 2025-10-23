@@ -12,10 +12,10 @@ typedef struct
 
 typedef struct
 {
-    FILE *Readable;
+    char *Readable;
     char *ReadBuffer;
 } ReaderMetadata;
 
-int HandleReadRequest(ReadRequest *, ReaderMetadata *);
+int HandleRead(ReadRequest *, ReaderMetadata *);
 
 #endif

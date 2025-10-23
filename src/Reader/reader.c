@@ -1,40 +1,47 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "reader.h"
 
-int HandleReadRequest(ReadRequest *request, ReaderMetadata *meta)
+int HandleRead(ReadRequest *request, ReaderMetadata *meta)
 {
     if (ValidateReadSessionArgs(request, meta) != 0)
     {
-        fprintf(stderr, "(handle-read-request-err) incorrect parameters passed \n");
+        fprintf(stderr, "(handle-read-request) Incorrect parameters passed \n");
         return -1;
     }
 
-    // Incase we didn't clear errors
-    clearerr(meta->Readable);
-
-    if (fseek(meta->Readable, request->StartPosition, SEEK_SET) < 0)
+    FILE *readable;
+    readable = fopen(meta->Readable, "r");
+    if (!readable)
     {
-        fprintf(stderr, "(handle-read-request-err) cannot set fp to location \n");
+        fprintf(stderr, "(handle-read-request) Could not open file \n");
         return -1;
     }
 
-    if (fread(meta->ReadBuffer, request->ReadSize, 1, meta->Readable) < 1)
+    if (fseek(readable, request->StartPosition, SEEK_SET) < 0)
     {
-        fprintf(stderr, "(handle-read-request-err) read failed \n");
-        return -1;
-    }
-    else if (ferror(meta->Readable) != 0)
-    {
-        fprintf(stderr, "(handle-read-request-err) read failed \n");
-        return -1;
-    }
-    else if (feof(meta->Readable) != 0)
-    {
-        fprintf(stderr, "(writer-handle-write-err) EOF error \n");
+        fprintf(stderr, "(handle-read-request) Cannot set fp to location \n");
         return -1;
     }
 
+    if (fread(readable, request->ReadSize, 1, meta->Readable) < 1)
+    {
+        fprintf(stderr, "(handle-read-request) Read failed \n");
+        return -1;
+    }
+    else if (ferror(readable) != 0)
+    {
+        fprintf(stderr, "(handle-read-request) Read failed \n");
+        return -1;
+    }
+    else if (feof(readable) != 0)
+    {
+        fprintf(stderr, "(writer-handle-write) EOF error \n");
+        return -1;
+    }
+
+    fclose(readable);
     return 0;
 }
 
@@ -46,7 +53,7 @@ int ValidateReadSessionArgs(ReadRequest *request, ReaderMetadata *meta)
         fprintf(stderr, "(handle-read-request-err) incorrect parameters passed \n");
         return -1;
     }
-    else if (!meta->Readable)
+    else if (!meta->Readable || strlen(meta->Readable) < 1)
     {
         fprintf(stderr, "(handle-read-request-err) readable in NULL \n");
         return -1;

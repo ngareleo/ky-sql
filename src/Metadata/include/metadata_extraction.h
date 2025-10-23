@@ -72,7 +72,7 @@ void IntrospectMetadata(const FileMetadata *);
 int WriteMetadataToFile(FILE *, FileMetadata *, int(const FileMetadata *, WritableFileMetadata *));
 int ReadMetadataFromFile(FILE *, FileMetadata **, FileMetadata *(const WritableFileMetadata *));
 
-FileMetadata *NewFileMetadata(Offset *, SchemaDefinition *);
+FileMetadata *NewFileMetadata(Offset *, SchemaDefinition *, StorageMeta *);
 FileMetadata *CreateMetadataFromWritable(const WritableFileMetadata *);
 FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *);
 

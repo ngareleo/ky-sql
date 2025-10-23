@@ -1,6 +1,8 @@
 #ifndef METADATA_STORAGE_H
 #define METADATA_STORAGE_H
 
+#include "metadata_schema.h"
+
 typedef struct
 {
     int RowSize; // The size of a single row
@@ -14,6 +16,7 @@ typedef struct
 } StorageMeta;
 
 void FreeStorageMeta(StorageMeta *);
-StorageMeta *CreateStorageMeta(int **);
+StorageMeta *NewStorageMeta(SchemaDefinition *);
+size_t CalculateRowSize(TableDefinition *);
 
 #endif
