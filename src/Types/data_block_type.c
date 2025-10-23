@@ -15,61 +15,35 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
 
     DataBlockType *block;
     int headerCount, rowCount;
+    bool allocFailed = false;
 
     headerCount = Count((void **)headers);
     rowCount = Count((void **)values);
-    block = malloc(sizeof(DataBlockType));
 
-    if (!block)
+    // ?? Allocation
+    block = malloc(sizeof(DataBlockType));
+    block->Header = malloc(sizeof(char *) * (headerCount + 1));
+    block->Values = malloc(sizeof(char **) * (rowCount + 1));
+    if (!block->Header || !block->Values)
     {
-        fprintf(stderr, "(create-data-block) malloc failed \n");
-        return NULL;
+        allocFailed = true;
     }
 
     if (headerCount > 0)
     {
-        block->Header = malloc(sizeof(char *) * (headerCount + 1));
-        if (!block->Header)
-        {
-            fprintf(stderr, "(create-data-block) malloc failed \n");
-            return NULL;
-        }
-
         for (int h_c = 0; h_c < headerCount; h_c++)
         {
             block->Header[h_c] = malloc(strlen(headers[h_c]) + 1);
             if (!block->Header[h_c])
             {
-                for (int h_c_1 = 0; h_c_1 < h_c; h_c_1++)
-                {
-                    free(block->Header[h_c_1]);
-                }
-                free(block->Header);
-                fprintf(stderr, "(create-data-block) malloc failed \n");
-                return NULL;
+                allocFailed = true;
             }
-
-            strcpy(block->Header[h_c], headers[h_c]);
         }
-
         block->Header[headerCount] = NULL;
     }
 
     if (rowCount > 0)
     {
-
-        block->Values = malloc(sizeof(char **) * (rowCount + 1));
-        if (!block->Values)
-        {
-            for (int h = 0; h < headerCount; h++)
-            {
-                free(block->Header[h]);
-            }
-            free(block->Header);
-            fprintf(stderr, "(create-data-block) malloc failed \n");
-            return NULL;
-        }
-
         for (int row_n = 0; row_n < rowCount; row_n++)
         {
             int rSize = Count((void **)values[row_n]);
@@ -78,14 +52,7 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
                 block->Values[row_n] = malloc(sizeof(char **) * (rSize + 1));
                 if (!block->Values[row_n])
                 {
-                    for (int h = 0; h < headerCount; h++)
-                    {
-                        free(block->Header[h]);
-                    }
-                    free(block->Header);
-                    free(block->Values);
-                    fprintf(stderr, "(create-data-block) malloc failed \n");
-                    return NULL;
+                    allocFailed = true;
                 }
 
                 for (int r_val = 0; r_val < rSize; r_val++)
@@ -93,43 +60,60 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
                     block->Values[row_n][r_val] = malloc(strlen(values[row_n][r_val]) + 1);
                     if (!block->Values[row_n][r_val])
                     {
-                        // We recover mem held by headers
-                        for (int h = 0; h < headerCount; h++)
-                        {
-                            free(block->Header[h]);
-                        }
-                        free(block->Header);
-
-                        // We recover mem for all the rows we've allocated in this turn
-                        for (int r_val_1 = 0; r_val_1 < r_val; r_val_1++)
-                        {
-                            free(block->Values[row_n][r_val_1]);
-                        }
-
-                        // We recover mem for all the rows we've allocated so far
-                        for (int prev_r = 0; prev_r < row_n; prev_r++)
-                        {
-                            for (int prev_r_n = 0; prev_r_n < Count((void **)values[prev_r]); prev_r_n++)
-                            {
-                                free(block->Values[row_n][prev_r_n]);
-                            }
-                            free(block->Values[prev_r]);
-                        }
-
-                        free(block->Values[row_n]);
-                        free(block->Values);
-                        fprintf(stderr, "(create-data-block) malloc failed \n");
-                        return NULL;
+                        allocFailed = true;
                     }
-
-                    strcpy(block->Values[row_n][r_val], values[row_n][r_val]);
                 }
-
                 block->Values[row_n][rSize] = NULL;
             }
         }
-
         block->Values[rowCount] = NULL;
+    }
+    // ?? Allocation
+
+    if (allocFailed)
+    {
+        for (int h_c_1 = 0; h_c_1 < headerCount; h_c_1++)
+        {
+            free(block->Header[h_c_1]);
+        }
+
+        for (int row_n = 0; row_n < rowCount; row_n++)
+        {
+            int rSize = Count((void **)values[row_n]);
+            if (rSize > 0)
+            {
+                for (int r_val = 0; r_val < rSize; r_val++)
+                    free(block->Values[row_n][r_val]);
+                free(block->Values[row_n]);
+            }
+        }
+
+        free(block->Header);
+        free(block->Values);
+        fprintf(stderr, "(create-data-block) mem allocation failed \n");
+        return NULL;
+    }
+
+    if (headerCount > 0)
+    {
+        for (int h_c = 0; h_c < headerCount; h_c++)
+        {
+            strcpy(block->Header[h_c], headers[h_c]);
+        }
+    }
+    if (rowCount > 0)
+    {
+        for (int row_n = 0; row_n < rowCount; row_n++)
+        {
+            int rSize = Count((void **)values[row_n]);
+            if (rSize > 0)
+            {
+                for (int r_val = 0; r_val < rSize; r_val++)
+                {
+                    strcpy(block->Values[row_n][r_val], values[row_n][r_val]);
+                }
+            }
+        }
     }
 
     ValidateDataBlock(block);
