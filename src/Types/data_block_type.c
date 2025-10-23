@@ -9,8 +9,9 @@
 DataBlockType *CreateDataBlock(char **headers, char ***values)
 {
     if (!values && !headers)
+    {
         return DefaultBlock();
-
+    }
     Allocator *alloc = MallocInit();
     DataBlockType *block;
     int headerCount, rowCount;
@@ -26,7 +27,9 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
     if (block && block->Header && headerCount > 0)
     {
         for (int h_c = 0; h_c < headerCount; h_c++)
+        {
             block->Header[h_c] = Malloc(strlen(headers[h_c]) + 1, alloc);
+        }
         block->Header[headerCount] = NULL;
     }
 
@@ -41,7 +44,9 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
                 for (int r_val = 0; r_val < rSize; r_val++)
                 {
                     if (block->Values[row_n])
+                    {
                         block->Values[row_n][r_val] = Malloc(strlen(values[row_n][r_val]) + 1, alloc);
+                    }
                 }
                 block->Values[row_n][rSize] = NULL;
             }
@@ -59,7 +64,9 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
     if (headerCount > 0)
     {
         for (int h_c = 0; h_c < headerCount; h_c++)
+        {
             strcpy(block->Header[h_c], headers[h_c]);
+        }
     }
 
     if (rowCount > 0)
@@ -70,7 +77,9 @@ DataBlockType *CreateDataBlock(char **headers, char ***values)
             if (rSize > 0)
             {
                 for (int r_val = 0; r_val < rSize; r_val++)
+                {
                     strcpy(block->Values[row_n][r_val], values[row_n][r_val]);
+                }
             }
         }
     }
@@ -135,21 +144,27 @@ DataBlockSize *MeasureBlockStructure(char ***rowText)
         return NULL;
     }
 
-    int count, dimC;
-    if ((count = Count((void **)rowText)) < 1)
+    int rCount, rWidth;
+    if ((rCount = Count((void **)rowText)) < 1)
+    {
         return EmptyBlockSize();
+    }
 
     // Count the first row and use that as base for default row width
-    if ((dimC = Count((void **)rowText[0]) < 1))
-        return EmptyBlockSize();
-
-    for (int c = 1; c < count; c++)
+    if ((rWidth = Count((void **)rowText[0]) < 1))
     {
-        int rowC;
+        return EmptyBlockSize();
+    }
+
+    for (int c = 1; c < rCount; c++)
+    {
+        int rValCount;
         // !! Whenever the data is unaligned, use the widest width as row width
         // !! Should not cause problems as long as we read `IsAligned` and `IsValid` property before accessing width
-        if ((rowC = Count((void **)rowText[c])) > dimC)
-            dimC = rowC;
+        if ((rValCount = Count((void **)rowText[c])) > rWidth)
+        {
+            rWidth = rValCount;
+        }
     }
 
     DataBlockSize *size;
@@ -160,8 +175,8 @@ DataBlockSize *MeasureBlockStructure(char ***rowText)
         return NULL;
     }
 
-    size->Count = count;
-    size->Width = dimC;
+    size->Count = rCount;
+    size->Width = rWidth;
     return size;
 }
 
@@ -174,17 +189,16 @@ void ValidateDataBlock(DataBlockType *block)
     }
 
     DataBlockSize *size;
-    int count, dimC;
-    int headerC;
+    int vCount, vWidth, hCount;
 
     block->IsValid = true;
 
-    if (!block->Header ||
-        (headerC = Count((void **)block->Header)) < 1)
+    if (!block->Header || (hCount = Count((void **)block->Header)) < 1)
+    {
         block->IsHeaderLess = true;
+    }
 
-    if (!block->Values ||
-        (count = Count((void **)block->Values)) < 1)
+    if (!block->Values || (vCount = Count((void **)block->Values)) < 1)
     {
         block->IsEmpty = true;
         block->IsAligned = true;
@@ -199,8 +213,8 @@ void ValidateDataBlock(DataBlockType *block)
         return;
     }
 
-    dimC = Count((void **)block->Values[0]);
-    if (dimC < 1)
+    vWidth = Count((void **)block->Values[0]);
+    if (vWidth < 1)
     {
         block->IsEmpty = true;
         block->IsAligned = true;
@@ -223,9 +237,9 @@ void ValidateDataBlock(DataBlockType *block)
         }
     }
     block->Size = size;
-    for (int c = 1; c < dimC; c++)
+    for (int c = 1; c < vCount; c++)
     {
-        if (Count((void **)block->Values[c]) != dimC)
+        if (Count((void **)block->Values[c]) != vWidth)
         {
             block->IsAligned = false;
 
@@ -235,7 +249,7 @@ void ValidateDataBlock(DataBlockType *block)
         }
     }
 
-    if (dimC != count)
+    if (vWidth != hCount)
     {
         // ?? We don't set alignment to false because alignment is a values construct
         // ?? but we mark the data block as invalid because headers should be equal to data block width
@@ -252,9 +266,10 @@ void FreeDataBlock(DataBlockType *block)
         rowCount = Count((void **)block->Values);
         if (block->Header && headerCount > 0)
         {
-
             for (int h_c_1 = 0; h_c_1 < headerCount; h_c_1++)
+            {
                 free(block->Header[h_c_1]);
+            }
         }
 
         if (block->Values && rowCount > 0)
@@ -266,7 +281,9 @@ void FreeDataBlock(DataBlockType *block)
                     (rSize = Count((void **)block->Values[row_n])) > 0)
                 {
                     for (int r_val = 0; r_val < rSize; r_val++)
+                    {
                         free(block->Values[row_n][r_val]);
+                    }
                     free(block->Values[row_n]);
                 }
             }
