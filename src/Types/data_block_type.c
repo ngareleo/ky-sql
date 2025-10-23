@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "data_block_type.h"
 #include "Types/types.h"
 #include "Utilities/utilities.h"
@@ -207,19 +208,19 @@ void ValidateDataBlock(DataBlockType *block)
     int count, dimC;
     int headerC;
 
-    block->IsValid = 1;
+    block->IsValid = true;
 
     if (!block->Header ||
         (headerC = Count((void **)block->Header)) < 1)
     {
-        block->IsHeaderLess = 1;
+        block->IsHeaderLess = true;
     }
 
     if (!block->Values ||
         (count = Count((void **)block->Values)) < 1)
     {
-        block->IsEmpty = 1;
-        block->IsAligned = 1;
+        block->IsEmpty = true;
+        block->IsAligned = true;
         block->Size = EmptyBlockSize();
         return;
     }
@@ -234,8 +235,8 @@ void ValidateDataBlock(DataBlockType *block)
     dimC = Count((void **)block->Values[0]);
     if (dimC < 1)
     {
-        block->IsEmpty = 1;
-        block->IsAligned = 1;
+        block->IsEmpty = true;
+        block->IsAligned = true;
 
         // !! Here lies dragons
         // !! We purposerfully return an empty block size even if there's one empty element
@@ -244,14 +245,16 @@ void ValidateDataBlock(DataBlockType *block)
         return;
     }
 
-    block->IsAligned = 1;
+    block->IsAligned = true;
     block->Size = size;
     for (int c = 1; c < dimC; c++)
     {
         if (Count((void **)block->Values[c]) != dimC)
         {
-            block->IsAligned = 0;
-            block->IsValid = 0;
+            block->IsAligned = false;
+
+            // info: A valid data block should be well aligned
+            block->IsValid = false;
             break;
         }
     }
@@ -260,7 +263,7 @@ void ValidateDataBlock(DataBlockType *block)
     {
         // We don't set alignment to false because alignment is a values construct
         // but we mark the data block as invalid because headers should be equal to data block width
-        block->IsValid = 0;
+        block->IsValid = false;
     }
 }
 
