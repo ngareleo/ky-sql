@@ -3,29 +3,29 @@
 #include <string.h>
 #include "reader.h"
 
-int HandleRead(ReadRequest *request, ReaderMetadata *meta)
+int HandleRead(ReadRequest *req, ReaderMetadata *meta)
 {
-    if (ValidateReadSessionArgs(request, meta) != 0)
+    if (ValidateReadSessionArgs(req, meta) != 0)
     {
         fprintf(stderr, "(handle-read-request) Incorrect parameters passed \n");
         return -1;
     }
 
     FILE *readable;
-    readable = fopen(meta->Readable, "r");
+    readable = fopen(meta->File, "r");
     if (!readable)
     {
         fprintf(stderr, "(handle-read-request) Could not open file \n");
         return -1;
     }
 
-    if (fseek(readable, request->StartPosition, SEEK_SET) < 0)
+    if (fseek(readable, req->StartPosition, SEEK_SET) < 0)
     {
         fprintf(stderr, "(handle-read-request) Cannot set fp to location \n");
         return -1;
     }
 
-    if (fread(readable, request->ReadSize, 1, meta->Readable) < 1)
+    if (fread(meta->ReadBuffer, req->ReadSize, 1, readable) < 1)
     {
         fprintf(stderr, "(handle-read-request) Read failed \n");
         return -1;
@@ -45,15 +45,14 @@ int HandleRead(ReadRequest *request, ReaderMetadata *meta)
     return 0;
 }
 
-// For dev logs
-int ValidateReadSessionArgs(ReadRequest *request, ReaderMetadata *meta)
+int ValidateReadSessionArgs(ReadRequest *req, ReaderMetadata *meta)
 {
-    if (!request || !meta)
+    if (!req || !meta)
     {
         fprintf(stderr, "(handle-read-request-err) incorrect parameters passed \n");
         return -1;
     }
-    else if (!meta->Readable || strlen(meta->Readable) < 1)
+    else if (!meta->File || strlen(meta->File) < 1)
     {
         fprintf(stderr, "(handle-read-request-err) readable in NULL \n");
         return -1;
@@ -63,11 +62,19 @@ int ValidateReadSessionArgs(ReadRequest *request, ReaderMetadata *meta)
         fprintf(stderr, "(handle-read-request-err) buffer is NULL \n");
         return -1;
     }
-    else if (request->ReadSize < 1)
+    else if (req->ReadSize < 1)
     {
         fprintf(stderr, "(handle-read-request-err) read size is incorrect \n");
         return -1;
     }
 
     return 0;
+}
+
+void FreeReadRequest(ReadRequest *req)
+{
+    if (req)
+    {
+        free(req);
+    }
 }

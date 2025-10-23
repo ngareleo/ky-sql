@@ -11,9 +11,9 @@
 #include "Utilities/utilities.h"
 #include "Writer/writer.h"
 
-int LinsmtToWriteRequest(Linsmt *stmt, WriteRequest **req)
+int LinsmtToWriteRequest(Linsmt *smt, WriteRequest **req)
 {
-    WriteRequest *writeRq;
+    WriteRequest *wReq;
     TranslationCtx *ctx = GetTranslationContext();
 
     if (!ctx)
@@ -22,27 +22,62 @@ int LinsmtToWriteRequest(Linsmt *stmt, WriteRequest **req)
         return -1;
     }
 
-    if (ValidateLinsmt(stmt) != 0)
+    if (ValidateLinsmt(smt) != 0)
     {
         fprintf(stderr, "(linsmt-to-write-request) statement failed validation \n");
         return -1;
     }
 
-    if (SchemaValidateLinsmt(stmt, ctx) != 0)
+    if (SchemaValidateLinsmt(smt, ctx) != 0)
     {
         fprintf(stderr, "(linsmt-to-write-request) statement failed schema validation \n");
         return -1;
     }
 
-    writeRq = CreateWriteRequest(stmt, ctx);
-    if (!writeRq)
+    wReq = CreateWriteRequest(smt, ctx);
+    if (!wReq)
     {
         fprintf(stderr, "(linsmt-to-write-request) failed to create write request \n");
         return -1;
     }
 
-    *req = writeRq;
+    *req = wReq;
+
+    if (!UpdateStorageFromLinsmt(smt, ctx) != 0)
+    {
+        FreeWriteRequest(wReq);
+        fprintf(stderr, "(linsmt-to-write-request) failed to update storage \n");
+        return -1;
+    }
+
     return 0;
+}
+
+int UpdateStorageFromLinsmt(Linsmt *smt, TranslationCtx *ctx)
+{
+    if (!smt || !ctx)
+    {
+        fprintf(stderr, "(update-storage-from-linsmt) args are invalid \n");
+        return -1;
+    }
+
+    TableDefinition *def = MatchTableDefFromLinsmt(smt, ctx->FileMd->Schema);
+    if (!def)
+    {
+        fprintf(stderr, "(update-storage-from-linsmt) table doesn't exist \n");
+        return -1;
+    }
+
+    for (int idx = 0; idx < ctx->FileMd->Schema->TableCount; idx++)
+    {
+        if (ctx->FileMd->Storage->Items[idx]->TableId == def->Id)
+        {
+            ctx->FileMd->Storage->Items[idx]->Count += smt->Data->Size->Count;
+            return 0;
+        }
+    }
+
+    return -1;
 }
 
 TableColDefinition *MatchTableColFromLinsmt(char *name, TableDefinition *def)

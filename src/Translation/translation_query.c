@@ -115,7 +115,7 @@ TableColDefinition *MatchColDefFromLiqsmt(char *colName, TableDefinition *schema
         return -1;
     }
 
-    TableColDefinition *def;
+    TableColDefinition *def = NULL;
     for (int cIdx = 0; cIdx < schema->ColumnCount; cIdx++)
     {
         if (strcmp(schema->Columns[cIdx], colName) == 0)

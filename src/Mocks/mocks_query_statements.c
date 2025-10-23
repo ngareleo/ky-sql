@@ -14,7 +14,7 @@ Liqsmt *CreateMockBooksLiqsmt()
     const columns = {"title", "author", "genre", "price", "stock_quantity", "rental_price_per_day"};
     const order = {"title"};
 
-    Liqsmt *smt = CreateLqsmt(tableName, columns, order, false);
+    Liqsmt *smt = CreateLiqsmt(tableName, columns, order, false);
     if (!smt)
     {
         fprintf(stderr, "(create-mock-books-liqsmt) Error creating language query statement\n");

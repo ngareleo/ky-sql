@@ -5,7 +5,7 @@
 #include "Utilities/utilities.h"
 #include "include/language_query.h"
 
-Liqsmt *CreateLqsmt(char *tableName, char **columns, char **order, bool isWildcardSelection)
+Liqsmt *CreateLiqsmt(char *tableName, char **columns, char **order, bool isWildcardSelection)
 {
     Liqsmt *smt;
     Allocator *alloc = MallocInit();
@@ -24,7 +24,6 @@ Liqsmt *CreateLqsmt(char *tableName, char **columns, char **order, bool isWildca
             smt->Columns[colIdx] = Malloc(strlen(columns[colIdx]) + 1, alloc);
         }
         smt->Columns[colC] = NULL;
-        smt->ColCount = colC;
     }
 
     if (order)
@@ -36,7 +35,6 @@ Liqsmt *CreateLqsmt(char *tableName, char **columns, char **order, bool isWildca
             smt->Order[odx] = Malloc(strlen(order[odx]) + 1, alloc);
         }
         smt->Order[orderC] = NULL;
-        smt->OrderCount = orderC;
     }
 
     if (!VerifyAlloc(alloc))
@@ -73,6 +71,7 @@ Liqsmt *CreateLqsmt(char *tableName, char **columns, char **order, bool isWildca
     if (columns)
     {
         int colC = Count((void **)columns);
+        smt->ColCount = colC;
         for (int cIdx = 0; cIdx < colC; cIdx++)
         {
             strcpy(smt->Columns[cIdx], columns[cIdx]);
@@ -82,6 +81,7 @@ Liqsmt *CreateLqsmt(char *tableName, char **columns, char **order, bool isWildca
     if (order)
     {
         int orderC = Count((void **)order);
+        smt->OrderCount = orderC;
         smt->Order = Malloc(sizeof(char *) * (orderC + 1), alloc);
         for (int oIdx = 0; oIdx < order; oIdx++)
         {

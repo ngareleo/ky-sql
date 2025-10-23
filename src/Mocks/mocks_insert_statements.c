@@ -66,8 +66,8 @@ Linsmt *MockBookTableInsertStatement()
         // ?? Add more here
         NULL,
     };
-    char **columns = {"title", "author", "isbn", "genre", "publication_year", "price", "stock_quantity", "rental_price_per_day"};
-    char *table = "books";
+    const char **columns = {"title", "author", "isbn", "genre", "publication_year", "price", "stock_quantity", "rental_price_per_day"};
+    const char *table = "books";
 
     Linsmt *stm;
     if (!(stm = CreateLinsmt(table, columns, values)))

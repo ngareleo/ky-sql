@@ -22,7 +22,7 @@ int main()
 
     obj->File = file;
     writer->Writable = writable;
-    reader->Readable = file;
+    reader->File = file;
     reader->ReadBuffer = readBuff;
 
     InitTranslationContext(obj);

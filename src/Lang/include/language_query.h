@@ -13,7 +13,7 @@ typedef struct
     bool IsWildcardSelection; // "select *"
 } Liqsmt;                     // Language-Query-Statement
 
-Liqsmt *CreateLqsmt(char *tableName, char **columns, char **order, bool isWildcardSelection);
+Liqsmt *CreateLiqsmt(char *tableName, char **columns, char **order, bool isWildcardSelection);
 void FreeLqsmt(Liqsmt *);
 
 #endif
