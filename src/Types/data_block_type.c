@@ -8,10 +8,9 @@
 
 DataBlockType *CreateDataBlock(char **headers, char ***values)
 {
-    if (!values)
+    if (!values && !headers)
     {
-        fprintf(stderr, "(create-data-block) input invalid \n");
-        return NULL;
+        return DefaultBlock();
     }
 
     DataBlockType *block;
