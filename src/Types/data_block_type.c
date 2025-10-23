@@ -158,7 +158,7 @@ DataBlockType *DefaultBlock()
     block = malloc(sizeof(DataBlockType));
     if (!block)
     {
-        fprintf(stderr, "(empty-block-size) malloc failed \n");
+        fprintf(stderr, "(default-block) malloc failed \n");
         return NULL;
     }
 
@@ -166,7 +166,7 @@ DataBlockType *DefaultBlock()
     s = malloc(sizeof(DataBlockSize));
     if (!s)
     {
-        fprintf(stderr, "(empty-block-size) malloc failed \n");
+        fprintf(stderr, "(default-block) malloc failed \n");
         return NULL;
     }
 
