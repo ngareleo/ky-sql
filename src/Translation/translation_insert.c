@@ -80,46 +80,6 @@ int UpdateStorageFromLinsmt(Linsmt *smt, TranslationCtx *ctx)
     return -1;
 }
 
-TableColDefinition *MatchTableColFromLinsmt(char *name, TableDefinition *def)
-{
-    if (!name || !def)
-    {
-        fprintf(stderr, "(match-table-col-from-linsmt) args are invalid \n");
-        return -1;
-    }
-
-    TableColDefinition *colDef;
-    for (int col = 0; col < def->ColumnCount; col++)
-    {
-        if (strcmp(name, def->Columns[col]->Name) == 0)
-        {
-            colDef = def->Columns[col];
-        }
-    }
-
-    return colDef;
-}
-
-TableDefinition *MatchTableDefFromLinsmt(Linsmt *stmt, SchemaDefinition *def)
-{
-    if (!stmt || !def)
-    {
-        fprintf(stderr, "(match-table-col-from-linsmt) args are invalid \n");
-        return -1;
-    }
-
-    TableDefinition *tableDef;
-    for (int tIdx = 0; tIdx < def->TableCount; tIdx++)
-    {
-        if (strcmp(def->TableDefs[tIdx]->Name, stmt->TableName) == 0)
-        {
-            tableDef = def->TableDefs[tIdx];
-        }
-    }
-
-    return tableDef;
-}
-
 WriteRequest *CreateWriteRequest(Linsmt *stmt, TranslationCtx *ctx)
 {
     if (!stmt || !ctx)
@@ -131,7 +91,7 @@ WriteRequest *CreateWriteRequest(Linsmt *stmt, TranslationCtx *ctx)
     TableDefinition *tableDef;
     WriteRequest *req;
 
-    char *writable = TranslateLinsmt(stmt, ctx);
+    char *writable = BuildWritableFromDataBlock(stmt, ctx);
     if (!writable)
     {
         fprintf(stderr, "(linsmt-to-write-request) couldn't generate a writable \n");
@@ -165,54 +125,6 @@ WriteRequest *CreateWriteRequest(Linsmt *stmt, TranslationCtx *ctx)
     }
 
     return req;
-}
-
-char *TranslateLinsmt(Linsmt *stmt, TranslationCtx *ctx)
-{
-    if (!stmt || !ctx)
-    {
-        fprintf(stderr, "(translate-linsmt) args are invalid \n");
-        return -1;
-    }
-
-    FILE *stream;
-    char *buffer;
-    size_t size;
-
-    TableDefinition *tableDef = MatchTableDefFromLinsmt(stmt, ctx->FileMd->Schema);
-    if (!tableDef)
-    {
-        return -1;
-    }
-
-    stream = open_memstream(&buffer, &size);
-    if (!stream)
-    {
-        fprintf(stderr, "(translate-linsmt) open_memstream failed.\n");
-        return NULL;
-    }
-
-    for (int rowIdx = 0; rowIdx < stmt->Data->Size->Count; rowIdx)
-    {
-        for (int scIdx = 0; scIdx < tableDef->ColumnCount; scIdx++)
-        {
-            for (int colIdx = 0; colIdx < stmt->Data->Size->Width; colIdx++)
-            {
-                TableColDefinition *colDef = MatchTableColFromLinsmt(stmt->Data->Header[colIdx], tableDef);
-                char *val = colDef ? stmt->Data->Values[rowIdx][colIdx] : "";
-                if (WriteColumnEntry(val, stream, colDef->Type) < 1)
-                {
-                    fprintf(stderr, "(translate-linsmt) write failed.\n");
-                    fclose(stream);
-                    return NULL;
-                }
-            }
-        }
-    }
-
-    fflush(stream);
-    fclose(stream);
-    return buffer;
 }
 
 int SchemaValidateLinsmt(Linsmt *stmt, TranslationCtx *ctx)

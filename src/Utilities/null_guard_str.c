@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "utilities.h"
+#include "include/null_guard_str.h"
 
 char *NullGuardStr(char *str)
 {

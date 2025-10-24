@@ -9,7 +9,6 @@ int ValidateLanguageInsertStatement(Linsmt *);
 TableColDefinition *MatchTableColFromLinsmt(char *, TableDefinition *);
 TableDefinition *MatchTableDefFromLinsmt(Linsmt *, SchemaDefinition *);
 WriteRequest *CreateWriteRequest(Linsmt *, TranslationCtx *);
-char *TranslateLinsmt(Linsmt *, TranslationCtx *);
 int SchemaValidateLinsmt(Linsmt *, TranslationCtx *);
 int ValidateLinsmt(Linsmt *);
 

@@ -9,9 +9,9 @@
 #include "Utilities/utilities.h"
 #include "Writer/writer.h"
 
-int _Validate(Liqsmt *smt, TableDefinition *tDef, ReaderMetadata *reader, FileMetadata *meta)
+int _Validate(Liqsmt *smt, ReaderMetadata *reader, FileMetadata *meta)
 {
-    if (!smt || !reader || !meta || !tDef)
+    if (!smt || !reader || !meta)
     {
         fprintf(stderr, "(validate-build-data-block-from-readable) Args are null \n");
         return -1;
@@ -32,43 +32,51 @@ int _Validate(Liqsmt *smt, TableDefinition *tDef, ReaderMetadata *reader, FileMe
     return 0;
 }
 
-/** The data section is structured as contigous bytes of data separated by carriage returns
- * Since we know the schema, and the start of the table, we can separate the blocks precisely during reads to get specific columns/rows */
-DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, TableDefinition *tDef, ReaderMetadata *reader, FileMetadata *meta)
+/**
+ * The data section is structured as contigous bytes of data separated by carriage returns
+ * Since we know the schema, and the start of the table, we can separate the blocks precisely during reads to get specific columns/rows
+ */
+DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, ReaderMetadata *reader, FileMetadata *meta)
 {
-    if (_Validate(smt, tDef, reader, meta) != 0)
+    if (_Validate(smt, reader, meta) != 0)
     {
         fprintf(stderr, "(build-data-block-from-readable) Args are invalid \n");
         return NULL;
     }
 
-    int *colIds = CreateOrderedColIds(smt, tDef);
+    TableDefinition *tDef = MatchTableDefFromLiqsmt(smt, meta->Schema);
+    if (!tDef)
+    {
+        fprintf(stderr, "(build-data-block-from-readable) Table not found in schema \n");
+        return NULL;
+    }
+
+    int **colIds = CreateOrderedColIds(smt, tDef);
     if (!colIds)
     {
         fprintf(stderr, "(build-data-block-from-readable) Error ordering the data. The data might be invalid\n");
         return NULL;
     }
 
-    // !! Path of least resistance
-    // !! I want to get over this part quickly mostly because I'm unsure how to proceed
-    // !! For now,
-    // !! We make a hard assumption that the data we write is well structured.
-    // !! We will enforce this rule during writing
-    // !! Given that we can compute exact read locations from the schema
-    // !! We will use byte location to control reading and hence construct data blocks
-    // !! Even in the future I don't see this changing
-    // !! Until I improve the structure in future to something like B-Trees
-    // !! For now the focus is to understand the execution part and not storage.
-
-    // ?? Here is an example of the assumption I mentioned
-    // ?? I don't want to do single character reads and instead do a whole data strucute read
-    // ?? I will do a guess of the number of rows read based on limit, max-read size or total storage count
+    // !! Walking down the path of least resistance
+    // !! =========================================
+    // !!
+    // !! I want to get over this part quickly mostly because I'm unsure performant this architecture is.
+    // !! For now, we make a BIG assumption that the data we write is accurately structured.
+    // !! We enforce this rule strictly during writing to avoid faults.
+    // !!
+    // !! Even in the future I don't see this changing, until when I start to improve the internal structures to something like B-Trees
+    // !! For now the focus is to understand the execution part and not storage
+    // !! If I can limit coupling, this will be easy to change in future
 
     int rowCount = 0;
     if (smt->Limit == 0)
     {
-        // We don't have a read size limit
-        // So we check the row count
+        // ?? Here is an example of the assumption I mentioned
+        // ?? I don't want to do many per character reads.
+        // ?? Instead, I'm opting to estimate the number of rows read based on the query and the existing row count
+        // ?? The knowing the row size and the column sizes, I can do precise jumps
+        // ?? This will also workout well in future when we tackle search queries
         for (int idx = 0; idx < meta->Schema->TableCount; idx++)
         {
             if (meta->Storage->Items[idx]->TableId == tDef->Id)
@@ -78,10 +86,32 @@ DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, TableDefinition *tDef, Reader
         }
     }
 
-    Allocator *alloc = MallocInit();
-    DataBlock *data = DefaultBlock();
+    Allocator *alloc;
+    DataBlock *data;
     StorageMetaItem *item;
 
+    for (int idx = 0; idx < meta->Schema->TableCount; idx++)
+    {
+        if (meta->Storage->Items[idx]->TableId == meta->Schema->TableDefs[idx]->Id)
+        {
+            item = meta->Storage->Items[idx];
+        }
+    }
+
+    if (!item)
+    {
+        fprintf(stderr, "(build-data-block-from-readable) Missing storage info\n");
+        return NULL;
+    }
+
+    data = DefaultBlock();
+    if (!data)
+    {
+        fprintf(stderr, "(build-data-block-from-readable) Failed to create data block\n");
+        return NULL;
+    }
+
+    alloc = MallocInit();
     data->Values = Malloc(sizeof(char **) * (rowCount + 1), alloc);
     for (int ridx = 0; ridx < rowCount; ridx++)
     {
@@ -94,7 +124,12 @@ DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, TableDefinition *tDef, Reader
                 {
                     TableColDefinition *col = tDef->Columns[cidx];
                     int start = (ridx * item->RowSize) + item->ColInfo[cidx]->Padding;
+
                     size_t size = GetDataTypeSize(col->Type);
+                    // ?? Later we'll add a prefix of 8 bytes to hold the exact string length
+                    // ?? This will also unlock variable strings
+                    // ?? Issue is we waste space since we reserve per data size
+                    // ?? Won't address that anytime soon
 
                     data->Values[ridx][cidx] = Malloc(size, alloc);
                     data->Values[ridx][size] = NULL;
@@ -149,20 +184,6 @@ DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, TableDefinition *tDef, Reader
         return data;
     }
 
-    for (int idx = 0; idx < meta->Schema->TableCount; idx++)
-    {
-        if (meta->Storage->Items[idx]->TableId == meta->Schema->TableDefs[idx]->Id)
-        {
-            item = meta->Storage->Items[idx];
-        }
-    }
-
-    if (!item)
-    {
-        fprintf(stderr, "(build-data-block-from-readable) Missing storage info\n");
-        return NULL;
-    }
-
     for (int ridx = 0; ridx < rowCount; ridx++)
     {
         for (int cidx = 0; cidx < smt->ColCount; cidx++)
@@ -186,8 +207,6 @@ DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, TableDefinition *tDef, Reader
     FreeAlloc(alloc);
     return data;
 }
-
-StorageMetaItem *GetStorageItemById() {}
 
 TableDefinition *MatchTableDefFromLiqsmt(Liqsmt *smt, SchemaDefinition *schema)
 {

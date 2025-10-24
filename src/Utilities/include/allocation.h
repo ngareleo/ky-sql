@@ -10,8 +10,8 @@
  * For those situations that need memory conditionally, you should compute the conditon first, then allocate the memory using this allocator.
  * Remember to free the allocator and all the memory you've borrowed.
  */
-#ifndef ALLOCATOR_H
-#define ALLOCATOR_H
+#ifndef ALLOCATION_H
+#define ALLOCATION_H
 
 #include <stdbool.h>
 
