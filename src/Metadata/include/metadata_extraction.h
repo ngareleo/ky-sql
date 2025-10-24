@@ -30,6 +30,12 @@ typedef struct
     } TableOffsets[MAX_TABLE_COUNT];                             /** Offsets to tables */
     struct WritableStorageMeta                                   /** */
     {                                                            /** */
+        struct WritableColumnStorage                             /** */
+        {                                                        /** */
+            int Id;                                              /**  The id of the column */
+            int Padding;                                         /**  Byte distance from start of the row */
+            int SequencePos;                                     /**  The position in the schema */
+        } ColInfo[MAX_TABLE_COLUMN_COUNT];                       /**  Information about columns */
         int RowSize;                                             /** Size of a single row */
         int Count;                                               /** The number of rows in a table */
         int TableId;                                             /** The table Id */

@@ -107,46 +107,6 @@ int SchemaValidateLiqsmt(Liqsmt *smt, TranslationCtx *ctx)
     return 0;
 }
 
-TableColDefinition *MatchColDefFromLiqsmt(char *colName, TableDefinition *schema)
-{
-    if (!colName || !schema)
-    {
-        fprintf(stderr, "(match-col-def-from-liqsmt) args invalid \n");
-        return -1;
-    }
-
-    TableColDefinition *def = NULL;
-    for (int cIdx = 0; cIdx < schema->ColumnCount; cIdx++)
-    {
-        if (strcmp(schema->Columns[cIdx], colName) == 0)
-        {
-            def = schema->Columns;
-        }
-    }
-
-    return def;
-}
-
-TableDefinition *MatchTableDefFromLiqsmt(Liqsmt *smt, SchemaDefinition *schema)
-{
-    if (!smt || !schema)
-    {
-        fprintf(stderr, "(match-table-def-from-liqsmt) args invalid \n");
-        return -1;
-    }
-
-    TableDefinition *def = NULL;
-    for (int tIdx = 0; tIdx < schema->TableCount; tIdx++)
-    {
-        if (strcmp(schema->TableDefs[tIdx]->Name, smt->TableName) == 0)
-        {
-            def = schema->TableDefs[tIdx];
-        }
-    }
-
-    return def;
-}
-
 int ValidateLiqsmt(Liqsmt *smt)
 {
     if (!smt)

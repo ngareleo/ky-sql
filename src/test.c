@@ -34,8 +34,16 @@ void TestCount()
     fprintf(stdout, "name count: %d\n", Count((void **)names));
 }
 
+void TestFileWritingAndRead()
+{
+    char *filen = "noop.kysql";
+    FILE *readable = fopen(filen, "r");
+    char *buff = "\r";
+}
+
 int main()
 {
+    TestFileWritingAndRead();
     TestStrTok();
     TestCount();
     return 0;

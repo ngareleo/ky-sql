@@ -5,9 +5,17 @@
 
 typedef struct
 {
-    int RowSize; // The size of a single row
-    int Count;   // The number of items in a table
-    int TableId; // The table id
+    int Id;          // The id of the column
+    int Padding;     // Byte distance from start of the row
+    int SequencePos; // The position in the schema
+} ColumnStorage;
+
+typedef struct
+{
+    ColumnStorage **ColInfo; // Information about columns
+    int RowSize;             // The size of a single row
+    int Count;               // The number of items in a table
+    int TableId;             // The table id
 } StorageMetaItem;
 
 typedef struct

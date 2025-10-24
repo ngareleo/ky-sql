@@ -82,7 +82,6 @@ Liqsmt *CreateLiqsmt(char *tableName, char **columns, char **order, bool isWildc
     {
         int orderC = Count((void **)order);
         smt->OrderCount = orderC;
-        smt->Order = Malloc(sizeof(char *) * (orderC + 1), alloc);
         for (int oIdx = 0; oIdx < order; oIdx++)
         {
             strcpy(smt->Order[oIdx], order[oIdx]);

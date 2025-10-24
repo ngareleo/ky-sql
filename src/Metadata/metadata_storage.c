@@ -31,6 +31,7 @@ StorageMeta *NewStorageMeta(SchemaDefinition *def)
     if (meta)
     {
         meta->Items = Malloc(sizeof(StorageMetaItem) * (def->TableCount + 1), alloc);
+        meta->Items[def->TableCount] = NULL;
     }
 
     if (!VerifyAlloc(alloc))

@@ -200,7 +200,6 @@ char *TranslateLinsmt(Linsmt *stmt, TranslationCtx *ctx)
             {
                 TableColDefinition *colDef = MatchTableColFromLinsmt(stmt->Data->Header[colIdx], tableDef);
                 char *val = colDef ? stmt->Data->Values[rowIdx][colIdx] : "";
-                size_t size = GetDataTypeSize(val);
                 if (WriteColumnEntry(val, stream, colDef->Type) < 1)
                 {
                     fprintf(stderr, "(translate-linsmt) write failed.\n");
