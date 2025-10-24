@@ -6,6 +6,8 @@
 #include "Metadata/metadata.h"
 #include "Lang/language.h"
 #include "Types/types.h"
+#include "Utilities/utilities.h"
+#include "Writer/writer.h"
 
 int _Validate(Liqsmt *smt, TableDefinition *tDef, ReaderMetadata *reader, FileMetadata *meta)
 {
@@ -76,39 +78,116 @@ DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, TableDefinition *tDef, Reader
         }
     }
 
-    if (rowCount == 0)
-    {
-        DataBlock *emp = DefaultBlock();
-        emp->Header = malloc(sizeof(char *) * (smt->ColCount + 1));
-        if (!emp || !emp->Header)
-        {
-            fprintf(stderr, "(build-data-block-from-readable) Error creating data block\n");
-            return NULL;
-        }
+    Allocator *alloc = MallocInit();
+    DataBlock *data = DefaultBlock();
+    StorageMetaItem *item;
 
-        emp->Header[smt->ColCount] = NULL;
+    data->Values = Malloc(sizeof(char **) * (rowCount + 1), alloc);
+    for (int ridx = 0; ridx < rowCount; ridx++)
+    {
+        data->Values[ridx] = Malloc(sizeof(char *) * smt->ColCount, alloc);
         for (int cidx = 0; cidx < smt->ColCount; cidx++)
         {
-            emp->Header[cidx] = malloc(strlen(smt->Columns[cidx]) + 1);
-            if (emp->Header[cidx])
+            for (int icIdx = 0; icIdx < tDef->ColumnCount; icIdx++)
             {
-                free(emp->Header);
-                free(emp);
-                fprintf(stderr, "(build-data-block-from-readable) Malloc failed\n");
-                return NULL;
+                if (colIds[cidx] == tDef->Columns[cidx]->Id)
+                {
+                    TableColDefinition *col = tDef->Columns[cidx];
+                    int start = (ridx * item->RowSize) + item->ColInfo[cidx]->Padding;
+                    size_t size = GetDataTypeSize(col->Type);
+
+                    data->Values[ridx][cidx] = Malloc(size, alloc);
+                    data->Values[ridx][size] = NULL;
+                }
             }
-
-            strcpy(emp->Header[cidx], smt->Columns[cidx]);
         }
+    }
 
-        ValidateDataBlock(emp);
-        return emp;
+    data->Header = Malloc(sizeof(char *) * (smt->ColCount + 1), alloc);
+    data->Header[smt->ColCount] = NULL;
+
+    for (int cidx = 0; cidx < smt->ColCount; cidx++)
+    {
+        data->Header[cidx] = Malloc(strlen(smt->Columns[cidx]) + 1, alloc);
+    }
+
+    if (!VerifyAlloc(alloc))
+    {
+        for (int ridx = 0; ridx < rowCount; ridx++)
+        {
+            free(data->Values[ridx]);
+            for (int cidx = 0; cidx < smt->ColCount; cidx++)
+            {
+                for (int icIdx = 0; icIdx < tDef->ColumnCount; icIdx++)
+                {
+                    if (colIds[cidx] == tDef->Columns[cidx]->Id)
+                    {
+                        free(data->Values[ridx][cidx]);
+                    }
+                }
+            }
+        }
+        free(data->Values);
+        for (int cidx = 0; cidx < smt->ColCount; cidx++)
+        {
+            free(data->Header[cidx]);
+        }
+        free(data->Header);
+        FreeAlloc(alloc);
+        FreeDataBlock(data);
+    }
+
+    for (int cidx = 0; cidx < smt->ColCount; cidx++)
+    {
+        strcpy(data->Header[cidx], smt->Columns[cidx]);
+    }
+
+    ValidateDataBlock(data);
+
+    if (rowCount == 0)
+    {
+        return data;
+    }
+
+    for (int idx = 0; idx < meta->Schema->TableCount; idx++)
+    {
+        if (meta->Storage->Items[idx]->TableId == meta->Schema->TableDefs[idx]->Id)
+        {
+            item = meta->Storage->Items[idx];
+        }
+    }
+
+    if (!item)
+    {
+        fprintf(stderr, "(build-data-block-from-readable) Missing storage info\n");
+        return NULL;
     }
 
     for (int ridx = 0; ridx < rowCount; ridx++)
     {
+        for (int cidx = 0; cidx < smt->ColCount; cidx++)
+        {
+            for (int icIdx = 0; icIdx < tDef->ColumnCount; icIdx++)
+            {
+                if (colIds[cidx] == tDef->Columns[cidx]->Id)
+                {
+                    TableColDefinition *col = tDef->Columns[cidx];
+                    int start = (ridx * item->RowSize) + item->ColInfo[cidx]->Padding;
+                    size_t size = GetDataTypeSize(col->Type);
+                    strncpy(data->Values[ridx][cidx],
+                            reader->ReadBuffer[start],
+                            sizeof(data->Values[ridx][cidx]));
+                }
+            }
+        }
     }
+
+    ValidateDataBlock(data);
+    FreeAlloc(alloc);
+    return data;
 }
+
+StorageMetaItem *GetStorageItemById() {}
 
 TableDefinition *MatchTableDefFromLiqsmt(Liqsmt *smt, SchemaDefinition *schema)
 {

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "include/write_size.h"
+#include "include/writer_size.h"
 #include "Metadata/metadata.h"
 
 size_t GetDataTypeSize(enum SchemaType type)

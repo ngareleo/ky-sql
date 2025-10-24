@@ -216,7 +216,12 @@ int ReadStorageFromWritable(FileMetadata *meta, const WritableFileMetadata *file
     meta->Storage->Items = Malloc(sizeof(StorageMetaItem) * (file->Schema.TableCount + 1), alloc);
     for (int idx = 0; idx < file->Schema.TableCount; idx++)
     {
+        int colCount = file->Schema.TableDefs[idx].TableColumnCount;
         meta->Storage->Items[idx] = Malloc(sizeof(StorageMetaItem), alloc);
+        for (int cidx = 0; cidx < colCount; cidx++)
+        {
+            meta->Storage->Items[idx]->ColInfo = Malloc(sizeof(ColumnStorage *) * (colCount + 1), alloc);
+        }
     }
 
     if (!VerifyAlloc(alloc))
@@ -224,6 +229,10 @@ int ReadStorageFromWritable(FileMetadata *meta, const WritableFileMetadata *file
         free(meta->Storage);
         for (int idx = 0; idx < file->Schema.TableCount; idx++)
         {
+            for (int cidx = 0; cidx < file->Schema.TableDefs[idx].TableColumnCount; cidx++)
+            {
+                free(meta->Storage->Items[idx]->ColInfo);
+            }
             free(meta->Storage->Items[idx]);
             free(meta->Storage->Items);
         }
@@ -234,6 +243,13 @@ int ReadStorageFromWritable(FileMetadata *meta, const WritableFileMetadata *file
         meta->Storage->Items[tIdx]->RowSize = file->Storage[tIdx].RowSize;
         meta->Storage->Items[tIdx]->TableId = file->Storage[tIdx].TableId;
         meta->Storage->Items[tIdx]->Count = file->Storage[tIdx].Count;
+
+        for (int cidx = 0; cidx < file->Schema.TableDefs[tIdx].TableColumnCount; cidx++)
+        {
+            meta->Storage->Items[tIdx]->ColInfo[cidx]->Id = file->Storage[tIdx].ColInfo[cidx].Id;
+            meta->Storage->Items[tIdx]->ColInfo[cidx]->Padding = file->Storage[tIdx].ColInfo[cidx].Padding;
+            meta->Storage->Items[tIdx]->ColInfo[cidx]->SequencePos = file->Storage[tIdx].ColInfo[cidx].SequencePos;
+        }
     }
 
     FreeAlloc(alloc);
@@ -366,6 +382,12 @@ int WriteStorage(WritableFileMetadata *file, const FileMetadata *meta)
 
     for (int tIdx = 0; tIdx < meta->Schema->TableCount; tIdx++)
     {
+        for (int cIdx = 0; cIdx < meta->Schema->TableDefs[tIdx]->ColumnCount; cIdx++)
+        {
+            file->Storage[tIdx].ColInfo[cIdx].Id = meta->Storage->Items[tIdx]->ColInfo[cIdx]->Id;
+            file->Storage[tIdx].ColInfo[cIdx].Padding = meta->Storage->Items[tIdx]->ColInfo[cIdx]->Padding;
+            file->Storage[tIdx].ColInfo[cIdx].SequencePos = meta->Storage->Items[tIdx]->ColInfo[cIdx]->SequencePos;
+        }
         file->Storage[tIdx].Count = meta->Storage->Items[tIdx]->Count;
         file->Storage[tIdx].RowSize = meta->Storage->Items[tIdx]->RowSize;
         file->Storage[tIdx].TableId = meta->Storage->Items[tIdx]->TableId;
