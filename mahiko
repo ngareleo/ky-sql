@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # List your example source files here (without .c extension)
-EXAMPLES=("00_filemetadata")
+EXAMPLES=("00_filemetadata" "01_datasection")
 
 usage(){
     echo "Usage: $0 <build|run> examples <index|name>"

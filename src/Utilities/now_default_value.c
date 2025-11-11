@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include "utilities.h"
+#include <time.h>
+#include "now_default_value.h"
 
 char *NowDefaultValue()
 {

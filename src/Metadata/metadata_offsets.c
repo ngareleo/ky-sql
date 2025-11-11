@@ -3,8 +3,8 @@
 #include <time.h>
 #include <string.h>
 #include <stdarg.h>
-#include "metadata_offsets.h"
-#include "../Utilities/utilities.h"
+#include "include/metadata_offsets.h"
+#include "Utilities/utilities.h"
 
 TableOffset *NewTableOffset(int id, int offset)
 {
@@ -134,7 +134,7 @@ Offset *NewOffsetN(int imwebOffset, const TableOffset **offsets)
         return NULL;
     }
 
-    count = Count(offsets);
+    count = Count((void **)offsets);
 
     offset = malloc(sizeof(Offset));
     if (!offset)

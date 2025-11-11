@@ -10,7 +10,6 @@ const char *NOOP_FILE = "noop.kysql";
 
 int main()
 {
-    time_t duration = 1000;
     FILE *writableNoop, *readableNoop;
     SchemaDefinition *bookstoreSchema;
     FileMetadata *constructedMeta, *metaFromFile;
@@ -77,4 +76,6 @@ int main()
     FreeFileMetadata(constructedMeta);
     FreeFileMetadata(metaFromFile);
     FreeSchemaDefinition(bookstoreSchema);
+
+    return 0;
 }

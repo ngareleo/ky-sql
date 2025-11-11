@@ -1,4 +1,0 @@
-#ifndef METADATA_DEFAULT_H
-#define METADATA_DEFAULT_H
-
-#endif

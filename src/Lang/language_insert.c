@@ -1,0 +1,42 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "include/language_insert.h"
+#include "Utilities/utilities.h"
+#include "Types/types.h"
+
+Linsmt *CreateLinsmt(char *tableName, char **columns, char ***values)
+{
+    Linsmt *stmt;
+    Allocator *alloc = MallocInit();
+
+    stmt = Malloc(sizeof(Linsmt), alloc);
+    if (stmt)
+    {
+        stmt->TableName = Malloc(sizeof(strlen(tableName) + 1), alloc);
+    }
+
+    stmt->Data = CreateDataBlock(columns, values);
+
+    if (!VerifyAlloc(alloc) ||
+        !stmt->Data)
+    {
+        free(stmt->TableName);
+        free(stmt);
+        fprintf(stderr, "(create-lang-insert-stmt) failed to mem alloc \n");
+        return NULL;
+    }
+
+    strcpy(stmt->TableName, &tableName);
+    FreeAlloc(alloc);
+    return stmt;
+}
+
+void *FreeLinsmt(Linsmt *smt)
+{
+    if (smt)
+    {
+        FreeDataBlock(smt->Data);
+        free(smt->TableName);
+    }
+}

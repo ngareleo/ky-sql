@@ -2,14 +2,18 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include "metadata_extraction.h"
-#include "metadata_offsets.h"
-#include "../Utilities/utilities.h"
+#include "include/metadata_extraction.h"
+#include "include/metadata_offsets.h"
+#include "include/metadata_default.h"
+#include "include/metadata_storage.h"
+#include "Utilities/utilities.h"
+#include "Writer/writer.h"
 
 FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *schema)
 {
     FileMetadata *meta;
     Offset *offset;
+    StorageMeta *storage;
 
     if (!schema)
     {
@@ -43,9 +47,10 @@ FileMetadata *CreateNewFileMetadataFromSchema(SchemaDefinition *schema)
             return NULL;
         }
     }
-
     fprintf(stdout, "(create-new-file-metadata-info) table offsets linked\n");
-    meta = NewFileMetadata(offset, schema);
+
+    storage = NewStorageMeta(schema);
+    meta = NewFileMetadata(offset, schema, storage);
     if (!meta)
     {
         FreeOffset(offset);
@@ -64,162 +69,94 @@ int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
         return -1;
     }
 
-    meta->Schema = malloc(sizeof(SchemaDefinition));
-    if (!meta->Schema)
+    Allocator *alloc = MallocInit();
+
+    meta->Schema = Malloc(sizeof(SchemaDefinition), alloc);
+    meta->Schema->TagName = Malloc(strlen(file->Schema.SchemaTag) + 1, alloc);
+    meta->Schema->TableDefs = Malloc(sizeof(TableDefinition *) * file->Schema.TableCount, alloc);
+
+    if (meta)
     {
-        fprintf(stderr, "(read-schema-from-writable-err) malloc failed. \n");
-        return -1;
+        for (int tIdx = 0; tIdx < file->Schema.TableCount; tIdx++)
+        {
+            TableDefinition *tableDef;
+            tableDef = Malloc(sizeof(TableDefinition), alloc);
+            tableDef->Name = Malloc(strlen(file->Schema.TableDefs[tIdx].TableName) + 1, alloc);
+            tableDef->Columns = Malloc(sizeof(TableColDefinition) * file->Schema.TableDefs[tIdx].TableColumnCount, alloc);
+
+            for (int cIdx = 0; cIdx < file->Schema.TableDefs[tIdx].TableColumnCount; cIdx++)
+            {
+                TableColDefinition *colDef;
+                colDef = Malloc(sizeof(TableColDefinition), alloc);
+                colDef->Name = Malloc(strlen(file->Schema.TableDefs[tIdx].TableColumnDefs[cIdx].ColumnName) + 1, alloc);
+                if (strlen(file->Schema.TableDefs[tIdx].TableColumnDefs[cIdx].ColumnDefaultValue) > 0)
+                {
+                    colDef->DefaultValue = Malloc(strlen(file->Schema.TableDefs[tIdx].TableColumnDefs[cIdx].ColumnDefaultValue) + 1, alloc);
+                }
+
+                meta->Schema->TableDefs[tIdx]->Columns[cIdx] = colDef;
+            }
+
+            meta->Schema->TableDefs[tIdx] = tableDef;
+        }
     }
 
-    meta->Schema->TagName = malloc(strlen(file->Schema.SchemaTag) + 1);
-    if (!meta->Schema->TagName)
+    if (!VerifyAlloc(alloc))
     {
-        free(meta->Schema);
-        fprintf(stderr, "(read-schema-from-writable-err) malloc failed. \n");
-        return -1;
-    }
+        if (meta)
+        {
+            fprintf(stderr, "(read-schema-from-writable) Malloc failed. \n");
+            for (int tIdx = 0; tIdx < file->Schema.TableCount; tIdx++)
+            {
+                for (int cIdx = 0; cIdx < file->Schema.TableDefs[tIdx].TableColumnCount; cIdx++)
+                {
+                    free(meta->Schema->TableDefs[tIdx]->Columns[cIdx]->DefaultValue);
+                    free(meta->Schema->TableDefs[tIdx]->Columns[cIdx]->Name);
+                    free(meta->Schema->TableDefs[tIdx]->Columns[cIdx]);
+                }
 
-    meta->Schema->TableDefs = malloc(sizeof(TableDefinition *) * file->Schema.TableCount);
-    if (!meta->Schema->TableDefs)
-    {
-        free(meta->Schema);
-        free(meta->Schema->TagName);
-        fprintf(stderr, "(read-schema-from-writable-err) malloc failed. \n");
+                free(meta->Schema->TableDefs[tIdx]->Name);
+                free(meta->Schema->TableDefs[tIdx]->Columns);
+                free(meta->Schema->TableDefs[tIdx]);
+            }
+
+            free(meta->Schema->TagName);
+            free(meta->Schema->TableDefs);
+            free(meta);
+        }
         return -1;
     }
 
     for (int ti = 0; ti < file->Schema.TableCount; ti++)
     {
-        fprintf(stdout, "(read-schema-from-writable-info) 1 starting table copy \n");
-        TableDefinition *tableDef;
-        tableDef = malloc(sizeof(TableDefinition));
-        if (!tableDef)
-        {
-            fprintf(stderr, "(read-schema-from-writable) malloc failed. \n");
-            for (int ti2 = 0; ti2 < ti; ti2++)
-            {
-                FreeTableDefinition(meta->Schema->TableDefs[ti2]);
-            }
-            free(meta->Schema->TableDefs);
-            free(meta->Schema->TagName);
-            free(meta->Schema);
-            return -1;
-        }
-
-        tableDef->Name = malloc(strlen(file->Schema.TableDefs[ti].TableName) + 1);
-        if (!tableDef->Name)
-        {
-            fprintf(stderr, "(read-schema-from-writable) malloc failed. \n");
-            free(tableDef);
-            for (int ti2 = 0; ti2 < ti; ti2++)
-            {
-                FreeTableDefinition(meta->Schema->TableDefs[ti2]);
-            }
-            free(meta->Schema->TableDefs);
-            free(meta->Schema->TagName);
-            free(meta->Schema);
-            return -1;
-        }
-
-        tableDef->Columns = malloc(sizeof(TableColDefinition) * file->Schema.TableDefs[ti].TableColumnCount);
-        if (!tableDef->Columns)
-        {
-            fprintf(stderr, "(read-schema-from-writable) malloc failed. \n");
-            free(tableDef->Name);
-            free(tableDef);
-            for (int ti2 = 0; ti2 < ti; ti2++)
-            {
-                FreeTableDefinition(meta->Schema->TableDefs[ti2]);
-            }
-            free(meta->Schema->TableDefs);
-            free(meta->Schema->TagName);
-            free(meta->Schema);
-            return -1;
-        }
-
         for (int ci = 0; ci < file->Schema.TableDefs[ti].TableColumnCount; ci++)
         {
-            fprintf(stdout, "(read-schema-from-writable-info) 2 starting table column copy \n");
-            TableColDefinition *colDef;
-            colDef = malloc(sizeof(TableColDefinition));
-            if (!colDef)
-            {
-                fprintf(stderr, "(read-schema-from-writable) malloc failed. \n");
-                free(tableDef->Name);
-                free(tableDef);
-                for (int ti2 = 0; ti2 < ti; ti2++)
-                {
-                    FreeTableDefinition(meta->Schema->TableDefs[ti2]);
-                }
-                free(meta->Schema->TableDefs);
-                free(meta->Schema->TagName);
-                free(meta->Schema);
-                return -1;
-            }
-
-            colDef->Name = malloc(strlen(file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnName) + 1);
-            if (!colDef->Name)
-            {
-                fprintf(stderr, "(read-schema-from-writable) malloc failed. \n");
-                free(colDef);
-                free(tableDef);
-                for (int ti2 = 0; ti2 < ti; ti2++)
-                {
-                    FreeTableDefinition(meta->Schema->TableDefs[ti2]);
-                }
-                free(meta->Schema->TableDefs);
-                free(meta->Schema->TagName);
-                free(meta->Schema);
-                return -1;
-            }
-
             // !! For now we treat default values as character array
             // !! The way we handle default values will be different for each data type
-
             if (strlen(file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnDefaultValue) > 0)
             {
-
-                colDef->DefaultValue = malloc(strlen(file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnDefaultValue) + 1);
-                if (!colDef->DefaultValue)
+                if (file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnDefaultValue)
                 {
-                    fprintf(stderr, "(read-schema-from-writable) malloc failed. \n");
-                    free(colDef);
-                    free(tableDef->Name);
-                    free(tableDef);
-                    for (int ti2 = 0; ti2 < ti; ti2++)
-                    {
-                        FreeTableDefinition(meta->Schema->TableDefs[ti2]);
-                    }
-                    free(meta->Schema->TableDefs);
-                    free(meta->Schema->TagName);
-                    free(meta->Schema);
-                    return -1;
-                }
-                else
-                {
-
-                    strcpy(colDef->DefaultValue, &file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnDefaultValue);
+                    strcpy(meta->Schema->TableDefs[ti]->Columns[ci]->DefaultValue, &file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnDefaultValue);
                 }
             }
 
-            strcpy(colDef->Name, &file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnName);
-            colDef->CreatedAt = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnCreatedAt;
-            colDef->Id = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnId;
-            colDef->IsUnique = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsUnique;
-            colDef->IsNullable = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsNullable;
-            colDef->IsPrimaryKey = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsPrimaryKey;
-            colDef->LastModified = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnLastModified;
-            colDef->Type = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnType;
-            tableDef->Columns[ci] = colDef;
+            strcpy(meta->Schema->TableDefs[ti]->Columns[ci]->Name, &file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnName);
+            meta->Schema->TableDefs[ti]->Columns[ci]->CreatedAt = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnCreatedAt;
+            meta->Schema->TableDefs[ti]->Columns[ci]->Id = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnId;
+            meta->Schema->TableDefs[ti]->Columns[ci]->IsUnique = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsUnique;
+            meta->Schema->TableDefs[ti]->Columns[ci]->IsNullable = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsNullable;
+            meta->Schema->TableDefs[ti]->Columns[ci]->IsPrimaryKey = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnIsPrimaryKey;
+            meta->Schema->TableDefs[ti]->Columns[ci]->LastModified = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnLastModified;
+            meta->Schema->TableDefs[ti]->Columns[ci]->Type = file->Schema.TableDefs[ti].TableColumnDefs[ci].ColumnType;
             fprintf(stderr, "(read-schema-from-writable-info) 2 table column copied over \n");
         }
-        tableDef->PrimaryKeyId = file->Schema.TableDefs[ti].TablePrimaryKey;
-        tableDef->Id = file->Schema.TableDefs[ti].TableId;
-        tableDef->ColumnCount = file->Schema.TableDefs[ti].TableColumnCount;
-        tableDef->CreatedAt = file->Schema.TableDefs[ti].TableCreatedAt;
-        tableDef->LastModified = file->Schema.TableDefs[ti].TableLastModified;
-        strcpy(tableDef->Name, &file->Schema.TableDefs[ti].TableName);
-        meta->Schema->TableDefs[ti] = tableDef;
+        meta->Schema->TableDefs[ti]->PrimaryKeyId = file->Schema.TableDefs[ti].TablePrimaryKey;
+        meta->Schema->TableDefs[ti]->Id = file->Schema.TableDefs[ti].TableId;
+        meta->Schema->TableDefs[ti]->ColumnCount = file->Schema.TableDefs[ti].TableColumnCount;
+        meta->Schema->TableDefs[ti]->CreatedAt = file->Schema.TableDefs[ti].TableCreatedAt;
+        meta->Schema->TableDefs[ti]->LastModified = file->Schema.TableDefs[ti].TableLastModified;
+        strcpy(meta->Schema->TableDefs[ti]->Name, &file->Schema.TableDefs[ti].TableName);
         fprintf(stderr, "(read-schema-from-writable-info) 1 table  copied over \n");
     }
     meta->Schema->TableCount = file->Schema.TableCount;
@@ -227,118 +164,95 @@ int ReadSchemaFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
     meta->Schema->LastModified = file->FileLastModified;
     strcpy(meta->Schema->TagName, &file->Schema.SchemaTag);
 
+    FreeAlloc(alloc);
+
     return 0;
-}
-
-void *CreateDefaultValue(enum SchemaType schemaType, const char *defaultValue)
-{
-    void *output;
-    if (!defaultValue)
-    {
-        fprintf(stderr, "(create-default-value-err) `defaultValue` is null. \n");
-        return -1;
-    }
-
-    switch (schemaType)
-    {
-    case DATE:
-        output = malloc(sizeof(time_t));
-        if (output)
-        {
-            *(time_t *)output = atol(defaultValue);
-            return output;
-        }
-        break;
-
-    case INTEGER:
-        output = malloc(sizeof(int));
-        if (output)
-        {
-            *(int *)output = atoi(defaultValue);
-            return output;
-        }
-        break;
-
-    case STRING:
-        output = malloc(strlen(defaultValue) + 1);
-        if (output)
-        {
-            strcpy(output, defaultValue);
-            return output;
-        }
-        break;
-
-    case FLOAT:
-        output = malloc(sizeof(double));
-        if (output)
-        {
-            *(double *)output = atof(defaultValue);
-            return output;
-        }
-        break;
-
-    case BOOL:
-        output = malloc(sizeof(bool));
-        if (output)
-        {
-            *(bool *)output = strcmp(defaultValue, &"0") ? true : false;
-            return output;
-        }
-        break;
-
-    default:
-        break;
-    }
-
-    fprintf(stderr, "(create-default-value-err) malloc failed. \n");
-    return NULL;
 }
 
 int ReadOffsetFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
 {
-    TableOffset **offsets;
-
     if (!meta || !file)
     {
-        fprintf(stderr, "(build-offsets-from-persisted-format-err) file or meta is null. \n");
+        fprintf(stderr, "(read-offset-from-writable) file or meta is null. \n");
         return -1;
     }
 
-    meta->Offset = malloc(sizeof(TableOffset));
-    if (!meta->Offset)
-    {
-        fprintf(stderr, "(build-offsets-from-persisted-format-err) malloc failed. \n");
-        return -1;
-    }
+    TableOffset **offsets;
+    Allocator *alloc = MallocInit();
 
-    offsets = malloc(sizeof(TableOffset *) * file->Schema.TableCount);
-    if (!offsets)
+    meta->Offset = Malloc(sizeof(TableOffset) * meta->Schema->TableCount, alloc);
+
+    if (!VerifyAlloc(alloc))
     {
         free(meta->Offset);
-        fprintf(stderr, "(build-offsets-from-persisted-format-err) malloc failed. \n");
+        fprintf(stderr, "(read-offset-from-writable) malloc failed \n");
         return -1;
     }
 
-    for (int c = 0; c < file->Schema.TableCount; c++)
+    for (int tIdx = 0; tIdx < file->Schema.TableCount; tIdx++)
     {
-        offsets[c] = NewTableOffset(file->TableOffsets[c].TableOffsetId, file->TableOffsets[c].TableOffset);
-        if (!offsets[c])
-        {
-            for (int c2 = 0; c2 < c; c2++)
-            {
-                free(offsets[c2]);
-            }
-            free(meta->Offset);
-            free(offsets);
-            fprintf(stderr, "(build-offsets-from-persisted-format-err) couldn't create table offset. \n");
-            return -1;
-        }
+        meta->Offset->Offsets[tIdx] = NewTableOffset(file->TableOffsets[tIdx].TableOffsetId, file->TableOffsets[tIdx].TableOffset);
     }
 
     meta->Offset->Offsets = offsets;
     meta->Offset->ImwebOffset = file->OffsetImweb;
     meta->Offset->TableCount = file->Schema.TableCount;
 
+    FreeAlloc(alloc);
+    return 0;
+}
+
+int ReadStorageFromWritable(FileMetadata *meta, const WritableFileMetadata *file)
+{
+    if (!meta || !file)
+    {
+        fprintf(stderr, "(read-storage-from-writable) file or meta is null. \n");
+        return -1;
+    }
+
+    Allocator *alloc = MallocInit();
+
+    meta->Storage = Malloc(sizeof(StorageMeta), alloc);
+    meta->Storage->Items = Malloc(sizeof(StorageMetaItem) * (file->Schema.TableCount + 1), alloc);
+    for (int idx = 0; idx < file->Schema.TableCount; idx++)
+    {
+        int colCount = file->Schema.TableDefs[idx].TableColumnCount;
+        meta->Storage->Items[idx] = Malloc(sizeof(StorageMetaItem), alloc);
+        for (int cidx = 0; cidx < colCount; cidx++)
+        {
+            meta->Storage->Items[idx]->ColInfo = Malloc(sizeof(ColumnStorage *) * (colCount + 1), alloc);
+        }
+    }
+
+    if (!VerifyAlloc(alloc))
+    {
+        free(meta->Storage);
+        for (int idx = 0; idx < file->Schema.TableCount; idx++)
+        {
+            for (int cidx = 0; cidx < file->Schema.TableDefs[idx].TableColumnCount; cidx++)
+            {
+                free(meta->Storage->Items[idx]->ColInfo);
+            }
+            free(meta->Storage->Items[idx]);
+            free(meta->Storage->Items);
+        }
+    }
+
+    for (int tIdx = 0; tIdx < file->Schema.TableCount; tIdx++)
+    {
+        meta->Storage->Items[tIdx]->RowSize = file->Storage[tIdx].RowSize;
+        meta->Storage->Items[tIdx]->TableId = file->Storage[tIdx].TableId;
+        meta->Storage->Items[tIdx]->Count = file->Storage[tIdx].Count;
+
+        for (int cidx = 0; cidx < file->Schema.TableDefs[tIdx].TableColumnCount; cidx++)
+        {
+            meta->Storage->Items[tIdx]->ColInfo[cidx]->Id = file->Storage[tIdx].ColInfo[cidx].Id;
+            meta->Storage->Items[tIdx]->ColInfo[cidx]->Padding = file->Storage[tIdx].ColInfo[cidx].Padding;
+            meta->Storage->Items[tIdx]->ColInfo[cidx]->SequencePos = file->Storage[tIdx].ColInfo[cidx].SequencePos;
+        }
+    }
+
+    FreeAlloc(alloc);
     return 0;
 }
 
@@ -373,6 +287,14 @@ FileMetadata *CreateMetadataFromWritable(const WritableFileMetadata *metadata)
         return NULL;
     }
     fprintf(stdout, "(create-metadata-from-writable) schema copied to metadata . \n");
+
+    if (ReadStorageFromWritable(target, metadata) != 0)
+    {
+        free(target);
+        fprintf(stderr, "(boot-file-from-persisted-format-err) failed while copying over storage info. \n");
+        return NULL;
+    }
+    fprintf(stdout, "(create-metadata-from-writable) storage copied to metadata . \n");
 
     target->CreatedAt = metadata->FileCreatedAt;
     target->LastModified = metadata->FileLastModified;
@@ -409,13 +331,19 @@ int CreateWritableFromMetadata(const FileMetadata *metadata, WritableFileMetadat
     }
     fprintf(stdout, "(create-writable-from-metadata) schema written to writable metadata \n");
 
+    if (WriteStorage(target, metadata) != 0)
+    {
+        fprintf(stderr, "(create-writable-from-metadata) failed to write storage \n");
+        return -1;
+    }
+    fprintf(stdout, "(create-writable-from-metadata) storage written to writable metadata \n");
+
     target->FileCreatedAt = metadata->CreatedAt;
     target->FileLastModified = metadata->LastModified;
     target->OffsetImweb = metadata->Offset->ImwebOffset;
     return 0;
 }
 
-// !! Assumes memory is pre-allocated
 int WriteOffset(WritableFileMetadata *file, const FileMetadata *meta)
 {
     if (!meta)
@@ -439,6 +367,30 @@ int WriteOffset(WritableFileMetadata *file, const FileMetadata *meta)
     {
         file->TableOffsets[ti].TableOffset = meta->Offset->Offsets[ti]->Offset;
         file->TableOffsets[ti].TableOffsetId = meta->Offset->Offsets[ti]->Id;
+    }
+
+    return 0;
+}
+
+int WriteStorage(WritableFileMetadata *file, const FileMetadata *meta)
+{
+    if (!meta)
+    {
+        fprintf(stderr, "(write-offset-err) meta is null\n");
+        return -1;
+    }
+
+    for (int tIdx = 0; tIdx < meta->Schema->TableCount; tIdx++)
+    {
+        for (int cIdx = 0; cIdx < meta->Schema->TableDefs[tIdx]->ColumnCount; cIdx++)
+        {
+            file->Storage[tIdx].ColInfo[cIdx].Id = meta->Storage->Items[tIdx]->ColInfo[cIdx]->Id;
+            file->Storage[tIdx].ColInfo[cIdx].Padding = meta->Storage->Items[tIdx]->ColInfo[cIdx]->Padding;
+            file->Storage[tIdx].ColInfo[cIdx].SequencePos = meta->Storage->Items[tIdx]->ColInfo[cIdx]->SequencePos;
+        }
+        file->Storage[tIdx].Count = meta->Storage->Items[tIdx]->Count;
+        file->Storage[tIdx].RowSize = meta->Storage->Items[tIdx]->RowSize;
+        file->Storage[tIdx].TableId = meta->Storage->Items[tIdx]->TableId;
     }
 
     return 0;
@@ -487,12 +439,12 @@ int WriteSchema(WritableFileMetadata *file, const FileMetadata *meta)
     return 0;
 }
 
-FileMetadata *NewFileMetadata(Offset *offset, SchemaDefinition *schema)
+FileMetadata *NewFileMetadata(Offset *offset, SchemaDefinition *schema, StorageMeta *storage)
 {
     FileMetadata *metadata;
     time_t now;
 
-    if (!offset || !schema)
+    if (!offset || !schema || !storage)
     {
         fprintf(stderr, "(new-file-metadata-err) offset or schema is null \n");
         return NULL;
@@ -516,6 +468,7 @@ FileMetadata *NewFileMetadata(Offset *offset, SchemaDefinition *schema)
     metadata->CreatedAt = now;
     metadata->LastModified = now;
     metadata->Schema = schema;
+    metadata->Storage = storage;
     fprintf(stderr, "(new-file-metadata-info) file metadata creation success \n");
     return metadata;
 }
