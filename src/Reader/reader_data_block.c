@@ -69,6 +69,13 @@ DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, ReaderMetadata *reader, FileM
     // !! For now the focus is to understand the execution part and not storage
     // !! If I can limit coupling, this will be easy to change in future
 
+    StorageMetaItem *storeInfo = MatchStorageItemFromLiqsmt(smt, meta);
+    if (!storeInfo)
+    {
+        fprintf(stderr, "(build-data-block-from-readable) Missing storage info\n");
+        return NULL;
+    }
+
     int rowCount = 0;
     if (smt->Limit == 0)
     {
@@ -77,41 +84,22 @@ DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, ReaderMetadata *reader, FileM
         // ?? Instead, I'm opting to estimate the number of rows read based on the query and the existing row count
         // ?? The knowing the row size and the column sizes, I can do precise jumps
         // ?? This will also workout well in future when we tackle search queries
-        for (int idx = 0; idx < meta->Schema->TableCount; idx++)
-        {
-            if (meta->Storage->Items[idx]->TableId == tDef->Id)
-            {
-                rowCount = meta->Storage->Items[idx]->Count;
-            }
-        }
+        rowCount = storeInfo->Count;
     }
 
-    Allocator *alloc;
-    DataBlock *data;
-    StorageMetaItem *item;
-
-    for (int idx = 0; idx < meta->Schema->TableCount; idx++)
-    {
-        if (meta->Storage->Items[idx]->TableId == meta->Schema->TableDefs[idx]->Id)
-        {
-            item = meta->Storage->Items[idx];
-        }
-    }
-
-    if (!item)
-    {
-        fprintf(stderr, "(build-data-block-from-readable) Missing storage info\n");
-        return NULL;
-    }
-
-    data = DefaultBlock();
+    DataBlock *data = EmptyDataBlock();
     if (!data)
     {
         fprintf(stderr, "(build-data-block-from-readable) Failed to create data block\n");
         return NULL;
     }
 
-    alloc = MallocInit();
+    if (rowCount == 0)
+    {
+        return data;
+    }
+
+    Allocator *alloc = MallocInit();
     data->Values = Malloc(sizeof(char **) * (rowCount + 1), alloc);
     for (int ridx = 0; ridx < rowCount; ridx++)
     {
@@ -123,7 +111,7 @@ DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, ReaderMetadata *reader, FileM
                 if (colIds[cidx] == tDef->Columns[cidx]->Id)
                 {
                     TableColDefinition *col = tDef->Columns[cidx];
-                    int start = (ridx * item->RowSize) + item->ColInfo[cidx]->Padding;
+                    int start = (ridx * storeInfo->RowSize) + storeInfo->ColInfo[cidx]->Padding;
 
                     size_t size = GetDataTypeSize(col->Type);
                     // ?? Later we'll add a prefix of 8 bytes to hold the exact string length
@@ -148,40 +136,13 @@ DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, ReaderMetadata *reader, FileM
 
     if (!VerifyAlloc(alloc))
     {
-        for (int ridx = 0; ridx < rowCount; ridx++)
-        {
-            free(data->Values[ridx]);
-            for (int cidx = 0; cidx < smt->ColCount; cidx++)
-            {
-                for (int icIdx = 0; icIdx < tDef->ColumnCount; icIdx++)
-                {
-                    if (colIds[cidx] == tDef->Columns[cidx]->Id)
-                    {
-                        free(data->Values[ridx][cidx]);
-                    }
-                }
-            }
-        }
-        free(data->Values);
-        for (int cidx = 0; cidx < smt->ColCount; cidx++)
-        {
-            free(data->Header[cidx]);
-        }
-        free(data->Header);
-        FreeAlloc(alloc);
         FreeDataBlock(data);
+        FreeAlloc(alloc);
     }
 
     for (int cidx = 0; cidx < smt->ColCount; cidx++)
     {
         strcpy(data->Header[cidx], smt->Columns[cidx]);
-    }
-
-    ValidateDataBlock(data);
-
-    if (rowCount == 0)
-    {
-        return data;
     }
 
     for (int ridx = 0; ridx < rowCount; ridx++)
@@ -192,9 +153,7 @@ DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, ReaderMetadata *reader, FileM
             {
                 if (colIds[cidx] == tDef->Columns[cidx]->Id)
                 {
-                    TableColDefinition *col = tDef->Columns[cidx];
-                    int start = (ridx * item->RowSize) + item->ColInfo[cidx]->Padding;
-                    size_t size = GetDataTypeSize(col->Type);
+                    int start = (ridx * storeInfo->RowSize) + storeInfo->ColInfo[cidx]->Padding;
                     strncpy(data->Values[ridx][cidx],
                             reader->ReadBuffer[start],
                             sizeof(data->Values[ridx][cidx]));
@@ -206,6 +165,33 @@ DataBlock *BuildDataBlockFromReadable(Liqsmt *smt, ReaderMetadata *reader, FileM
     ValidateDataBlock(data);
     FreeAlloc(alloc);
     return data;
+}
+
+StorageMetaItem *MatchStorageItemFromLiqsmt(Liqsmt *smt, FileMetadata *meta)
+{
+    if (!smt || !meta)
+    {
+        fprintf(stderr, "(match-storage-item-from-liqsmt) args invalid \n");
+        return -1;
+    }
+
+    TableDefinition *def = MatchTableDefFromLiqsmt(smt, meta->Schema);
+    if (!def)
+    {
+        fprintf(stderr, "(match-storage-item-from-liqsmt) table not found \n");
+        return -1;
+    }
+
+    StorageMetaItem *item = NULL;
+    for (int idx = 0; idx < meta->Schema->TableCount; idx++)
+    {
+        if (meta->Storage->Items[idx]->TableId == meta->Schema->TableDefs[idx]->Id)
+        {
+            item = meta->Storage->Items[idx];
+        }
+    }
+
+    return item;
 }
 
 TableDefinition *MatchTableDefFromLiqsmt(Liqsmt *smt, SchemaDefinition *schema)

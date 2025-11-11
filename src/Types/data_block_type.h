@@ -25,11 +25,11 @@ typedef struct
     DataBlockSize *Size; // Dimensions of the data block
 } DataBlock;
 
-DataBlock *CreateDataBlock(char **, char ***);
+DataBlock *CreateDataBlock(const char **, const char ***);
 void ValidateDataBlock(DataBlock *);
-DataBlockSize *MeasureBlockStructure(char ***);
-DataBlockSize *EmptyBlockSize();
-DataBlock *DefaultBlock();
+DataBlockSize *MeasureBlockStructure(const char **, const char ***);
+DataBlockSize *ZeroBlockSize();
+DataBlock *EmptyDataBlock();
 void FreeDataBlock(DataBlock *);
 
 #endif

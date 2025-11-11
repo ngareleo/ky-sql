@@ -62,6 +62,12 @@ ReadRequest *CreateReadRequest(Liqsmt *smt, TranslationCtx *ctx)
         if (ctx->FileMd->Offset->Offsets[tIdx]->Id == tableDef->Id &&
             ctx->FileMd->Storage->Items[tIdx]->TableId == tableDef->Id)
         {
+            if (ctx->FileMd->Storage->Items[tIdx]->Count == 0)
+            {
+                fprintf(stderr, "(liqsmt-to-read-request) File is empty \n");
+                return NULL;
+            }
+
             readReq = malloc(sizeof(ReadRequest));
             if (!readReq)
             {

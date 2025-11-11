@@ -90,7 +90,6 @@ int main()
         }
 
         ShellPrintTable(readBloc);
-        
         fprintf(stderr, "(01_datasection) Data retreieved successfully \n");
 
     } while (0);

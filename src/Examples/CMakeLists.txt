@@ -1,6 +1,7 @@
 set (INNER_MODULES
     utilities
     types
+    shell
     mocks
     metadata
     lang

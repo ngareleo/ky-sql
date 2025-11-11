@@ -37,8 +37,7 @@ int HandleRead(ReadRequest *req, ReaderMetadata *meta)
     }
     else if (feof(readable) != 0)
     {
-        fprintf(stderr, "(writer-handle-write) EOF error \n");
-        return -1;
+        fprintf(stderr, "(writer-handle-write) Reached EOF \n");
     }
 
     fclose(readable);

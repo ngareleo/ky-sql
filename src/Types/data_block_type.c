@@ -6,25 +6,31 @@
 #include "Types/types.h"
 #include "Utilities/utilities.h"
 
-DataBlock *CreateDataBlock(char **headers, char ***values)
+DataBlock *CreateDataBlock(const char **headers, const char ***values)
 {
+
     if (!values && !headers)
     {
-        return DefaultBlock();
+        fprintf(stderr, "(create-data-block) Args are invalid \n");
+        return NULL;
     }
-    Allocator *alloc = MallocInit();
-    DataBlock *block;
-    int headerCount, rowCount;
 
+    DataBlock *block = EmptyDataBlock();
+    if (!block)
+    {
+        fprintf(stderr, "(create-data-block) Couldn't create empty data block \n");
+        return NULL;
+    }
+
+    int headerCount, rowCount;
     headerCount = Count((void **)headers);
     rowCount = Count((void **)values);
 
-    block = Malloc(sizeof(DataBlock), alloc);
+    Allocator *alloc = MallocInit();
     block->Header = Malloc(sizeof(char *) * (headerCount + 1), alloc);
     block->Values = Malloc(sizeof(char **) * (rowCount + 1), alloc);
-    block->Size = Malloc(sizeof(DataBlockSize), alloc);
 
-    if (block && block->Header && headerCount > 0)
+    if (block->Header && headerCount > 0)
     {
         for (int h_c = 0; h_c < headerCount; h_c++)
         {
@@ -33,7 +39,7 @@ DataBlock *CreateDataBlock(char **headers, char ***values)
         block->Header[headerCount] = NULL;
     }
 
-    if (block && block->Values && rowCount > 0)
+    if (block->Values && rowCount > 0)
     {
         for (int rowIdx = 0; rowIdx < rowCount; rowIdx++)
         {
@@ -89,7 +95,7 @@ DataBlock *CreateDataBlock(char **headers, char ***values)
     return block;
 }
 
-DataBlockSize *EmptyBlockSize()
+DataBlockSize *ZeroBlockSize()
 {
     DataBlockSize *s;
     s = malloc(sizeof(DataBlockSize));
@@ -104,7 +110,7 @@ DataBlockSize *EmptyBlockSize()
     return s;
 }
 
-DataBlock *DefaultBlock()
+DataBlock *EmptyDataBlock()
 {
     DataBlock *block;
     block = malloc(sizeof(DataBlock));
@@ -124,6 +130,7 @@ DataBlock *DefaultBlock()
 
     s->Count = 0;
     s->Width = 0;
+    s->HeaderCount = 0;
 
     block->Size = s;
     block->Header = NULL;
@@ -136,7 +143,7 @@ DataBlock *DefaultBlock()
     return block;
 }
 
-DataBlockSize *MeasureBlockStructure(char **headers, char ***rowText)
+DataBlockSize *MeasureBlockStructure(const char **headers, const char ***rowText)
 {
     if (!rowText)
     {
@@ -149,13 +156,13 @@ DataBlockSize *MeasureBlockStructure(char **headers, char ***rowText)
     hCount = Count((void **)headers);
     if ((rCount = Count((void **)rowText)) < 1)
     {
-        return EmptyBlockSize();
+        return ZeroBlockSize();
     }
 
     // Count the first row and use that as base for default row width
     if ((rWidth = Count((void **)rowText[0]) < 1))
     {
-        return EmptyBlockSize();
+        return ZeroBlockSize();
     }
 
     for (int c = 1; c < rCount; c++)
@@ -205,7 +212,7 @@ void ValidateDataBlock(DataBlock *block)
     {
         block->IsEmpty = true;
         block->IsAligned = true;
-        block->Size = EmptyBlockSize();
+        block->Size = ZeroBlockSize();
         return;
     }
 
@@ -225,7 +232,7 @@ void ValidateDataBlock(DataBlock *block)
         // !! Here lies dragons
         // !! We purposerfully return an empty block size even if there's one empty element
         // !! We treat this case as an empty data block so we enforce the count of 0 and width of 0
-        block->Size = EmptyBlockSize();
+        block->Size = ZeroBlockSize();
         return;
     }
 
