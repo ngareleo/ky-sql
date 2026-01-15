@@ -25,5 +25,5 @@ To build examples
 To run example
 
 ```bash
-./mahiko run examples {index}
+./mahiko run examples {index}kw
 ```
